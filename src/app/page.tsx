@@ -1,65 +1,160 @@
 import Image from "next/image";
+import Link from "next/link";
+import { BookOpen, Camera, Gift, Printer, Sparkles } from "lucide-react";
+import { StartQuest } from "@/components/StartQuest";
 
-export default function Home() {
+const features = [
+  {
+    title: "Scan",
+    text: "Point the camera at a Word Quest QR code.",
+    icon: Camera,
+    color: "var(--sky-4)",
+  },
+  {
+    title: "Discover",
+    text: "Letters appear with a magic pop animation.",
+    icon: Sparkles,
+    color: "var(--gold)",
+  },
+  {
+    title: "Build",
+    text: "Tap big letter tiles to spell the mystery word.",
+    icon: BookOpen,
+    color: "var(--magenta)",
+  },
+  {
+    title: "Win",
+    text: "Earn FeatherPop and unlock real-world rewards.",
+    icon: Gift,
+    color: "var(--mint)",
+  },
+];
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="page">
+      <section className="hero">
+        <div className="float-letters" aria-hidden>
+          <span className="float-letter" style={{ top: "8%", left: "6%" }}>A</span>
+          <span className="float-letter" style={{ top: "65%", left: "12%" }}>B</span>
+          <span className="float-letter" style={{ top: "18%", right: "10%" }}>C</span>
+          <span className="float-letter" style={{ top: "70%", right: "6%" }}>!</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+
+        <div className="hero-grid">
+          <div>
+            <span className="kicker">
+              <Sparkles aria-hidden className="h-4 w-4" />
+              QR-powered literacy adventure
+            </span>
+            <h1 className="h-display hero-title mt-4">
+              <span className="h-gradient">Word</span>
+              <br />
+              <span className="h-stroke">Quest</span>
+            </h1>
+            <p className="hero-subtitle">
+              Scan, discover letters, make words, earn{" "}
+              <strong style={{ color: "var(--magenta)" }}>FeatherPop</strong>,
+              and unlock prizes — at the park or right at home.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <StartQuest />
+              <Link href="/how-to-play" className="btn btn-ghost">
+                How to Play
+              </Link>
+            </div>
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-[var(--ink-soft)]">
+              <span>· Made for ages 3–11</span>
+              <span>· Mobile-first</span>
+              <span>· No sign-up required</span>
+            </div>
+          </div>
+
+          <div className="hero-portrait">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              src="/media/hero-portrait-1.jpeg"
+              alt="Ms. Feather Pop"
+              fill
+              sizes="(max-width: 768px) 100vw, 480px"
+              priority
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      <section className="mt-8">
+        <div className="mb-4 flex items-end justify-between gap-3">
+          <h2 className="h-display text-3xl">How a quest works</h2>
+          <Link
+            href="/how-to-play"
+            className="text-sm font-bold text-[var(--purple)]"
+          >
+            Read more →
+          </Link>
+        </div>
+        <div className="feature-row">
+          {features.map((f) => {
+            const Icon = f.icon;
+            return (
+              <article key={f.title} className="feature-pill">
+                <div
+                  className="icon-bubble"
+                  style={{ background: f.color }}
+                >
+                  <Icon aria-hidden className="h-5 w-5" />
+                </div>
+                <h3>{f.title}</h3>
+                <p>{f.text}</p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="mt-8 grid gap-4 md:grid-cols-2">
+        <div className="card">
+          <span className="kicker" style={{ color: "var(--pink)" }}>
+            For kids
+          </span>
+          <h3 className="h-display mt-3 text-2xl">Active learning, big fun</h3>
+          <p className="mt-2 text-[var(--ink-soft)]">
+            Every QR is a mini quest. Hunt them around the park, discover a
+            secret letter, build the target word, and celebrate with cheers.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link href="/scan" className="btn btn-sky btn-sm">
+              <Camera aria-hidden className="h-4 w-4" />
+              Open Scanner
+            </Link>
+            <Link href="/wallet" className="btn btn-ghost btn-sm">
+              View Wallet
+            </Link>
+          </div>
+        </div>
+
+        <div className="card card-deep">
+          <span
+            className="kicker"
+            style={{ background: "rgba(255,255,255,0.18)", color: "white" }}
+          >
+            For parents
+          </span>
+          <h3 className="h-display mt-3 text-2xl">Print quest packs at home</h3>
+          <p className="mt-2 text-white/80">
+            Print a sheet of QR cards, place them around the room, and watch
+            your child move, read and spell. No accounts, no ads.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link href="/print" className="btn btn-gold btn-sm">
+              <Printer aria-hidden className="h-4 w-4" />
+              Get Print Pack
+            </Link>
+            <Link href="/rewards" className="btn btn-ghost btn-sm">
+              See Rewards
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
