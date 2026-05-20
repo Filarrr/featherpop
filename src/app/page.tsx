@@ -80,14 +80,26 @@ export default function HomePage() {
 
           <div className="hero-portrait">
             <div className="fp-stage">
-              <MsFeatherPopAvatar pose="wave" size={300} />
+              <MsFeatherPopAvatar pose="wave" size={360} />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="kid-stage mt-6">
-        <KidRow pose="cheer" size={86} />
+      <section
+        className="kid-stage mt-6"
+        style={{
+          backgroundImage: "url(/media/scenes/group-cheer.png)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          minHeight: 220,
+          border: "3px solid rgba(255,255,255,0.6)",
+        }}
+        aria-label="Word Quest crew"
+      />
+
+      <section className="kid-stage mt-4">
+        <KidRow pose="cheer" size={96} />
       </section>
 
       <section className="mt-8">
