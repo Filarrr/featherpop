@@ -197,25 +197,40 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
     if (guess === targetUpper) {
       const next = completeChallenge(challenge.slug, challenge.featherpopValue);
       setProgress(next);
-      setFoundWords((arr) => [...arr, guess]);
+      const updatedFound = [...foundWords, guess];
+      setFoundWords(updatedFound);
       setPoppedWord(guess);
       fanfare();
       kidCrowdCheer();
       setMood("cheer");
-      setMascotMessage(`${challenge.targetWord}! +${challenge.featherpopValue} FeatherPop!`);
+      setMascotMessage(
+        `${challenge.targetWord}! +${challenge.featherpopValue} FeatherPop! Keep going for bonus words!`,
+      );
       setMascotNudge((n) => n + 1);
       speak(
         completed
-          ? `${challenge.targetWord}! Great spelling!`
-          : `${challenge.targetWord}! You earned ${challenge.featherpopValue} FeatherPop!`,
+          ? `${challenge.targetWord}! Great spelling! Keep going for bonus words.`
+          : `${challenge.targetWord}! You earned ${challenge.featherpopValue} FeatherPop! Keep going for bonus words.`,
       );
+      // Quick celebration burst, then let the player keep hunting bonus words.
+      // The timer keeps counting; the round only ends when the timer hits
+      // zero, or when every word on the list is found (the all-found check
+      // below).
       setShowReward(true);
-      setRunning(false);
       setSelection([]);
       window.setTimeout(() => {
         setShowReward(false);
-        setPhase("result");
-      }, 2800);
+        setPoppedWord(null);
+      }, 1500);
+
+      // Clean sweep: if the target completes the full list, end the round.
+      if (updatedFound.length === wordList.length) {
+        window.setTimeout(() => {
+          setRunning(false);
+          stopMusic();
+          setPhase("result");
+        }, 1700);
+      }
       return;
     }
 
@@ -228,7 +243,8 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
       };
       saveProgress(updated);
       setProgress(updated);
-      setFoundWords((arr) => [...arr, guess]);
+      const updatedFound = [...foundWords, guess];
+      setFoundWords(updatedFound);
       setPoppedWord(guess);
       ding(1200, 120);
       window.setTimeout(() => ding(1500, 120), 130);
@@ -239,6 +255,17 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
       speak(`Bonus word ${guess}! Plus one FeatherPop!`);
       setSelection([]);
       window.setTimeout(() => setPoppedWord(null), 1100);
+
+      // Clean sweep: if every word is now found, end the round.
+      if (updatedFound.length === wordList.length) {
+        window.setTimeout(() => {
+          setRunning(false);
+          stopMusic();
+          setPhase("result");
+          fanfare();
+          kidCrowdCheer();
+        }, 1300);
+      }
       return;
     }
 
