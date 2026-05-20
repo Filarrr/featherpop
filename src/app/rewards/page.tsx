@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { RewardsClient } from "@/components/RewardsClient";
 import { KidRow } from "@/components/KidAvatar";
 
@@ -14,8 +15,21 @@ export default function RewardsPage() {
           activate rewards in person at events or at home.
         </p>
       </header>
+
+      <section className="badge-shelf mb-5">
+        <Image
+          src="/media/ui/badges.png"
+          alt="Achievement badges: First Word, Five Words, Word Hunter, Word Champ, Word Legend"
+          width={1200}
+          height={400}
+          unoptimized
+          priority
+          className="badge-shelf-image"
+        />
+      </section>
+
       <section className="kid-stage mb-4">
-        <KidRow kids={["bee", "lila", "mo", "ari"]} pose="jump" size={72} />
+        <KidRow kids={["bee", "lila", "mo", "ari"]} pose="jump" size={86} />
       </section>
       <RewardsClient />
     </main>

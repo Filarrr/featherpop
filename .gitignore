@@ -42,6 +42,11 @@ WhatsApp*.jpeg
 WhatsApp*.jpg
 *.docx
 search_results.txt
+/_raw-assets/
+/.claude/
+_probe-*.png
+_tmp-*
+_frames/
 
 # typescript
 *.tsbuildinfo

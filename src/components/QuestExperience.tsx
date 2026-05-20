@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -635,6 +636,15 @@ function WordGrid({
 }
 
 /* -------- Header -------- */
+const ZONE_BG: Record<string, string> = {
+  "Feather Forest": "/media/scenes/zone-feather-forest.png",
+  "Sky Stage": "/media/scenes/zone-sky-stage.png",
+  "Adventure Trail": "/media/scenes/zone-adventure-trail.png",
+  "Pop Park": "/media/scenes/zone-pop-park.png",
+  "Star Stage": "/media/scenes/zone-star-stage.png",
+  "Reading Nest": "/media/scenes/zone-reading-nest.png",
+};
+
 function Header({
   challenge,
   step,
@@ -644,34 +654,40 @@ function Header({
   step: string;
   inset?: boolean;
 }) {
+  const bg = ZONE_BG[challenge.zone];
   return (
     <div
-      className={`flex flex-wrap items-end justify-between gap-3 ${
-        inset ? "p-4 md:p-5" : ""
-      }`}
+      className={`zone-header ${inset ? "is-inset" : ""}`}
+      style={bg ? { backgroundImage: `url(${bg})` } : undefined}
     >
-      <div>
-        <span className="kicker">{step}</span>
-        <h1 className="h-display mt-2 text-3xl md:text-4xl">
-          <span className="h-gradient">{challenge.zone}</span>
-        </h1>
-        <p className="text-sm font-semibold text-[var(--ink-soft)]">
-          {challenge.qrLabel}
-        </p>
-      </div>
-      <div
-        className="grid min-h-16 min-w-20 place-items-center rounded-2xl px-3 text-center"
-        style={{
-          background: "linear-gradient(135deg, #ffe27a, var(--gold))",
-          color: "var(--ink)",
-        }}
-      >
-        <span className="text-[0.65rem] font-bold uppercase tracking-wide">
-          Reward
-        </span>
-        <strong className="font-display text-2xl leading-none">
-          +{challenge.featherpopValue}
-        </strong>
+      <div className="zone-header-overlay" />
+      <div className="zone-header-content">
+        <div>
+          <span className="kicker">{step}</span>
+          <h1 className="h-display mt-2 text-3xl md:text-4xl">
+            <span className="h-stroke">{challenge.zone}</span>
+          </h1>
+          <p className="text-sm font-semibold text-white/85">
+            {challenge.qrLabel}
+          </p>
+        </div>
+        <div className="reward-badge">
+          <Image
+            src="/media/ui/coin.png"
+            alt=""
+            width={44}
+            height={44}
+            unoptimized
+          />
+          <div>
+            <span className="text-[0.65rem] font-bold uppercase tracking-wide">
+              Reward
+            </span>
+            <strong className="font-display text-2xl leading-none block">
+              +{challenge.featherpopValue}
+            </strong>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -681,8 +697,14 @@ function Header({
 function RewardBurst({ word }: { word: string }) {
   return (
     <div className="reward-burst" role="status" aria-live="polite">
-      <div className="reward-ring" />
-      <div className="reward-ring reward-ring-2" />
+      <Image
+        src="/media/scenes/reward-burst.png"
+        alt=""
+        fill
+        sizes="600px"
+        unoptimized
+        className="reward-burst-bg"
+      />
       <div className="reward-word">
         {word.split("").map((ch, i) => (
           <span
@@ -700,7 +722,6 @@ function RewardBurst({ word }: { word: string }) {
         <KidAvatar kid="kai" pose="cheer" size={72} delay={240} />
         <KidAvatar kid="lila" pose="jump" size={72} delay={360} />
       </div>
-      <Confetti />
     </div>
   );
 }

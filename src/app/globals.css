@@ -854,6 +854,96 @@ a { color: inherit; }
   z-index: 30;
   pointer-events: none;
   animation: fade-in 200ms ease;
+  overflow: hidden;
+}
+.reward-burst-bg {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  animation: reward-burst-spin 4s linear infinite;
+  opacity: 0.95;
+}
+@keyframes reward-burst-spin {
+  from { transform: rotate(0); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ---------- Quest zone header (with scene background) ---------- */
+.zone-header {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  background-color: #1a0f3a;
+  background-size: cover;
+  background-position: center;
+  min-height: 140px;
+  margin: -1.5rem -1.5rem 0;
+}
+.zone-header.is-inset { margin: 0; border-radius: 24px 24px 0 0; }
+.zone-header-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(26,15,58,0.0) 0%, rgba(26,15,58,0.55) 100%),
+    radial-gradient(60% 50% at 20% 40%, rgba(26,15,58,0.45), transparent 70%);
+}
+.zone-header-content {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  color: white;
+}
+.zone-header .kicker {
+  background: rgba(255,255,255,0.92);
+  color: var(--purple);
+}
+.reward-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem 0.4rem 0.4rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffe27a, var(--gold));
+  color: var(--ink);
+  box-shadow: 0 10px 24px -8px rgba(255, 145, 0, 0.55);
+}
+.reward-badge img { width: 44px; height: 44px; animation: coin-spin 3s ease-in-out infinite; }
+@keyframes coin-spin {
+  0%, 100% { transform: rotate(-6deg) scale(1); }
+  50%      { transform: rotate(8deg)  scale(1.06); }
+}
+
+/* ---------- Badge shelf ---------- */
+.badge-shelf {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  border-radius: 24px;
+  background:
+    radial-gradient(50% 80% at 50% 0%, rgba(255, 209, 74, 0.45), transparent 70%),
+    linear-gradient(135deg, #fff7e6, #ffe9c2);
+  box-shadow: 0 14px 30px -14px rgba(240,169,0,0.5);
+}
+.badge-shelf-image {
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  filter: drop-shadow(0 8px 16px rgba(26, 15, 58, 0.18));
+}
+
+/* Hero portrait now hosts the AI cartoon */
+.hero-portrait .fp-stage img {
+  position: relative !important;
+  width: auto !important;
+  height: 100% !important;
+  max-height: 100%;
+  object-fit: contain;
 }
 @keyframes fade-in {
   from { opacity: 0; }
@@ -1035,6 +1125,16 @@ a { color: inherit; }
 }
 
 /* ---------- Ms. Feather Pop avatar ---------- */
+/* ---------- Sprite-sheet animation (used by AnimatedAvatar for poses) ---------- */
+.sprite-anim {
+  display: block;
+  background-repeat: no-repeat;
+}
+@keyframes sprite-play-12 {
+  from { background-position: 0 0; }
+  to   { background-position: -1200% 0; }
+}
+
 .fp-avatar { display: block; }
 .fp-avatar .fp-wing-left {
   transform-origin: 60px 165px;
