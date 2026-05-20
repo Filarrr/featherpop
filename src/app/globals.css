@@ -1131,12 +1131,15 @@ a { color: inherit; }
   display: block;
   background-repeat: no-repeat;
 }
-/* steps(12, jump-none) visits exactly 12 positions: 0%, -100%, -200%, ... -1100%.
-   The naïve `steps(12) + to -1200%` lands briefly on frame 13 (empty area past
-   the strip) every loop, which reads as a "blink". jump-none avoids it. */
+/* Percent-based sprite scroll. Because background-position percentages are
+   relative to (container_width − image_width), and our background-size is
+   1200% (image 12× container width), 100% bg-position-x right-aligns the
+   image — landing frame 12. So we animate 0% → 100% (POSITIVE), not 0% →
+   -1100%. With steps(12, jump-none) the 12 stops land exactly on frame
+   boundaries at k × 100/11 % for k = 0..11. */
 @keyframes sprite-play-12 {
-  from { background-position: 0 0; }
-  to   { background-position: -1100% 0; }
+  from { background-position: 0% 0%; }
+  to   { background-position: 100% 0%; }
 }
 
 .fp-avatar { display: block; }
