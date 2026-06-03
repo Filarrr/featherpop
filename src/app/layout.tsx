@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Baloo_2, Fredoka } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { BrandBar } from "@/components/BrandBar";
 import { BottomNav } from "@/components/BottomNav";
@@ -47,17 +48,19 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${fredoka.variable} ${baloo.variable} h-full antialiased`}
-    >
-      <body className="min-h-full">
-        <div className="app-shell">
-          <BrandBar />
-          {children}
-          <BottomNav />
-        </div>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html
+        lang="en"
+        className={`${fredoka.variable} ${baloo.variable} h-full antialiased`}
+      >
+        <body className="min-h-full">
+          <div className="app-shell">
+            <BrandBar />
+            {children}
+            <BottomNav />
+          </div>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Camera, Gift, LockKeyhole, Trophy } from "lucide-react";
+import { Camera, Gift, LockKeyhole, Printer, Sparkles, Trophy } from "lucide-react";
 import { listRewards } from "@/lib/admin-store";
 import { Reward } from "@/lib/game-data";
 import {
@@ -10,10 +10,12 @@ import {
   defaultProgress,
   readProgress,
 } from "@/lib/player";
+import { useMembership } from "@/lib/use-membership";
 
 export function RewardsClient() {
   const [progress, setProgress] = useState<PlayerProgress>(defaultProgress);
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const { isMember } = useMembership();
 
   useEffect(() => {
     setProgress(readProgress());
@@ -40,7 +42,9 @@ export function RewardsClient() {
 
       <div className="grid gap-3 md:grid-cols-3">
         {rewards.map((r) => {
-          const unlocked = progress.totalFeatherPop >= r.featherpopRequired;
+          const earned = progress.totalFeatherPop >= r.featherpopRequired;
+          const memberGated = r.memberOnly && !isMember;
+          const unlocked = earned && !memberGated;
           const remaining = Math.max(
             0,
             r.featherpopRequired - progress.totalFeatherPop,
@@ -72,11 +76,23 @@ export function RewardsClient() {
                 <span
                   className={`tier-pill ${unlocked ? "unlocked" : "locked"}`}
                 >
-                  {unlocked ? "Unlocked" : `${remaining} to go`}
+                  {unlocked
+                    ? "Unlocked"
+                    : memberGated && earned
+                      ? "Members only"
+                      : `${remaining} to go`}
                 </span>
               </div>
 
-              <h3 className="h-display text-2xl">{r.name}</h3>
+              <h3 className="h-display text-2xl">
+                {r.name}
+                {r.memberOnly ? (
+                  <Sparkles
+                    aria-hidden
+                    className="ml-1 inline h-4 w-4 text-[var(--gold)]"
+                  />
+                ) : null}
+              </h3>
               <p className="text-sm text-[var(--ink-soft)]">{r.description}</p>
 
               <div className="progress-bar">
@@ -89,6 +105,21 @@ export function RewardsClient() {
                   <Gift className="h-3.5 w-3.5" /> {r.type}
                 </span>
               </div>
+
+              {unlocked && r.printable ? (
+                <Link
+                  href={`/print/reward/${r.id}`}
+                  className="btn btn-gold btn-sm mt-2"
+                >
+                  <Printer aria-hidden className="h-4 w-4" />
+                  Print certificate
+                </Link>
+              ) : null}
+              {memberGated ? (
+                <Link href="/membership" className="btn btn-ghost btn-sm mt-2">
+                  Unlock with membership
+                </Link>
+              ) : null}
             </article>
           );
         })}

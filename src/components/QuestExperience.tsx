@@ -17,12 +17,16 @@ import {
   XCircle,
 } from "lucide-react";
 import { Challenge } from "@/lib/game-data";
+import { isDictWord } from "@/lib/wordshake-dict";
 import {
   PlayerProgress,
   completeChallenge,
   readProgress,
   saveProgress,
 } from "@/lib/player";
+import { incrementDaily } from "@/lib/quest-limit";
+import { useMembership } from "@/lib/use-membership";
+import { FREE_DAILY_QUEST_LIMIT, readDaily } from "@/lib/quest-limit";
 import {
   buzz,
   childOoh,
@@ -46,6 +50,19 @@ type Phase = "video" | "reveal" | "build" | "result";
 
 const ROUND_SECONDS = 120; // 2 minutes
 
+function canFormFromLetters(word: string, letters: readonly string[]): boolean {
+  const counts: Record<string, number> = {};
+  for (const l of letters) {
+    const ch = l.toUpperCase();
+    counts[ch] = (counts[ch] ?? 0) + 1;
+  }
+  for (const ch of word.toUpperCase()) {
+    if (!counts[ch]) return false;
+    counts[ch] -= 1;
+  }
+  return true;
+}
+
 export function QuestExperience({ challenge }: { challenge: Challenge }) {
   const hasIntro = !!challenge.introVideoUrl;
   const [videoOk, setVideoOk] = useState<boolean | null>(hasIntro ? null : false);
@@ -54,6 +71,7 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
   const [shakeKey, setShakeKey] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [foundWords, setFoundWords] = useState<string[]>([]);
+  const [foundExtras, setFoundExtras] = useState<string[]>([]);
   const [poppedWord, setPoppedWord] = useState<string | null>(null);
   const [showReward, setShowReward] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
@@ -64,6 +82,17 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
   const [mascotNudge, setMascotNudge] = useState(0);
   const [progress, setProgress] = useState<PlayerProgress>(() => readProgress());
   const completed = progress.completedChallengeSlugs.includes(challenge.slug);
+  const { isMember, isLoaded: memberLoaded } = useMembership();
+  const [overLimit, setOverLimit] = useState(false);
+
+  useEffect(() => {
+    if (!memberLoaded) return;
+    if (isMember) {
+      setOverLimit(false);
+      return;
+    }
+    setOverLimit(readDaily().count >= FREE_DAILY_QUEST_LIMIT);
+  }, [memberLoaded, isMember]);
 
   // All puzzle words: target + bonus words (uppercase, deduped)
   const wordList = useMemo(() => {
@@ -137,6 +166,9 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
   useEffect(() => {
     if (phase === "build" && !running && secondsLeft === ROUND_SECONDS) {
       setRunning(true);
+      // Count this attempt toward the free daily cap. Members bypass the
+      // cap at the route level, so we always increment here for symmetry.
+      incrementDaily();
     }
   }, [phase, running, secondsLeft]);
 
@@ -184,7 +216,7 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
     const guess = builtWord.toUpperCase();
     if (guess.length < 2) return;
 
-    if (foundWords.includes(guess)) {
+    if (foundWords.includes(guess) || foundExtras.includes(guess)) {
       // already found
       buzz();
       setMood("oops");
@@ -269,6 +301,34 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
       return;
     }
 
+    // Secret extra: any real English word formable from the letter bank,
+    // even if it's not in the curated bonus list. Awards 1 FeatherPop.
+    if (
+      !foundExtras.includes(guess) &&
+      isDictWord(guess) &&
+      canFormFromLetters(guess, challenge.letters)
+    ) {
+      const cur = readProgress();
+      const updated: PlayerProgress = {
+        ...cur,
+        totalFeatherPop: cur.totalFeatherPop + 1,
+      };
+      saveProgress(updated);
+      setProgress(updated);
+      setFoundExtras((arr) => [...arr, guess]);
+      setPoppedWord(guess);
+      ding(1100, 120);
+      window.setTimeout(() => ding(1400, 120), 130);
+      childOoh();
+      setMood("wow");
+      setMascotMessage(`Extra word "${guess}"! +1 FeatherPop!`);
+      setMascotNudge((n) => n + 1);
+      speak(`Nice extra word ${guess}!`);
+      setSelection([]);
+      window.setTimeout(() => setPoppedWord(null), 1100);
+      return;
+    }
+
     // Not a known word
     buzz();
     setMood("oops");
@@ -319,6 +379,24 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
 
   /* -------- REVEAL -------- */
   if (phase === "reveal") {
+    if (overLimit) {
+      return (
+        <section className="card">
+          <Header challenge={challenge} step="Daily limit reached" />
+          <div className="reveal-stage">
+            <h2 className="h-display text-3xl">Out of free quests today</h2>
+            <p className="max-w-md text-center text-[var(--ink-soft)]">
+              Free players get {FREE_DAILY_QUEST_LIMIT} quests every day.
+              Become a member to play as many as you want — plus unlock all
+              zones, printables, and cosmetic rewards.
+            </p>
+            <Link href="/membership" className="btn btn-gold btn-lg">
+              See membership · 3-day free trial
+            </Link>
+          </div>
+        </section>
+      );
+    }
     return (
       <section className="card">
         <Header challenge={challenge} step="Step 3 · Reveal" />
@@ -368,6 +446,11 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
               Words: {foundWords.join(", ")}
             </p>
           ) : null}
+          {foundExtras.length > 0 ? (
+            <p className="mt-1 text-sm text-white/75">
+              Extras (+1 each): {foundExtras.join(", ")}
+            </p>
+          ) : null}
           <p className="mt-1 text-sm text-white/65">
             Wallet balance:{" "}
             <strong className="text-[var(--gold)]">
@@ -389,6 +472,7 @@ export function QuestExperience({ challenge }: { challenge: Challenge }) {
               type="button"
               onClick={() => {
                 setFoundWords([]);
+                setFoundExtras([]);
                 setSecondsLeft(ROUND_SECONDS);
                 setRunning(false);
                 setPhase("build");

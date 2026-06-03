@@ -14,6 +14,9 @@ const links = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  if (pathname?.startsWith("/sign-in") || pathname?.startsWith("/sign-up")) {
+    return null;
+  }
   return (
     <nav className="bottom-nav" aria-label="Quest navigation">
       {links.map((link) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Home, RefreshCw, Sparkles, Timer, Volume2, VolumeX } from "lucide-react";
 import {
@@ -19,6 +19,7 @@ import {
 } from "@/lib/audio";
 import { isDictWord } from "@/lib/wordshake-dict";
 import { readProgress, saveProgress } from "@/lib/player";
+import { Mascot, MascotMood } from "@/components/Mascot";
 
 const GRID_SIZE = 4;
 const ROUND_SECONDS = 120;
@@ -40,7 +41,8 @@ function rollGrid(): string[] {
 
 function scoreFor(word: string) {
   const n = word.length;
-  if (n <= 2) return 0;
+  if (n < 2) return 0;
+  if (n === 2) return 1;
   if (n === 3) return 1;
   if (n === 4) return 2;
   if (n === 5) return 4;
@@ -65,7 +67,17 @@ export function Wordshake() {
   const [running, setRunning] = useState(true);
   const [boardClass, setBoardClass] = useState("");
   const [musicOn, setMusicOn] = useState(true);
+  const [gridSeed, setGridSeed] = useState(0);
+  const [flyScore, setFlyScore] = useState<{ value: number; key: number } | null>(
+    null,
+  );
+  const [mood, setMood] = useState<MascotMood>("idle");
+  const [mascotMessage, setMascotMessage] = useState<string | undefined>();
+  const [mascotNudge, setMascotNudge] = useState(0);
   const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const [boardSize, setBoardSize] = useState({ w: 0, h: 0 });
+  const [linePx, setLinePx] = useState<{ x: number; y: number }[]>([]);
 
   useEffect(() => setMusicOn(isMusicEnabled()), []);
 
@@ -84,6 +96,9 @@ export function Wordshake() {
           stopMusic();
           fanfare();
           setRunning(false);
+          setMood("cheer");
+          setMascotMessage("Time! Great spelling, Word Explorer!");
+          setMascotNudge((n) => n + 1);
         } else if (next <= 10) urgentTick();
         else if (next % 10 === 0) tick();
         return next;
@@ -127,10 +142,13 @@ export function Wordshake() {
   }
 
   function enter() {
-    if (path.length < 3) {
+    if (path.length < 2) {
       buzz();
       setBoardClass("is-wrong");
       window.setTimeout(() => setBoardClass(""), 380);
+      setMood("hint");
+      setMascotMessage("Tap at least two connected letters!");
+      setMascotNudge((n) => n + 1);
       return;
     }
     const w = builtWord.toUpperCase();
@@ -138,12 +156,18 @@ export function Wordshake() {
       buzz();
       setBoardClass("is-wrong");
       window.setTimeout(() => setBoardClass(""), 380);
+      setMood("oops");
+      setMascotMessage(`You already found "${w}".`);
+      setMascotNudge((n) => n + 1);
       return;
     }
     if (!isDictWord(w)) {
       buzz();
       setBoardClass("is-wrong");
       window.setTimeout(() => setBoardClass(""), 380);
+      setMood("oops");
+      setMascotMessage(`"${w}" isn't a word — try another!`);
+      setMascotNudge((n) => n + 1);
       return;
     }
     const pts = scoreFor(w);
@@ -151,9 +175,20 @@ export function Wordshake() {
     setPath([]);
     setBoardClass("is-win");
     window.setTimeout(() => setBoardClass(""), 380);
+    setFlyScore({ value: pts, key: Date.now() });
+    window.setTimeout(() => setFlyScore(null), 950);
     pop();
     if (pts >= 4) childCheer();
     else childOoh();
+
+    if (w.length >= 5 || pts >= 6) {
+      setMood("wow");
+      setMascotMessage(`Big word! "${w}" — +${pts} points!`);
+    } else {
+      setMood("cheer");
+      setMascotMessage(`"${w}" — +${pts} points!`);
+    }
+    setMascotNudge((n) => n + 1);
 
     // Award 1 FeatherPop per 4 points (rounded down, min 0).
     const award = Math.floor(pts / 4);
@@ -168,23 +203,63 @@ export function Wordshake() {
 
   function newGame() {
     setGrid(rollGrid());
+    setGridSeed((s) => s + 1);
     setPath([]);
     setFound([]);
     setSecondsLeft(ROUND_SECONDS);
     setRunning(true);
+    setMood("idle");
+    setMascotMessage(undefined);
+    setMascotNudge((n) => n + 1);
   }
 
   const mm = Math.floor(secondsLeft / 60);
   const ss = (secondsLeft % 60).toString().padStart(2, "0");
   const timeFlash = secondsLeft <= 10 && running;
 
-  // Compute line points between selected cells
-  const linePoints = useMemo(() => {
-    return path.map((idx) => {
-      const r = Math.floor(idx / GRID_SIZE);
-      const c = idx % GRID_SIZE;
-      return { r, c };
+  // Compute line points in pixels from actual cell positions so the
+  // overlay aligns with cell centers regardless of padding/gap.
+  useLayoutEffect(() => {
+    const board = boardRef.current;
+    if (!board || path.length < 2) {
+      setLinePx([]);
+      return;
+    }
+    const boardRect = board.getBoundingClientRect();
+    setBoardSize({ w: boardRect.width, h: boardRect.height });
+    setLinePx(
+      path.map((idx) => {
+        const cell = cellRefs.current[idx];
+        if (!cell) return { x: 0, y: 0 };
+        const r = cell.getBoundingClientRect();
+        return {
+          x: r.left - boardRect.left + r.width / 2,
+          y: r.top - boardRect.top + r.height / 2,
+        };
+      }),
+    );
+  }, [path, grid]);
+
+  useEffect(() => {
+    const board = boardRef.current;
+    if (!board) return;
+    const ro = new ResizeObserver(() => {
+      const r = board.getBoundingClientRect();
+      setBoardSize({ w: r.width, h: r.height });
+      setLinePx((prev) =>
+        prev.map((_, i) => {
+          const cell = cellRefs.current[path[i]];
+          if (!cell) return { x: 0, y: 0 };
+          const cr = cell.getBoundingClientRect();
+          return {
+            x: cr.left - r.left + cr.width / 2,
+            y: cr.top - r.top + cr.height / 2,
+          };
+        }),
+      );
     });
+    ro.observe(board);
+    return () => ro.disconnect();
   }, [path]);
 
   return (
@@ -222,14 +297,14 @@ export function Wordshake() {
           </div>
         </div>
 
-        <div className={`shake-board ${boardClass}`}>
+        <div ref={boardRef} className={`shake-board ${boardClass}`}>
           {grid.map((letter, idx) => {
             const sel = path.indexOf(idx);
             const isSel = sel !== -1;
             const isLast = sel === path.length - 1 && isSel;
             return (
               <button
-                key={idx}
+                key={`${gridSeed}-${idx}`}
                 ref={(el) => {
                   cellRefs.current[idx] = el;
                 }}
@@ -239,6 +314,7 @@ export function Wordshake() {
                 className={`shake-cell ${isSel ? "is-selected" : ""} ${
                   isLast ? "is-last" : ""
                 }`}
+                style={{ animationDelay: `${idx * 30}ms` }}
                 aria-label={`Letter ${letter}${isSel ? `, selected ${sel + 1}` : ""}`}
               >
                 {letter}
@@ -246,23 +322,30 @@ export function Wordshake() {
             );
           })}
 
+          {flyScore ? (
+            <span key={flyScore.key} className="shake-flyscore">
+              +{flyScore.value}
+            </span>
+          ) : null}
+
           {/* connect-the-dots line overlay */}
-          {linePoints.length > 1 ? (
+          {linePx.length > 1 && boardSize.w > 0 ? (
             <svg
               className="shake-line"
-              viewBox={`0 0 ${GRID_SIZE} ${GRID_SIZE}`}
-              preserveAspectRatio="none"
+              width={boardSize.w}
+              height={boardSize.h}
+              viewBox={`0 0 ${boardSize.w} ${boardSize.h}`}
               aria-hidden
             >
-              {linePoints.slice(1).map((pt, i) => {
-                const prev = linePoints[i];
+              {linePx.slice(1).map((pt, i) => {
+                const prev = linePx[i];
                 return (
                   <line
                     key={i}
-                    x1={prev.c + 0.5}
-                    y1={prev.r + 0.5}
-                    x2={pt.c + 0.5}
-                    y2={pt.r + 0.5}
+                    x1={prev.x}
+                    y1={prev.y}
+                    x2={pt.x}
+                    y2={pt.y}
                   />
                 );
               })}
@@ -283,6 +366,7 @@ export function Wordshake() {
       </section>
 
       <aside className="shake-side">
+        <Mascot mood={mood} message={mascotMessage} nudge={mascotNudge} />
         <div className="shake-builder">
           {builtWord.length === 0 ? (
             <em>Tap connected letters…</em>
@@ -303,7 +387,7 @@ export function Wordshake() {
           <button
             type="button"
             onClick={enter}
-            disabled={path.length < 3 || !running}
+            disabled={path.length < 2 || !running}
             className="shake-btn shake-btn-enter"
           >
             Enter

@@ -3,20 +3,26 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Camera, Gamepad2, Gift, HelpCircle, Home, Wallet } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
+import { BookOpen, Camera, Feather, Gamepad2, Gift, Home, Sparkles } from "lucide-react";
 import { SoundToggle } from "@/components/SoundToggle";
+import { ActiveChildChip } from "@/components/ActiveChildChip";
 
 const links = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/how-to-play", label: "How to Play", icon: HelpCircle },
   { href: "/scan", label: "Scan", icon: Camera },
-  { href: "/play", label: "Word Shake", icon: Gamepad2 },
-  { href: "/wallet", label: "Wallet", icon: Wallet },
+  { href: "/missions", label: "Missions", icon: Sparkles },
+  { href: "/feathers", label: "Feathers", icon: Feather },
   { href: "/rewards", label: "Rewards", icon: Gift },
+  { href: "/story", label: "Story", icon: BookOpen },
+  { href: "/play", label: "Letter Pop", icon: Gamepad2 },
 ];
 
 export function BrandBar() {
   const pathname = usePathname();
+  if (pathname?.startsWith("/sign-in") || pathname?.startsWith("/sign-up")) {
+    return null;
+  }
   return (
     <header className="brandbar">
       <div className="brandbar-inner">
@@ -33,7 +39,7 @@ export function BrandBar() {
           </span>
           <span>
             <strong>Ms. Feather Pop</strong>
-            <small>Word Quest</small>
+            <small>Feather Missions</small>
           </span>
         </Link>
 
@@ -55,7 +61,11 @@ export function BrandBar() {
           })}
         </nav>
 
-        <SoundToggle />
+        <div className="brandbar-actions">
+          <ActiveChildChip />
+          <SoundToggle />
+          <UserButton />
+        </div>
       </div>
     </header>
   );

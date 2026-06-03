@@ -1,80 +1,89 @@
 import Link from "next/link";
-import { BookOpen, Camera, Gamepad2, Gift, Printer, Sparkles } from "lucide-react";
+import { redirect } from "next/navigation";
+import { BookOpen, Camera, Feather, Gamepad2, Gift, Sparkles, Users } from "lucide-react";
 import { StartQuest } from "@/components/StartQuest";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
-import { KidRow } from "@/components/KidAvatar";
+import { HomeStats } from "@/components/HomeStats";
+import { NoActiveChildRedirect } from "@/components/NoActiveChildRedirect";
+import { listChildren } from "@/app/account/profiles/actions";
 
 const features = [
   {
     title: "Scan",
-    text: "Point the camera at a Word Quest QR code.",
+    text: "Point the camera at a Ms. Feather Pop QR code.",
     icon: Camera,
     color: "var(--sky-4)",
   },
   {
-    title: "Discover",
-    text: "Letters appear with a magic pop animation.",
+    title: "Mission",
+    text: "Each scan reveals a new short adventure.",
     icon: Sparkles,
     color: "var(--gold)",
   },
   {
-    title: "Build",
-    text: "Tap big letter tiles to spell the mystery word.",
-    icon: BookOpen,
+    title: "Earn feathers",
+    text: "Falcon, Courage, Wind, Joy — collect them all.",
+    icon: Feather,
     color: "var(--magenta)",
   },
   {
-    title: "Win",
-    text: "Earn FeatherPop and unlock real-world rewards.",
+    title: "Level up",
+    text: "Beginner Explorer → Guardian of Strudelay.",
     icon: Gift,
     color: "var(--mint)",
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const children = await listChildren();
+  if (children.length === 0) {
+    redirect("/welcome");
+  }
   return (
     <main className="page">
+      <NoActiveChildRedirect hasChildren={children.length > 0} />
       <section className="hero">
-        <div className="float-letters" aria-hidden>
-          <span className="float-letter" style={{ top: "8%", left: "6%" }}>A</span>
-          <span className="float-letter" style={{ top: "65%", left: "12%" }}>B</span>
-          <span className="float-letter" style={{ top: "18%", right: "10%" }}>C</span>
-          <span className="float-letter" style={{ top: "70%", right: "6%" }}>!</span>
-          <span className="float-letter" style={{ top: "40%", left: "2%" }}>★</span>
-          <span className="float-letter" style={{ top: "35%", right: "3%" }}>✦</span>
-          <span className="float-letter" style={{ top: "55%", left: "45%" }}>?</span>
-        </div>
-
         <div className="hero-grid">
           <div>
             <span className="kicker">
               <Sparkles aria-hidden className="h-4 w-4" />
-              QR-powered literacy adventure
+              Random missions · Magical feathers
             </span>
             <h1 className="h-display hero-title mt-4">
-              <span className="h-gradient">Word</span>
+              <span className="h-gradient">Ms. Feather</span>
               <br />
-              <span className="h-stroke">Quest</span>
+              <span className="h-stroke">Pop</span>
             </h1>
             <p className="hero-subtitle">
-              Scan, discover letters, make words, earn{" "}
-              <strong style={{ color: "var(--magenta)" }}>FeatherPop</strong>,
-              and unlock prizes — at the park or right at home.
+              Every QR is a portal to a new mission. Earn{" "}
+              <strong style={{ color: "var(--magenta)" }}>magical feathers</strong>,
+              level up, and become a Guardian of Strudelay.
             </p>
+            <HomeStats />
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <StartQuest />
-              <Link href="/play" className="btn btn-sky">
-                <Gamepad2 aria-hidden className="h-5 w-5" />
-                Play Word Shake
+              <Link href="/missions" className="btn btn-sky">
+                <Sparkles aria-hidden className="h-5 w-5" />
+                My missions
               </Link>
-              <Link href="/how-to-play" className="btn btn-ghost">
-                How to Play
+              <Link href="/feathers" className="btn btn-ghost">
+                <Feather aria-hidden className="h-5 w-5" />
+                My feathers
               </Link>
             </div>
-            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-[var(--ink-soft)]">
-              <span>· Made for ages 3–11</span>
-              <span>· Mobile-first</span>
-              <span>· No sign-up required</span>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Link href="/story" className="btn btn-ghost btn-sm">
+                <BookOpen aria-hidden className="h-4 w-4" />
+                Story time
+              </Link>
+              <Link href="/account/profiles" className="btn btn-ghost btn-sm">
+                <Users aria-hidden className="h-4 w-4" />
+                Child profiles
+              </Link>
+              <Link href="/play" className="btn btn-ghost btn-sm">
+                <Gamepad2 aria-hidden className="h-4 w-4" />
+                Letter Pop
+              </Link>
             </div>
           </div>
 
@@ -86,41 +95,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section
-        className="kid-stage mt-6"
-        style={{
-          backgroundImage: "url(/media/scenes/group-cheer.png)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          minHeight: 220,
-          border: "3px solid rgba(255,255,255,0.6)",
-        }}
-        aria-label="Word Quest crew"
-      />
-
-      <section className="kid-stage mt-4">
-        <KidRow pose="cheer" size={96} />
-      </section>
-
       <section className="mt-8">
         <div className="mb-4 flex items-end justify-between gap-3">
-          <h2 className="h-display text-3xl">How a quest works</h2>
-          <Link
-            href="/how-to-play"
-            className="text-sm font-bold text-[var(--purple)]"
-          >
-            Read more →
-          </Link>
+          <h2 className="h-display text-3xl">How a mission works</h2>
         </div>
         <div className="feature-row">
           {features.map((f) => {
             const Icon = f.icon;
             return (
               <article key={f.title} className="feature-pill">
-                <div
-                  className="icon-bubble"
-                  style={{ background: f.color }}
-                >
+                <div className="icon-bubble" style={{ background: f.color }}>
                   <Icon aria-hidden className="h-5 w-5" />
                 </div>
                 <h3>{f.title}</h3>
@@ -128,51 +112,6 @@ export default function HomePage() {
               </article>
             );
           })}
-        </div>
-      </section>
-
-      <section className="mt-8 grid gap-4 md:grid-cols-2">
-        <div className="card">
-          <span className="kicker" style={{ color: "var(--pink)" }}>
-            For kids
-          </span>
-          <h3 className="h-display mt-3 text-2xl">Active learning, big fun</h3>
-          <p className="mt-2 text-[var(--ink-soft)]">
-            Every QR is a mini quest. Hunt them around the park, discover a
-            secret letter, build the target word, and celebrate with cheers.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href="/scan" className="btn btn-sky btn-sm">
-              <Camera aria-hidden className="h-4 w-4" />
-              Open Scanner
-            </Link>
-            <Link href="/wallet" className="btn btn-ghost btn-sm">
-              View Wallet
-            </Link>
-          </div>
-        </div>
-
-        <div className="card card-deep">
-          <span
-            className="kicker"
-            style={{ background: "rgba(255,255,255,0.18)", color: "white" }}
-          >
-            For parents
-          </span>
-          <h3 className="h-display mt-3 text-2xl">Print quest packs at home</h3>
-          <p className="mt-2 text-white/80">
-            Print a sheet of QR cards, place them around the room, and watch
-            your child move, read and spell. No accounts, no ads.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href="/print" className="btn btn-gold btn-sm">
-              <Printer aria-hidden className="h-4 w-4" />
-              Get Print Pack
-            </Link>
-            <Link href="/rewards" className="btn btn-ghost btn-sm">
-              See Rewards
-            </Link>
-          </div>
         </div>
       </section>
     </main>

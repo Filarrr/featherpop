@@ -18,6 +18,8 @@ export type Challenge = {
    *  before the Reveal phase. Drop the file in /public/media/intros/ */
   introVideoUrl?: string;
   active: boolean;
+  /** If true, only paid members can play this quest. Free users see a lock. */
+  memberOnly?: boolean;
 };
 
 export type Reward = {
@@ -27,6 +29,10 @@ export type Reward = {
   type: "park" | "home" | "event";
   description: string;
   active: boolean;
+  /** Members-only cosmetic tier (still earned with FeatherPop). */
+  memberOnly?: boolean;
+  /** If true, members can print a certificate/sticker for this reward. */
+  printable?: boolean;
 };
 
 export const appBaseUrl =
@@ -79,6 +85,7 @@ export const defaultChallenges: Challenge[] = [
     zone: "Adventure Trail",
     introVideoUrl: "/media/intros/explore.mp4",
     active: true,
+    memberOnly: true,
   },
   {
     id: "qr-balloon",
@@ -93,6 +100,7 @@ export const defaultChallenges: Challenge[] = [
     zone: "Pop Park",
     introVideoUrl: "/media/intros/balloon.mp4",
     active: true,
+    memberOnly: true,
   },
   {
     id: "qr-sparkle",
@@ -107,6 +115,7 @@ export const defaultChallenges: Challenge[] = [
     zone: "Star Stage",
     introVideoUrl: "/media/intros/sparkle.mp4",
     active: true,
+    memberOnly: true,
   },
   {
     id: "qr-journey",
@@ -121,6 +130,7 @@ export const defaultChallenges: Challenge[] = [
     zone: "Adventure Trail",
     introVideoUrl: "/media/intros/journey.mp4",
     active: true,
+    memberOnly: true,
   },
   {
     id: "qr-book",
@@ -146,6 +156,7 @@ export const defaultRewards: Reward[] = [
     type: "event",
     description: "A shiny Ms. Feather Pop sticker for your first quest.",
     active: true,
+    printable: true,
   },
   {
     id: "bookmark",
@@ -154,6 +165,7 @@ export const defaultRewards: Reward[] = [
     type: "home",
     description: "A printable bookmark to keep your reading on track.",
     active: true,
+    printable: true,
   },
   {
     id: "patch",
@@ -162,6 +174,26 @@ export const defaultRewards: Reward[] = [
     type: "event",
     description: "An iron-on patch for backpacks and jackets.",
     active: true,
+    printable: true,
+  },
+  {
+    id: "glitter-badge",
+    name: "Glitter Feather Badge",
+    featherpopRequired: 30,
+    type: "event",
+    description: "Members-only glitter badge — print, peel, wear.",
+    active: true,
+    memberOnly: true,
+    printable: true,
+  },
+  {
+    id: "gold-frame",
+    name: "Gold Avatar Frame",
+    featherpopRequired: 50,
+    type: "home",
+    description: "Members-only gold frame around your kid avatar.",
+    active: true,
+    memberOnly: true,
   },
 ];
 

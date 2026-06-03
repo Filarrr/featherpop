@@ -1,7 +1,7 @@
 import { Wordshake } from "@/components/Wordshake";
 
 export const metadata = {
-  title: "Word Shake · Side Game",
+  title: "Letter Pop · Side Game",
 };
 
 export default function PlayPage() {
@@ -10,7 +10,7 @@ export default function PlayPage() {
       <header className="mb-4">
         <span className="kicker">Side game</span>
         <h1 className="h-display mt-2 text-3xl md:text-4xl">
-          <span className="h-gradient">Word Shake</span>
+          <span className="h-gradient">Letter Pop</span>
         </h1>
         <p className="text-sm font-semibold text-[var(--ink-soft)]">
           Tap connected letters to build words. 2 minutes — every word earns
