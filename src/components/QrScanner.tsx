@@ -4,41 +4,45 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BrowserQRCodeReader, IScannerControls } from "@zxing/browser";
-import { Camera, ChevronDown, ChevronUp, Keyboard, Ticket } from "lucide-react";
-import { listChallenges } from "@/lib/admin-store";
-import { Challenge } from "@/lib/game-data";
+import { Camera, Keyboard, Sparkles } from "lucide-react";
 import { ding } from "@/lib/audio";
 
-function extractSlug(rawValue: string, challenges: Challenge[]) {
+// V1 pivot: every QR is a portal to a random mission. The slug seeds the
+// mission picker — same QR can be replayed and rolls a different mission.
+// We accept anything that looks like a slug or a /quest/<slug> URL.
+function extractSlug(rawValue: string): string | null {
   const value = rawValue.trim();
+  if (!value) return null;
   try {
     const url = new URL(value);
-    const match = url.pathname.match(/\/quest\/([^/]+)/);
-    if (match?.[1]) return match[1];
+    const match = url.pathname.match(/\/quest\/([^/?#]+)/);
+    if (match?.[1]) return slugify(match[1]);
   } catch {
-    /* not a URL, continue */
+    /* not a URL */
   }
-  const normalized = value.replace(/^quest:/i, "").toLowerCase();
-  const direct = challenges.find(
-    (c) =>
-      c.slug.toLowerCase() === normalized ||
-      c.qrLabel.toLowerCase() === normalized,
-  );
-  return direct?.slug ?? normalized;
+  const normalized = value.replace(/^quest:/i, "");
+  return slugify(normalized);
 }
+
+function slugify(s: string): string | null {
+  const out = s.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
+  return out || null;
+}
+
+const SAMPLES = [
+  { slug: "welcome", label: "Welcome scan" },
+  { slug: "feather", label: "Feather portal" },
+  { slug: "wind", label: "Wind portal" },
+  { slug: "courage", label: "Courage portal" },
+  { slug: "joy", label: "Joy portal" },
+];
 
 export function QrScanner() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const [manualCode, setManualCode] = useState("");
-  const [status, setStatus] = useState("Aim at a Word Quest QR.");
-  const [showSamples, setShowSamples] = useState(false);
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-
-  useEffect(() => {
-    setChallenges(listChallenges().filter((c) => c.active !== false));
-  }, []);
+  const [status, setStatus] = useState("Aim at a Ms. Feather Pop QR.");
 
   useEffect(() => {
     let mounted = true;
@@ -52,16 +56,14 @@ export function QrScanner() {
           videoRef.current,
           (result) => {
             if (!result) return;
-            const all = listChallenges();
-            const slug = extractSlug(result.getText(), all);
-            const found = all.find((c) => c.slug === slug);
-            if (!found) {
-              setStatus("That QR isn't part of this Word Quest pack.");
+            const slug = extractSlug(result.getText());
+            if (!slug) {
+              setStatus("Couldn't read that QR — try again.");
               return;
             }
             ding(1100, 110);
             controlsRef.current?.stop();
-            router.push(`/quest/${found.slug}`);
+            router.push(`/quest/${slug}`);
           },
         );
 
@@ -72,8 +74,7 @@ export function QrScanner() {
           controls.stop();
         }
       } catch {
-        setStatus("Camera not available — try a sample below.");
-        setShowSamples(true);
+        setStatus("Camera not available — try a code or sample below.");
       }
     }
 
@@ -86,13 +87,12 @@ export function QrScanner() {
 
   function submitManual(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const slug = extractSlug(manualCode, challenges);
-    const found = challenges.find((c) => c.slug === slug);
-    if (!found) {
-      setStatus("No challenge found for that code.");
+    const slug = extractSlug(manualCode);
+    if (!slug) {
+      setStatus("Type any code or paste a quest link.");
       return;
     }
-    router.push(`/quest/${found.slug}`);
+    router.push(`/quest/${slug}`);
   }
 
   return (
@@ -105,7 +105,7 @@ export function QrScanner() {
               Scanner
             </span>
             <h1 className="h-display mt-2 text-3xl md:text-4xl">
-              Find a Word Quest code
+              Scan a mission portal
             </h1>
           </div>
         </div>
@@ -142,7 +142,7 @@ export function QrScanner() {
             <input
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
-              placeholder="e.g. book"
+              placeholder="e.g. feather"
             />
           </label>
           <button type="submit" className="btn btn-dark self-end">
@@ -150,40 +150,25 @@ export function QrScanner() {
           </button>
         </form>
 
-        <button
-          type="button"
-          onClick={() => setShowSamples((v) => !v)}
-          className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[var(--purple)]"
-        >
-          {showSamples ? "Hide" : "Show"} sample codes
-          {showSamples ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </button>
-
-        {showSamples ? (
-          <div className="row-list mt-3">
-            {challenges.map((c) => (
-              <Link key={c.slug} href={`/quest/${c.slug}`} className="row">
+        <div className="mt-5">
+          <span className="kicker">Try a sample portal</span>
+          <div className="row-list mt-2">
+            {SAMPLES.map((s) => (
+              <Link key={s.slug} href={`/quest/${s.slug}`} className="row">
                 <span className="flex items-center gap-2">
-                  <Ticket
+                  <Sparkles
                     aria-hidden
                     className="h-4 w-4 text-[var(--magenta)]"
                   />
-                  <strong>{c.targetWord}</strong>
-                  <span className="text-xs text-[var(--ink-soft)]">
-                    · {c.zone}
-                  </span>
+                  <strong>{s.label}</strong>
                 </span>
                 <span className="text-xs font-bold text-[var(--ink-soft)]">
-                  {c.qrLabel}
+                  /quest/{s.slug}
                 </span>
               </Link>
             ))}
           </div>
-        ) : null}
+        </div>
       </aside>
     </div>
   );

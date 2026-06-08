@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookOpen, Camera, Feather, Gamepad2, Gift, Sparkles, Users } from "lucide-react";
-import { StartQuest } from "@/components/StartQuest";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { HomeStats } from "@/components/HomeStats";
 import { NoActiveChildRedirect } from "@/components/NoActiveChildRedirect";
@@ -61,7 +60,10 @@ export default async function HomePage() {
             </p>
             <HomeStats />
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <StartQuest />
+              <Link href="/scan" className="btn btn-primary btn-lg">
+                <Camera aria-hidden className="h-5 w-5" />
+                Scan a QR
+              </Link>
               <Link href="/missions" className="btn btn-sky">
                 <Sparkles aria-hidden className="h-5 w-5" />
                 My missions
