@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Home, RefreshCw, Sparkles } from "lucide-react";
 import { Mission, getMission, pickRandomMission } from "@/lib/missions";
 import { recentMissionIds } from "@/lib/child-profile";
@@ -28,12 +28,14 @@ export function MissionRunner({
   const router = useRouter();
   const { activeChildId, progress } = useActiveChild();
 
-  const initialMission = useMemo<Mission | null>(() => {
+  // Pick the mission synchronously on the very first render. On the server
+  // we render the loading state; on the client (where window exists) we
+  // resolve a Mission immediately so the page never sits on "Rolling…".
+  const [mission, setMission] = useState<Mission | null>(() => {
     if (missionId) return getMission(missionId) ?? null;
-    return null;
-  }, [missionId]);
-
-  const [mission, setMission] = useState<Mission | null>(initialMission);
+    if (typeof window === "undefined") return null;
+    return pickRandomMission(slug, recentMissionIds(progress, 6));
+  });
   const [phase, setPhase] = useState<Phase>("show");
   const [mood, setMood] = useState<MascotMood>("idle");
   const [mascotMessage, setMascotMessage] = useState<string | undefined>();
@@ -41,12 +43,20 @@ export function MissionRunner({
   const [confettiKey, setConfettiKey] = useState(0);
   const finishingRef = useRef(false);
 
-  // Roll a random mission on client mount when no fixed missionId.
+  // Belt-and-suspenders: if we somehow rendered without a mission (e.g. the
+  // initial state captured an SSR null), pick one as soon as the component
+  // mounts on the client. Fires exactly once.
+  const pickedRef = useRef(mission !== null);
   useEffect(() => {
-    if (mission || missionId) return;
-    const exclude = recentMissionIds(progress, 6);
-    setMission(pickRandomMission(slug, exclude));
-  }, [mission, missionId, slug, progress]);
+    if (pickedRef.current) return;
+    pickedRef.current = true;
+    if (missionId) {
+      setMission(getMission(missionId) ?? pickRandomMission(slug));
+      return;
+    }
+    setMission(pickRandomMission(slug, recentMissionIds(progress, 6)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const feather = mission ? FEATHER_META[mission.feather] : null;
 
