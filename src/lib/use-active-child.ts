@@ -126,21 +126,25 @@ export function useActiveChild(): UseActiveChild {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (!activeChildId) {
-        setProgressState(defaultChildProgress);
+      try {
+        if (!activeChildId) {
+          setProgressState(defaultChildProgress);
+          return;
+        }
+        try {
+          const cached = readChildProgress(activeChildId);
+          setProgressState(cached);
+          try { mirrorLegacy(cached); } catch { /* quota / disabled storage */ }
+        } catch { /* corrupt cache — keep default */ }
+      } finally {
         setReady(true);
-        return;
       }
-      const cached = readChildProgress(activeChildId);
-      setProgressState(cached);
-      mirrorLegacy(cached);
-      setReady(true);
       try {
         const server = await getChildProgressAction(activeChildId);
         if (cancelled) return;
         setProgressState(server);
-        saveChildProgress(activeChildId, server);
-        mirrorLegacy(server);
+        try { saveChildProgress(activeChildId, server); } catch {}
+        try { mirrorLegacy(server); } catch {}
       } catch {
         /* offline / unauthed — keep cache */
       }

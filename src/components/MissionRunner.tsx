@@ -33,15 +33,21 @@ export function MissionRunner({
   const [confettiKey, setConfettiKey] = useState(0);
   const finishingRef = useRef(false);
 
+  // Pick a mission as soon as the component mounts on the client. We
+  // intentionally don't gate on `ready` here — the active-child store can
+  // fail to flip `ready=true` (storage quota / private mode / corrupt cache)
+  // and leave the page stuck on "Rolling…" forever. The reward step still
+  // needs activeChildId to apply, but the user can read the mission either
+  // way and we re-pick if activeChildId arrives later.
   useEffect(() => {
-    if (!ready) return;
+    if (mission) return;
     if (missionId) {
       setMission(getMission(missionId) ?? pickRandomMission(slug));
       return;
     }
     const exclude = activeChildId ? recentMissionIds(activeChildId, 6) : [];
     setMission(pickRandomMission(slug, exclude));
-  }, [ready, activeChildId, slug, missionId]);
+  }, [activeChildId, slug, missionId, mission]);
 
   const feather = useMemo(
     () => (mission ? FEATHER_META[mission.feather] : null),
@@ -49,7 +55,6 @@ export function MissionRunner({
   );
 
   function reroll() {
-    if (!ready) return;
     const exclude = activeChildId ? recentMissionIds(activeChildId, 6) : [];
     const next = pickRandomMission(slug, [
       ...exclude,
@@ -103,6 +108,9 @@ export function MissionRunner({
     window.setTimeout(() => setPhase("done"), 1800);
   }
 
+  // Only block on "no active child" when the store has confirmed it. If
+  // `ready` is stuck (storage issues) we still render the card and let the
+  // reward step gate gracefully.
   if (ready && !activeChildId) {
     return (
       <div className="mission-runner">
