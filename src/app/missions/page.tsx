@@ -18,31 +18,7 @@ function timeAgo(at: number) {
 }
 
 export default function MissionsPage() {
-  const { progress, ready, activeChildId } = useActiveChild();
-
-  if (!ready) {
-    return (
-      <main className="page">
-        <section className="card">
-          <span className="skel skel-pill" style={{ width: 120 }} />
-          <div style={{ marginTop: 12 }}>
-            <span className="skel skel-pill" style={{ width: 220, height: 36 }} />
-          </div>
-        </section>
-        <section className="mission-log mt-6">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="mission-log-row mission-log-skel">
-              <span className="mission-log-orb" />
-              <div className="mission-log-body">
-                <span className="skel skel-pill" style={{ width: "70%" }} />
-                <span className="skel skel-pill" style={{ width: "40%", marginTop: 6 }} />
-              </div>
-            </div>
-          ))}
-        </section>
-      </main>
-    );
-  }
+  const { progress, activeChildId } = useActiveChild();
 
   return (
     <main className="page">

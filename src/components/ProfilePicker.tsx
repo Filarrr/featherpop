@@ -2,14 +2,10 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Check } from "lucide-react";
 import type { ChildProfile } from "@/lib/child-profile";
-import {
-  bumpChildrenVersion,
-  setActiveChildIdGlobal,
-  useActiveChild,
-} from "@/lib/use-active-child";
+import { useActiveChild } from "@/lib/use-active-child";
 
 const AVATAR_OPTIONS = [
   "kid-ari",
@@ -24,27 +20,27 @@ export function ProfilePicker({
   children,
   addAction,
   removeAction,
+  selectAction,
 }: {
   children: ChildProfile[];
   addAction: (fd: FormData) => Promise<{ id: string } | null>;
   removeAction: (fd: FormData) => Promise<{ removedId: string } | null>;
+  selectAction: (fd: FormData) => Promise<void>;
 }) {
   const router = useRouter();
-  const { activeChildId, setActiveChildId } = useActiveChild();
+  const { activeChildId } = useActiveChild();
   const [nickname, setNickname] = useState("");
   const [avatar, setAvatar] = useState<string>(AVATAR_OPTIONS[0]);
+  const [, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
 
   async function handleAdd(fd: FormData) {
     setBusy(true);
     try {
-      const result = await addAction(fd);
-      if (result?.id) {
-        setActiveChildIdGlobal(result.id);
-        bumpChildrenVersion();
-      }
+      fd.set("avatar", avatar);
+      await addAction(fd);
       setNickname("");
-      router.refresh();
+      startTransition(() => router.refresh());
     } finally {
       setBusy(false);
     }
@@ -53,12 +49,20 @@ export function ProfilePicker({
   async function handleRemove(fd: FormData) {
     setBusy(true);
     try {
-      const result = await removeAction(fd);
-      if (result?.removedId && result.removedId === activeChildId) {
-        setActiveChildIdGlobal(null);
-      }
-      bumpChildrenVersion();
-      router.refresh();
+      await removeAction(fd);
+      startTransition(() => router.refresh());
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSelect(id: string) {
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.set("id", id);
+      await selectAction(fd);
+      startTransition(() => router.refresh());
     } finally {
       setBusy(false);
     }
@@ -91,7 +95,8 @@ export function ProfilePicker({
                   <button
                     type="button"
                     className="btn btn-gold btn-sm"
-                    onClick={() => setActiveChildId(c.id)}
+                    disabled={busy || isActive}
+                    onClick={() => handleSelect(c.id)}
                   >
                     {isActive ? (
                       <>

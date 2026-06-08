@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowRight, Check, ShieldCheck, Sparkles } from "lucide-react";
-import { setActiveChildIdGlobal, bumpChildrenVersion } from "@/lib/use-active-child";
 import { Confetti } from "@/components/Confetti";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { childCheer, fanfare, pop } from "@/lib/audio";
@@ -56,11 +55,8 @@ export function WelcomeWizard({
     setAdding(true);
     try {
       fd.set("avatar", avatar);
-      const result = await addChildAction(fd);
-      if (result?.id) {
-        setActiveChildIdGlobal(result.id);
-        bumpChildrenVersion();
-      }
+      // addChildAction already sets the active-child cookie server-side.
+      await addChildAction(fd);
       celebrate();
       setStep(2);
       router.refresh();

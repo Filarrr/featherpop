@@ -2,29 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import type { ChildProfile } from "@/lib/child-profile";
-import { useActiveChild, useChildrenVersion } from "@/lib/use-active-child";
-import { listChildren } from "@/app/account/profiles/actions";
+import { useActiveChild } from "@/lib/use-active-child";
 
 export function ActiveChildChip() {
-  const { activeChildId } = useActiveChild();
-  const version = useChildrenVersion();
-  const [children, setChildren] = useState<ChildProfile[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    listChildren()
-      .then((list) => {
-        if (!cancelled) setChildren(list);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [activeChildId, version]);
-
-  const active = children.find((c) => c.id === activeChildId) ?? null;
+  const { active } = useActiveChild();
 
   if (!active) {
     return (

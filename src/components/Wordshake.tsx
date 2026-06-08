@@ -18,7 +18,7 @@ import {
   urgentTick,
 } from "@/lib/audio";
 import { isDictWord } from "@/lib/wordshake-dict";
-import { readProgress, saveProgress } from "@/lib/player";
+import { awardFeatherPopAction } from "@/lib/child-progress-actions";
 import { Mascot, MascotMood } from "@/components/Mascot";
 
 const GRID_SIZE = 4;
@@ -190,14 +190,10 @@ export function Wordshake() {
     }
     setMascotNudge((n) => n + 1);
 
-    // Award 1 FeatherPop per 4 points (rounded down, min 0).
+    // Award 1 FeatherPop per 4 points (rounded down, min 0) to the active child.
     const award = Math.floor(pts / 4);
     if (award > 0) {
-      const cur = readProgress();
-      saveProgress({
-        ...cur,
-        totalFeatherPop: cur.totalFeatherPop + award,
-      });
+      void awardFeatherPopAction(award).catch(() => {});
     }
   }
 

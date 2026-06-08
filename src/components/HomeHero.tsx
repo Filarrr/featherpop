@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Camera, Feather, Sparkles } from "lucide-react";
-import type { ChildProfile } from "@/lib/child-profile";
-import { useActiveChild, useChildrenVersion } from "@/lib/use-active-child";
 import { useEffect, useState } from "react";
-import { listChildren } from "@/app/account/profiles/actions";
+import { Camera, Feather, Sparkles } from "lucide-react";
+import { useActiveChild } from "@/lib/use-active-child";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { HomeStats } from "@/components/HomeStats";
 import { FEATHER_META } from "@/lib/levels";
@@ -19,9 +17,7 @@ function greetingForTime(): { greeting: string; pose: "wave" | "cheer" | "idle" 
 }
 
 export function HomeHero() {
-  const { activeChildId, progress, ready } = useActiveChild();
-  const version = useChildrenVersion();
-  const [children, setChildren] = useState<ChildProfile[]>([]);
+  const { active, progress } = useActiveChild();
   const [greet, setGreet] = useState<{ greeting: string; pose: "wave" | "cheer" | "idle" }>({
     greeting: "Hello",
     pose: "wave",
@@ -31,19 +27,6 @@ export function HomeHero() {
     setGreet(greetingForTime());
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    listChildren()
-      .then((list) => {
-        if (!cancelled) setChildren(list);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [activeChildId, version]);
-
-  const active = children.find((c) => c.id === activeChildId) ?? null;
   const latest = progress.history[0] ?? null;
   const latestMeta = latest ? FEATHER_META[latest.feather] : null;
 
@@ -66,7 +49,7 @@ export function HomeHero() {
             grow your flock, and level up.
           </p>
 
-          {ready ? <HomeStats /> : null}
+          <HomeStats />
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link href="/scan" className="btn btn-primary btn-lg btn-pulse">

@@ -4,17 +4,18 @@ import { useEffect, useState } from "react";
 import { Printer } from "lucide-react";
 import { listRewards } from "@/lib/admin-store";
 import { Reward } from "@/lib/game-data";
-import { readProfile } from "@/lib/player";
+import { useActiveChild } from "@/lib/use-active-child";
 
 export function PrintableReward({ rewardId }: { rewardId: string }) {
+  const { active } = useActiveChild();
   const [reward, setReward] = useState<Reward | null>(null);
-  const [nickname, setNickname] = useState<string>("");
 
   useEffect(() => {
     const r = listRewards().find((x) => x.id === rewardId);
     setReward(r ?? null);
-    setNickname(readProfile()?.nickname ?? "Word Explorer");
   }, [rewardId]);
+
+  const nickname = active?.nickname ?? "Feather Explorer";
 
   if (!reward) {
     return (
@@ -49,7 +50,7 @@ export function PrintableReward({ rewardId }: { rewardId: string }) {
 
       <article className="reward-cert">
         <div className="reward-cert-frame">
-          <p className="reward-cert-kicker">Ms. Feather Pop · Word Quest</p>
+          <p className="reward-cert-kicker">Ms. Feather Pop · Feather Missions</p>
           <h2 className="reward-cert-title">Certificate of Achievement</h2>
           <p className="reward-cert-presented">This certificate is presented to</p>
           <p className="reward-cert-name">{nickname}</p>
@@ -59,12 +60,12 @@ export function PrintableReward({ rewardId }: { rewardId: string }) {
             ({reward.featherpopRequired} FeatherPop earned).
           </p>
           <p className="reward-cert-tag">
-            Way to go, Word Explorer! Keep finding letters and building words.
+            Way to go, brave explorer! Keep scanning, hopping, and helping.
           </p>
           <div className="reward-cert-signature">
             <div>
               <p className="line">Ms. Feather Pop</p>
-              <p className="sublabel">Chief Word Whisperer</p>
+              <p className="sublabel">Chief Feather Whisperer</p>
             </div>
             <div>
               <p className="line">{new Date().toLocaleDateString()}</p>

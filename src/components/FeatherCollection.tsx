@@ -53,17 +53,7 @@ function FeatherGlyph({ color, locked }: { color: string; locked: boolean }) {
 }
 
 export function FeatherCollection() {
-  const { progress, ready, activeChildId } = useActiveChild();
-  if (!ready) return null;
-
-  const total = totalFeathers(progress);
-  const level = levelFor(total);
-  const next = nextLevel(total);
-  const span = next ? Math.max(1, next.min - level.min) : 1;
-  const pct = next
-    ? Math.min(100, Math.round(((total - level.min) / span) * 100))
-    : 100;
-  const unlockedTypes = FEATHER_ORDER.filter((f) => (progress.feathers[f] ?? 0) > 0).length;
+  const { progress, activeChildId } = useActiveChild();
 
   if (!activeChildId) {
     return (
@@ -77,6 +67,15 @@ export function FeatherCollection() {
       </div>
     );
   }
+
+  const total = totalFeathers(progress);
+  const level = levelFor(total);
+  const next = nextLevel(total);
+  const span = next ? Math.max(1, next.min - level.min) : 1;
+  const pct = next
+    ? Math.min(100, Math.round(((total - level.min) / span) * 100))
+    : 100;
+  const unlockedTypes = FEATHER_ORDER.filter((f) => (progress.feathers[f] ?? 0) > 0).length;
 
   return (
     <div className="feather-collection">

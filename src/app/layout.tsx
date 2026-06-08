@@ -4,6 +4,10 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { BrandBar } from "@/components/BrandBar";
 import { BottomNav } from "@/components/BottomNav";
+import { ActiveChildProvider } from "@/lib/use-active-child";
+import { resolveActiveChild } from "@/lib/active-child-server";
+import { getChildProgressAction } from "@/lib/child-progress-actions";
+import { defaultChildProgress } from "@/lib/child-profile";
 
 const fredoka = Fredoka({
   variable: "--font-fredoka",
@@ -22,17 +26,17 @@ const baloo = Baloo_2({
 export const metadata: Metadata = {
   metadataBase: new URL("https://play.msfeatherpop.com"),
   title: {
-    default: "Ms. Feather Pop · Word Quest",
-    template: "%s · Ms. Feather Pop Word Quest",
+    default: "Ms. Feather Pop · Feather Missions",
+    template: "%s · Ms. Feather Pop",
   },
   description:
-    "Scan QR codes, discover letters, build words, and earn FeatherPop rewards on Ms. Feather Pop's Word Quest.",
-  applicationName: "Ms. Feather Pop Word Quest",
+    "Scan a QR, get a magical mission, collect feathers. A bright literacy + adventure app for kids ages 3–11.",
+  applicationName: "Ms. Feather Pop",
   icons: { icon: "/media/logo-dark.jpeg" },
   openGraph: {
-    title: "Ms. Feather Pop · Word Quest",
+    title: "Ms. Feather Pop · Feather Missions",
     description:
-      "A bright, kid-friendly literacy adventure. Scan, discover, build, win!",
+      "A bright, kid-friendly mission adventure. Scan, do, earn feathers!",
     images: ["/media/poster.jpeg"],
   },
 };
@@ -44,9 +48,17 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Resolve the active child + its progress once per request so every page
+  // gets correct data from the first paint, no localStorage roundtrip.
+  const resolved = await resolveActiveChild().catch(() => null);
+  const activeChildId = resolved?.activeChildId ?? null;
+  const progress = activeChildId
+    ? await getChildProgressAction(activeChildId).catch(() => defaultChildProgress)
+    : defaultChildProgress;
+
   return (
     <ClerkProvider>
       <html
@@ -54,11 +66,20 @@ export default function RootLayout({
         className={`${fredoka.variable} ${baloo.variable} h-full antialiased`}
       >
         <body className="min-h-full">
-          <div className="app-shell">
-            <BrandBar />
-            {children}
-            <BottomNav />
-          </div>
+          <ActiveChildProvider
+            value={{
+              activeChildId,
+              active: resolved?.active ?? null,
+              children: resolved?.children ?? [],
+              progress,
+            }}
+          >
+            <div className="app-shell">
+              <BrandBar />
+              {children}
+              <BottomNav />
+            </div>
+          </ActiveChildProvider>
         </body>
       </html>
     </ClerkProvider>

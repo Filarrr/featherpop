@@ -1,8 +1,7 @@
 "use server";
 
-// Source-of-truth child progress. Lives in Clerk privateMetadata.childProgress
-// keyed by child id. Streams to a per-child localStorage cache on the client
-// for instant render + offline fallback.
+// Child progress lives in Clerk privateMetadata.childProgress keyed by child
+// id. All reads + writes go through these server actions.
 
 import { revalidatePath } from "next/cache";
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
@@ -12,6 +11,7 @@ import {
   defaultChildProgress,
 } from "@/lib/child-profile";
 import { Mission, getMission } from "@/lib/missions";
+import { getActiveChildId } from "@/lib/active-child-server";
 
 type ProgressMap = Record<string, ChildProgress>;
 
@@ -51,17 +51,11 @@ export async function getChildProgressAction(
   return map[childId] ?? defaultChildProgress;
 }
 
-export async function saveChildProgressAction(
-  childId: string,
-  p: ChildProgress,
-): Promise<void> {
-  const user = await currentUser();
-  if (!user) throw new Error("Unauthorized");
-  const map = readMap(user.privateMetadata);
-  await writeMap({ ...map, [childId]: p });
-  revalidatePath("/");
-  revalidatePath("/feathers");
-  revalidatePath("/missions");
+/** Fetch progress for the currently-active child (cookie). */
+export async function getActiveChildProgress(): Promise<ChildProgress | null> {
+  const id = await getActiveChildId();
+  if (!id) return null;
+  return getChildProgressAction(id);
 }
 
 export async function applyMissionRewardAction(
@@ -82,7 +76,7 @@ export async function applyMissionRewardAction(
   const today = todayISO();
   let streakDays = prev.streakDays;
   if (prev.lastActiveDate === today) {
-    // already counted today — keep streak
+    // already counted today
   } else if (prev.lastActiveDate === yesterdayISO(today)) {
     streakDays = prev.streakDays + 1;
   } else {
@@ -107,9 +101,33 @@ export async function applyMissionRewardAction(
   };
 
   await writeMap({ ...map, [childId]: next });
-  revalidatePath("/");
-  revalidatePath("/feathers");
-  revalidatePath("/missions");
+  revalidatePath("/", "layout");
+  return next;
+}
+
+/**
+ * Bonus-FeatherPop award (Letter Pop / Wordshake). Increments featherPop on
+ * the active child's progress, no feather count change. Returns updated
+ * progress, or null if no active child.
+ */
+export async function awardFeatherPopAction(
+  amount: number,
+): Promise<ChildProgress | null> {
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  const childId = await getActiveChildId();
+  if (!childId) return null;
+
+  const user = await currentUser();
+  if (!user) return null;
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+
+  const next: ChildProgress = {
+    ...prev,
+    featherPop: prev.featherPop + Math.floor(amount),
+  };
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/", "layout");
   return next;
 }
 
@@ -121,7 +139,5 @@ export async function deleteChildProgressAction(childId: string): Promise<void> 
   const { [childId]: _drop, ...rest } = map;
   void _drop;
   await writeMap(rest);
-  revalidatePath("/");
-  revalidatePath("/feathers");
-  revalidatePath("/missions");
+  revalidatePath("/", "layout");
 }

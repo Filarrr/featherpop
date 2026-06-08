@@ -5,22 +5,19 @@ import Link from "next/link";
 import { Camera, Gift, LockKeyhole, Printer, Sparkles, Trophy } from "lucide-react";
 import { listRewards } from "@/lib/admin-store";
 import { Reward } from "@/lib/game-data";
-import {
-  PlayerProgress,
-  defaultProgress,
-  readProgress,
-} from "@/lib/player";
 import { useMembership } from "@/lib/use-membership";
+import { useActiveChild } from "@/lib/use-active-child";
 
 export function RewardsClient() {
-  const [progress, setProgress] = useState<PlayerProgress>(defaultProgress);
+  const { progress } = useActiveChild();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const { isMember } = useMembership();
 
   useEffect(() => {
-    setProgress(readProgress());
     setRewards(listRewards().filter((r) => r.active));
   }, []);
+
+  const featherPop = progress.featherPop;
 
   return (
     <div className="grid gap-4">
@@ -29,8 +26,7 @@ export function RewardsClient() {
           <div>
             <span className="kicker">Wallet</span>
             <h2 className="h-display mt-2 text-3xl">
-              <span className="h-gradient">{progress.totalFeatherPop}</span>{" "}
-              FeatherPop
+              <span className="h-gradient">{featherPop}</span> FeatherPop
             </h2>
           </div>
           <Link href="/scan" className="btn btn-primary btn-sm">
@@ -42,17 +38,11 @@ export function RewardsClient() {
 
       <div className="grid gap-3 md:grid-cols-3">
         {rewards.map((r) => {
-          const earned = progress.totalFeatherPop >= r.featherpopRequired;
+          const earned = featherPop >= r.featherpopRequired;
           const memberGated = r.memberOnly && !isMember;
           const unlocked = earned && !memberGated;
-          const remaining = Math.max(
-            0,
-            r.featherpopRequired - progress.totalFeatherPop,
-          );
-          const pct = Math.min(
-            1,
-            progress.totalFeatherPop / r.featherpopRequired,
-          );
+          const remaining = Math.max(0, r.featherpopRequired - featherPop);
+          const pct = Math.min(1, featherPop / r.featherpopRequired);
           return (
             <article
               key={r.id}
@@ -73,9 +63,7 @@ export function RewardsClient() {
                     <LockKeyhole aria-hidden className="h-5 w-5" />
                   )}
                 </div>
-                <span
-                  className={`tier-pill ${unlocked ? "unlocked" : "locked"}`}
-                >
+                <span className={`tier-pill ${unlocked ? "unlocked" : "locked"}`}>
                   {unlocked
                     ? "Unlocked"
                     : memberGated && earned

@@ -2,7 +2,12 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { ProfilePicker } from "@/components/ProfilePicker";
 import { hasParentPin } from "@/lib/parent-pin";
-import { addChildAction, listChildren, removeChildAction } from "./actions";
+import {
+  addChildAction,
+  listChildren,
+  removeChildAction,
+  setActiveChildAction,
+} from "./actions";
 
 export const metadata = { title: "Child profiles" };
 
@@ -32,6 +37,7 @@ export default async function ProfilesPage() {
         children={children}
         addAction={addChildAction}
         removeAction={removeChildAction}
+        selectAction={setActiveChildAction}
       />
     </main>
   );

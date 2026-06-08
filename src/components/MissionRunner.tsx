@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Home, RefreshCw, Sparkles } from "lucide-react";
 import { Mission, getMission, pickRandomMission } from "@/lib/missions";
@@ -24,8 +25,15 @@ export function MissionRunner({
   slug: string;
   missionId?: string;
 }) {
-  const { activeChildId, ready, setProgress } = useActiveChild();
-  const [mission, setMission] = useState<Mission | null>(null);
+  const router = useRouter();
+  const { activeChildId, progress } = useActiveChild();
+
+  const initialMission = useMemo<Mission | null>(() => {
+    if (missionId) return getMission(missionId) ?? null;
+    return null;
+  }, [missionId]);
+
+  const [mission, setMission] = useState<Mission | null>(initialMission);
   const [phase, setPhase] = useState<Phase>("show");
   const [mood, setMood] = useState<MascotMood>("idle");
   const [mascotMessage, setMascotMessage] = useState<string | undefined>();
@@ -33,29 +41,17 @@ export function MissionRunner({
   const [confettiKey, setConfettiKey] = useState(0);
   const finishingRef = useRef(false);
 
-  // Pick a mission as soon as the component mounts on the client. We
-  // intentionally don't gate on `ready` here — the active-child store can
-  // fail to flip `ready=true` (storage quota / private mode / corrupt cache)
-  // and leave the page stuck on "Rolling…" forever. The reward step still
-  // needs activeChildId to apply, but the user can read the mission either
-  // way and we re-pick if activeChildId arrives later.
+  // Roll a random mission on client mount when no fixed missionId.
   useEffect(() => {
-    if (mission) return;
-    if (missionId) {
-      setMission(getMission(missionId) ?? pickRandomMission(slug));
-      return;
-    }
-    const exclude = activeChildId ? recentMissionIds(activeChildId, 6) : [];
+    if (mission || missionId) return;
+    const exclude = recentMissionIds(progress, 6);
     setMission(pickRandomMission(slug, exclude));
-  }, [activeChildId, slug, missionId, mission]);
+  }, [mission, missionId, slug, progress]);
 
-  const feather = useMemo(
-    () => (mission ? FEATHER_META[mission.feather] : null),
-    [mission],
-  );
+  const feather = mission ? FEATHER_META[mission.feather] : null;
 
   function reroll() {
-    const exclude = activeChildId ? recentMissionIds(activeChildId, 6) : [];
+    const exclude = recentMissionIds(progress, 6);
     const next = pickRandomMission(slug, [
       ...exclude,
       ...(mission ? [mission.id] : []),
@@ -99,19 +95,17 @@ export function MissionRunner({
     window.setTimeout(() => fanfare(), 720);
 
     try {
-      const next = await applyMissionRewardAction(activeChildId, mission.id);
-      setProgress(next);
+      await applyMissionRewardAction(activeChildId, mission.id);
+      // Server data refresh — every consumer of useActiveChild() updates.
+      router.refresh();
     } catch {
-      /* offline / unauthed — keep optimistic UI */
+      /* swallow — keep the celebration UX even if write fails */
     }
 
     window.setTimeout(() => setPhase("done"), 1800);
   }
 
-  // Only block on "no active child" when the store has confirmed it. If
-  // `ready` is stuck (storage issues) we still render the card and let the
-  // reward step gate gracefully.
-  if (ready && !activeChildId) {
+  if (!activeChildId) {
     return (
       <div className="mission-runner">
         <MissionEmpty />

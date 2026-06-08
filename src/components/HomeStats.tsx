@@ -8,25 +8,7 @@ import { FEATHER_META, FEATHER_ORDER, levelFor, nextLevel } from "@/lib/levels";
 import { CountUp } from "./CountUp";
 
 export function HomeStats({ nickname }: { nickname?: string }) {
-  const { progress, activeChildId, ready } = useActiveChild();
-
-  if (!ready) {
-    return (
-      <div className="home-stats home-stats-skel" aria-busy>
-        <span className="skel skel-pill" />
-        <span className="skel skel-pill" />
-        <span className="skel skel-pill" />
-      </div>
-    );
-  }
-
-  const total = totalFeathers(progress);
-  const level = levelFor(total);
-  const next = nextLevel(total);
-  const toNext = next ? Math.max(0, next.min - total) : 0;
-  const pct = next
-    ? Math.min(100, Math.round(((total - level.min) / Math.max(1, next.min - level.min)) * 100))
-    : 100;
+  const { progress, activeChildId } = useActiveChild();
 
   if (!activeChildId) {
     return (
@@ -44,6 +26,14 @@ export function HomeStats({ nickname }: { nickname?: string }) {
       </div>
     );
   }
+
+  const total = totalFeathers(progress);
+  const level = levelFor(total);
+  const next = nextLevel(total);
+  const toNext = next ? Math.max(0, next.min - total) : 0;
+  const pct = next
+    ? Math.min(100, Math.round(((total - level.min) / Math.max(1, next.min - level.min)) * 100))
+    : 100;
 
   return (
     <div className="home-stats">

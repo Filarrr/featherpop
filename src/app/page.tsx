@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
-import { BookOpen, Camera, Feather, Gift, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { BookOpen, Camera, Feather, Gift, Sparkles } from "lucide-react";
 import { HomeHero } from "@/components/HomeHero";
-import { NoActiveChildRedirect } from "@/components/NoActiveChildRedirect";
-import { listChildren } from "@/app/account/profiles/actions";
+import { resolveActiveChild } from "@/lib/active-child-server";
 
 const features = [
   {
@@ -32,14 +31,15 @@ const features = [
   },
 ];
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
-  const children = await listChildren();
-  if (children.length === 0) {
-    redirect("/welcome");
-  }
+  const { children, activeChildId } = await resolveActiveChild();
+  if (children.length === 0) redirect("/welcome");
+  if (!activeChildId) redirect("/account/profiles");
+
   return (
     <main className="page">
-      <NoActiveChildRedirect hasChildren={children.length > 0} />
       <HomeHero />
 
       <section className="mt-10">
