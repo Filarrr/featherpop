@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Camera, Feather, Home, Sparkles } from "lucide-react";
+import { Camera, Feather, Gamepad2, Home, Sparkles } from "lucide-react";
 
 const links = [
   { href: "/", label: "Home", icon: Home },
   { href: "/scan", label: "Scan", icon: Camera },
   { href: "/missions", label: "Missions", icon: Sparkles },
   { href: "/feathers", label: "Feathers", icon: Feather },
-  { href: "/story", label: "Story", icon: BookOpen },
+  { href: "/play", label: "Letter Pop", icon: Gamepad2 },
 ];
 
 export function BottomNav() {

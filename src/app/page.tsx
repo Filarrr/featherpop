@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, Camera, Feather, Gift, Sparkles } from "lucide-react";
+import { BookOpen, Camera, Feather, Gamepad2, Gift, Sparkles } from "lucide-react";
 import { HomeHero } from "@/components/HomeHero";
 import { resolveActiveChild } from "@/lib/active-child-server";
 
@@ -81,6 +81,13 @@ export default async function HomePage() {
           <span>
             <strong>Prize Wall</strong>
             <small>Spend your FeatherPop</small>
+          </span>
+        </Link>
+        <Link href="/play" className="quick-link">
+          <Gamepad2 aria-hidden className="h-5 w-5" />
+          <span>
+            <strong>Letter Pop</strong>
+            <small>Spell words, earn bonus FeatherPop</small>
           </span>
         </Link>
       </section>

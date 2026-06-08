@@ -267,21 +267,17 @@ export function getMission(id: string): Mission | undefined {
 }
 
 // Pick a mission, avoiding recently completed ones when possible.
-// The slug is used as a soft seed (mixed with Math.random) so the SAME QR
-// code yields different missions on repeat scans.
+// Every scan yields a fresh random pick — the same QR genuinely surprises.
+// The `slug` arg is accepted for future "biased by portal" behavior but
+// currently unused (a previous version mixed it into the index math via
+// XOR with Date.now(), which produced negative offsets for many slugs and
+// returned undefined missions for those portals).
 export function pickRandomMission(
   slug?: string,
   excludeIds: string[] = [],
 ): Mission {
+  void slug;
   const pool = MISSIONS.filter((m) => !excludeIds.includes(m.id));
   const list = pool.length > 0 ? pool : MISSIONS;
-  // Light slug-seeded jitter — same QR favors a different sub-range each scan.
-  let seedHash = 0;
-  if (slug) {
-    for (let i = 0; i < slug.length; i++) {
-      seedHash = (seedHash * 31 + slug.charCodeAt(i)) >>> 0;
-    }
-  }
-  const offset = Date.now() ^ seedHash;
-  return list[(Math.floor(Math.random() * list.length) + offset) % list.length];
+  return list[Math.floor(Math.random() * list.length)];
 }
