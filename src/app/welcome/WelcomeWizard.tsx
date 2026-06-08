@@ -6,6 +6,9 @@ import { useActionState, useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowRight, Check, ShieldCheck, Sparkles } from "lucide-react";
 import { setActiveChildIdGlobal, bumpChildrenVersion } from "@/lib/use-active-child";
+import { Confetti } from "@/components/Confetti";
+import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
+import { childCheer, fanfare, pop } from "@/lib/audio";
 
 const AVATAR_OPTIONS = [
   "kid-ari",
@@ -39,7 +42,15 @@ export function WelcomeWizard({
   const [step, setStep] = useState<Step>(initial);
   const [avatar, setAvatar] = useState(AVATAR_OPTIONS[0]);
   const [adding, setAdding] = useState(false);
+  const [confettiKey, setConfettiKey] = useState(0);
   const [pinState, pinForm, pinPending] = useActionState(setPinAction, null);
+
+  function celebrate() {
+    setConfettiKey((k) => k + 1);
+    pop();
+    window.setTimeout(() => childCheer(), 200);
+    window.setTimeout(() => fanfare(), 500);
+  }
 
   async function handleAdd(fd: FormData) {
     setAdding(true);
@@ -50,6 +61,7 @@ export function WelcomeWizard({
         setActiveChildIdGlobal(result.id);
         bumpChildrenVersion();
       }
+      celebrate();
       setStep(2);
       router.refresh();
     } finally {
@@ -59,20 +71,37 @@ export function WelcomeWizard({
 
   // Advance to step 3 when PIN saves successfully.
   useEffect(() => {
-    if (pinState?.ok && step === 2) setStep(3);
+    if (pinState?.ok && step === 2) {
+      celebrate();
+      setStep(3);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinState?.ok, step]);
 
   return (
-    <section className="card">
+    <section className="card welcome-card">
+      <Confetti trigger={confettiKey} pieces={60} />
+      <div className="welcome-mascot">
+        <MsFeatherPopAvatar
+          pose={step === 1 ? "wave" : step === 2 ? "idle" : "cheer"}
+          size={120}
+        />
+      </div>
       <span className="kicker">
         <Sparkles aria-hidden className="h-4 w-4" />
         Welcome · Step {step} of 3
       </span>
       <h1 className="h-display mt-2 text-3xl">
-        <span className="h-gradient">Let&apos;s set up Ms. Feather Pop</span>
+        <span className="h-gradient">
+          {step === 3
+            ? "You're ready to fly!"
+            : "Let's set up Ms. Feather Pop"}
+        </span>
       </h1>
       <p className="text-[var(--ink-soft)]">
-        Three quick steps and your child can start collecting feathers.
+        {step === 3
+          ? "Open a QR or jump into a demo mission — every feather is yours from here."
+          : "Three quick steps and your child can start collecting feathers."}
       </p>
 
       <ol className="welcome-steps mt-4">

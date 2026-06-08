@@ -1,30 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { Flame, Feather, Trophy } from "lucide-react";
+import { Flame, Feather, Trophy, Sparkles } from "lucide-react";
 import { useActiveChild } from "@/lib/use-active-child";
 import { totalFeathers } from "@/lib/child-profile";
 import { FEATHER_META, FEATHER_ORDER, levelFor, nextLevel } from "@/lib/levels";
+import { CountUp } from "./CountUp";
 
 export function HomeStats({ nickname }: { nickname?: string }) {
   const { progress, activeChildId, ready } = useActiveChild();
-  if (!ready) return null;
+
+  if (!ready) {
+    return (
+      <div className="home-stats home-stats-skel" aria-busy>
+        <span className="skel skel-pill" />
+        <span className="skel skel-pill" />
+        <span className="skel skel-pill" />
+      </div>
+    );
+  }
 
   const total = totalFeathers(progress);
   const level = levelFor(total);
   const next = nextLevel(total);
   const toNext = next ? Math.max(0, next.min - total) : 0;
+  const pct = next
+    ? Math.min(100, Math.round(((total - level.min) / Math.max(1, next.min - level.min)) * 100))
+    : 100;
 
   if (!activeChildId) {
     return (
-      <div className="home-stats">
+      <div className="home-stats home-stats-empty">
+        <Sparkles aria-hidden className="h-5 w-5" />
         <p>
-          No child profile yet.{" "}
+          Pick a child to begin.{" "}
           <Link
             href="/account/profiles"
-            style={{ color: "var(--gold)", fontWeight: 700 }}
+            style={{ color: "var(--gold)", fontWeight: 800 }}
           >
-            Add one →
+            Choose →
           </Link>
         </p>
       </div>
@@ -41,21 +55,31 @@ export function HomeStats({ nickname }: { nickname?: string }) {
         </span>
         <span className="streak-pill">
           <Flame aria-hidden className="h-4 w-4" />
-          {progress.streakDays}-day streak
+          <CountUp to={progress.streakDays} duration={600} />
+          <span>-day streak</span>
         </span>
         <span className="feather-pill">
           <Feather aria-hidden className="h-4 w-4" />
-          {total} feathers
+          <CountUp to={total} duration={700} />
+          <span>&nbsp;feathers</span>
         </span>
-        <span className="pop-pill">{progress.featherPop} FeatherPop</span>
+        <span className="pop-pill">
+          <CountUp to={progress.featherPop} duration={700} />
+          <span>&nbsp;FeatherPop</span>
+        </span>
+      </div>
+
+      <div className="level-progress" aria-hidden>
+        <span style={{ width: `${pct}%` }} />
       </div>
       {next ? (
         <p className="home-stats-next">
-          {toNext} more {toNext === 1 ? "feather" : "feathers"} → {next.title}
+          {toNext} more {toNext === 1 ? "feather" : "feathers"} → <strong>{next.title}</strong>
         </p>
       ) : (
         <p className="home-stats-next">Top level! Keep flying high.</p>
       )}
+
       <div className="home-feather-strip" aria-hidden>
         {FEATHER_ORDER.map((f) => {
           const m = FEATHER_META[f];

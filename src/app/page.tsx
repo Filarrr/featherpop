@@ -1,33 +1,32 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpen, Camera, Feather, Gamepad2, Gift, Sparkles, Users } from "lucide-react";
-import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
-import { HomeStats } from "@/components/HomeStats";
+import { BookOpen, Camera, Feather, Gift, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { HomeHero } from "@/components/HomeHero";
 import { NoActiveChildRedirect } from "@/components/NoActiveChildRedirect";
 import { listChildren } from "@/app/account/profiles/actions";
 
 const features = [
   {
     title: "Scan",
-    text: "Point the camera at a Ms. Feather Pop QR code.",
+    text: "Aim at any Ms. Feather Pop QR code.",
     icon: Camera,
     color: "var(--sky-4)",
   },
   {
     title: "Mission",
-    text: "Each scan reveals a new short adventure.",
+    text: "A new adventure appears every scan.",
     icon: Sparkles,
     color: "var(--gold)",
   },
   {
-    title: "Earn feathers",
-    text: "Falcon, Courage, Wind, Joy — collect them all.",
+    title: "Earn",
+    text: "Magical feathers + FeatherPop.",
     icon: Feather,
     color: "var(--magenta)",
   },
   {
-    title: "Level up",
-    text: "Beginner Explorer → Guardian of Strudelay.",
+    title: "Unlock",
+    text: "Real prizes — stickers, crowns, art prints.",
     icon: Gift,
     color: "var(--mint)",
   },
@@ -41,65 +40,17 @@ export default async function HomePage() {
   return (
     <main className="page">
       <NoActiveChildRedirect hasChildren={children.length > 0} />
-      <section className="hero">
-        <div className="hero-grid">
-          <div>
-            <span className="kicker">
-              <Sparkles aria-hidden className="h-4 w-4" />
-              Random missions · Magical feathers
-            </span>
-            <h1 className="h-display hero-title mt-4">
-              <span className="h-gradient">Ms. Feather</span>
-              <br />
-              <span className="h-stroke">Pop</span>
-            </h1>
-            <p className="hero-subtitle">
-              Every QR is a portal to a new mission. Earn{" "}
-              <strong style={{ color: "var(--magenta)" }}>magical feathers</strong>,
-              level up, and become a Guardian of Strudelay.
-            </p>
-            <HomeStats />
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Link href="/scan" className="btn btn-primary btn-lg">
-                <Camera aria-hidden className="h-5 w-5" />
-                Scan a QR
-              </Link>
-              <Link href="/missions" className="btn btn-sky">
-                <Sparkles aria-hidden className="h-5 w-5" />
-                My missions
-              </Link>
-              <Link href="/feathers" className="btn btn-ghost">
-                <Feather aria-hidden className="h-5 w-5" />
-                My feathers
-              </Link>
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Link href="/story" className="btn btn-ghost btn-sm">
-                <BookOpen aria-hidden className="h-4 w-4" />
-                Story time
-              </Link>
-              <Link href="/account/profiles" className="btn btn-ghost btn-sm">
-                <Users aria-hidden className="h-4 w-4" />
-                Child profiles
-              </Link>
-              <Link href="/play" className="btn btn-ghost btn-sm">
-                <Gamepad2 aria-hidden className="h-4 w-4" />
-                Letter Pop
-              </Link>
-            </div>
-          </div>
+      <HomeHero />
 
-          <div className="hero-portrait">
-            <div className="fp-stage">
-              <MsFeatherPopAvatar pose="wave" size={360} />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-8">
-        <div className="mb-4 flex items-end justify-between gap-3">
-          <h2 className="h-display text-3xl">How a mission works</h2>
+      <section className="mt-10">
+        <div className="mb-4">
+          <span className="kicker">
+            <Sparkles aria-hidden className="h-4 w-4" />
+            How it works
+          </span>
+          <h2 className="h-display mt-1 text-3xl">
+            Four little steps to soar
+          </h2>
         </div>
         <div className="feature-row">
           {features.map((f) => {
@@ -115,6 +66,23 @@ export default async function HomePage() {
             );
           })}
         </div>
+      </section>
+
+      <section className="mt-10 quick-links">
+        <Link href="/story" className="quick-link">
+          <BookOpen aria-hidden className="h-5 w-5" />
+          <span>
+            <strong>Story Time</strong>
+            <small>Ms. Feather Pop reads to you</small>
+          </span>
+        </Link>
+        <Link href="/rewards" className="quick-link">
+          <Gift aria-hidden className="h-5 w-5" />
+          <span>
+            <strong>Prize Wall</strong>
+            <small>Spend your FeatherPop</small>
+          </span>
+        </Link>
       </section>
     </main>
   );

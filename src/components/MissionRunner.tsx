@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Home, RefreshCw, Sparkles } from "lucide-react";
 import { Mission, getMission, pickRandomMission } from "@/lib/missions";
 import { recentMissionIds } from "@/lib/child-profile";
@@ -10,10 +10,12 @@ import { FEATHER_META } from "@/lib/levels";
 import { Mascot, MascotMood } from "@/components/Mascot";
 import { MissionCard, MissionEmpty } from "@/components/MissionCard";
 import { ParentApprovalGate } from "@/components/ParentApprovalGate";
+import { Confetti } from "@/components/Confetti";
+import { FeatherAward } from "@/components/FeatherAward";
 import { useActiveChild } from "@/lib/use-active-child";
-import { childCheer, fanfare, pop } from "@/lib/audio";
+import { childCheer, fanfare, pop, ding } from "@/lib/audio";
 
-type Phase = "show" | "approval" | "done";
+type Phase = "show" | "approval" | "celebrate" | "done";
 
 export function MissionRunner({
   slug,
@@ -28,10 +30,9 @@ export function MissionRunner({
   const [mood, setMood] = useState<MascotMood>("idle");
   const [mascotMessage, setMascotMessage] = useState<string | undefined>();
   const [mascotNudge, setMascotNudge] = useState(0);
-  const [awardedPop, setAwardedPop] = useState(0);
+  const [confettiKey, setConfettiKey] = useState(0);
+  const finishingRef = useRef(false);
 
-  // Roll mission once child id is known. The slug seeds randomness so the same
-  // QR yields different missions, while recent ids steer away from repeats.
   useEffect(() => {
     if (!ready) return;
     if (missionId) {
@@ -59,7 +60,7 @@ export function MissionRunner({
     setMood("idle");
     setMascotMessage(undefined);
     setMascotNudge((n) => n + 1);
-    setAwardedPop(0);
+    finishingRef.current = false;
   }
 
   function startApproval() {
@@ -71,25 +72,35 @@ export function MissionRunner({
       setMascotNudge((n) => n + 1);
       return;
     }
-    finish();
+    void finish();
   }
 
   async function finish() {
-    if (!mission || !activeChildId) return;
+    if (!mission || !activeChildId || finishingRef.current) return;
+    finishingRef.current = true;
+
+    setPhase("celebrate");
+    setMood(mission.featherPop >= 3 ? "wow" : "cheer");
+    setMascotMessage(
+      mission.featherPop >= 3
+        ? `Whoa! ${FEATHER_META[mission.feather].name} unlocked!`
+        : `You earned a ${FEATHER_META[mission.feather].name}!`,
+    );
+    setMascotNudge((n) => n + 1);
+    setConfettiKey((k) => k + 1);
+    ding(1100, 90);
+    window.setTimeout(() => pop(), 220);
+    window.setTimeout(() => childCheer(), 480);
+    window.setTimeout(() => fanfare(), 720);
+
     try {
       const next = await applyMissionRewardAction(activeChildId, mission.id);
       setProgress(next);
     } catch {
-      // Offline / unauthed — keep optimistic UI without server update.
+      /* offline / unauthed — keep optimistic UI */
     }
-    pop();
-    childCheer();
-    fanfare();
-    setAwardedPop(mission.featherPop);
-    setPhase("done");
-    setMood(mission.featherPop >= 3 ? "wow" : "cheer");
-    setMascotMessage(`+${mission.featherPop} FeatherPop · ${FEATHER_META[mission.feather].name}!`);
-    setMascotNudge((n) => n + 1);
+
+    window.setTimeout(() => setPhase("done"), 1800);
   }
 
   if (ready && !activeChildId) {
@@ -103,13 +114,22 @@ export function MissionRunner({
   if (!mission) {
     return (
       <div className="mission-runner">
-        <p>Rolling a mission…</p>
+        <div className="mission-runner-loading" aria-busy>
+          <span />
+          <span />
+          <span />
+          <p>Rolling a mission…</p>
+        </div>
       </div>
     );
   }
 
+  const isCelebrating = phase === "celebrate" || phase === "done";
+
   return (
     <div className="mission-runner">
+      <Confetti trigger={confettiKey} pieces={90} />
+
       <div className="mission-runner-mascot">
         <Mascot mood={mood} message={mascotMessage} nudge={mascotNudge} />
       </div>
@@ -125,18 +145,24 @@ export function MissionRunner({
             setMascotNudge((n) => n + 1);
           }}
         />
+      ) : isCelebrating ? (
+        <FeatherAward
+          feather={mission.feather}
+          featherPop={mission.featherPop}
+          show
+        />
       ) : (
-        <MissionCard mission={mission} awarded={phase === "done"} />
+        <MissionCard mission={mission} awarded={false} />
       )}
 
       {phase === "done" ? (
         <div className="mission-runner-done">
           <span className="kicker" style={{ color: feather?.color }}>
             <Sparkles aria-hidden className="h-4 w-4" />
-            +{awardedPop} FeatherPop earned
+            Mission complete
           </span>
           <div className="mission-runner-actions">
-            <button type="button" onClick={reroll} className="btn btn-gold">
+            <button type="button" onClick={reroll} className="btn btn-gold btn-lg">
               <RefreshCw aria-hidden className="h-5 w-5" />
               Next mission
             </button>
@@ -148,7 +174,11 @@ export function MissionRunner({
         </div>
       ) : phase === "show" ? (
         <div className="mission-runner-actions">
-          <button type="button" onClick={startApproval} className="btn btn-gold btn-lg">
+          <button
+            type="button"
+            onClick={startApproval}
+            className="btn btn-gold btn-lg btn-pulse"
+          >
             {mission.approval === "parent"
               ? "Hand to a grown-up"
               : "I completed it"}

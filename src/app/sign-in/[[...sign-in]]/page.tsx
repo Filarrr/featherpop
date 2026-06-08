@@ -1,30 +1,43 @@
 import { SignIn } from "@clerk/nextjs";
+import { Feather, Heart, Sparkles } from "lucide-react";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 
 export const metadata = { title: "Sign in" };
 
 export default function SignInPage() {
   return (
-    <main className="auth-page">
-      <div className="auth-hero">
-        <MsFeatherPopAvatar pose="wave" size={180} />
-        <h1 className="h-display text-3xl mt-2">
-          <span className="h-gradient">Welcome back</span>
+    <main className="auth-page auth-split">
+      <aside className="auth-art">
+        <div className="auth-art-stage">
+          <MsFeatherPopAvatar pose="wave" size={260} />
+          <span className="auth-art-feather auth-art-feather-1" aria-hidden />
+          <span className="auth-art-feather auth-art-feather-2" aria-hidden />
+          <span className="auth-art-feather auth-art-feather-3" aria-hidden />
+        </div>
+        <h1 className="h-display text-4xl mt-3 text-center">
+          <span className="h-gradient">Welcome back, friend</span>
         </h1>
-        <p className="text-[var(--ink-soft)]">
-          Sign in to keep your child&apos;s feathers and streak safe.
+        <p className="auth-art-tagline">
+          Your flock has been waiting. Pick up right where you left off.
         </p>
+        <ul className="auth-perks">
+          <li><Feather aria-hidden className="h-4 w-4" /> Magical feathers, kept safe</li>
+          <li><Heart aria-hidden className="h-4 w-4" /> Multiple kids, one account</li>
+          <li><Sparkles aria-hidden className="h-4 w-4" /> Streaks across devices</li>
+        </ul>
+      </aside>
+      <div className="auth-form-wrap">
+        <SignIn
+          appearance={{
+            variables: {
+              colorPrimary: "#b13bff",
+              borderRadius: "14px",
+              fontFamily: "var(--font-fredoka)",
+            },
+          }}
+          signUpUrl="/sign-up"
+        />
       </div>
-      <SignIn
-        appearance={{
-          variables: {
-            colorPrimary: "#b13bff",
-            borderRadius: "14px",
-            fontFamily: "var(--font-fredoka)",
-          },
-        }}
-        signUpUrl="/sign-up"
-      />
     </main>
   );
 }

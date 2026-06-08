@@ -13,36 +13,36 @@ export type MascotMood =
 
 const MESSAGES: Record<MascotMood, string[]> = {
   idle: [
-    "Tap a letter to start spelling!",
-    "You can do this, Word Explorer!",
-    "Listen for the letter sound as you tap.",
+    "Ready for a feather adventure?",
+    "Scan a QR — let's see what mission appears!",
+    "Every brave try earns a feather.",
+    "Take a deep breath. You've got this!",
   ],
   think: [
-    "Hmm, look at the letters carefully…",
-    "Try moving them in a new order.",
-    "Read the slots out loud!",
+    "Hmm, look around carefully…",
+    "Trust your eyes — what do you see?",
+    "Slow and steady, little explorer.",
   ],
   hint: [
-    "Need a clue? Use the hint button!",
-    "Here's a tip — sound it out slowly.",
-    "Each letter makes a sound. Mix them!",
+    "Need a hint? Read the helper line below.",
+    "Try saying it out loud first.",
+    "It's okay to ask a grown-up if you're stuck!",
   ],
   oops: [
-    "Almost! Try a different letter.",
-    "Don't give up — you've got this!",
-    "Oops! Tap a slot to remove a letter.",
-    "Let's try again, friend!",
+    "Almost! Try once more.",
+    "Don't worry — every explorer wobbles sometimes.",
+    "Take another look — you can do it!",
   ],
   cheer: [
-    "Woohoo! You did it!",
-    "Amazing spelling!",
-    "Word Champion in the house!",
-    "FeatherPop earned!",
+    "Wonderful! You did it!",
+    "A feather just fluttered your way!",
+    "That was magic — keep going!",
+    "Brave heart, big smile!",
   ],
   wow: [
-    "Bonus word! Brilliant!",
-    "Wow — you found a hidden word!",
-    "Extra FeatherPop for you!",
+    "WOW! That was extra special!",
+    "A whole shower of FeatherPop!",
+    "You shine brighter than gold!",
   ],
 };
 
@@ -59,10 +59,12 @@ export function Mascot({
   mood,
   message,
   nudge,
+  size = 120,
 }: {
   mood: MascotMood;
   message?: string;
   nudge?: number;
+  size?: number;
 }) {
   const [line, setLine] = useState(message ?? MESSAGES[mood][0]);
 
@@ -87,7 +89,7 @@ export function Mascot({
         className={`mascot-figure ${cfg.bob}`}
         style={{ transform: `rotate(${cfg.tilt}deg)` }}
       >
-        <MsFeatherPopAvatar pose={cfg.pose} size={120} />
+        <MsFeatherPopAvatar pose={cfg.pose} size={size} />
       </div>
     </div>
   );
