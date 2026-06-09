@@ -30,13 +30,59 @@ const DICE = [
   "DISTTY","EEGHNW","EEINSU","EHRTVW","EIOSST","ELRTTY","HIMNQU","HLNNRZ",
 ];
 
-function rollGrid(): string[] {
+function rollGrid(seedWord?: string): {
+  grid: string[];
+  seededPath?: number[];
+} {
   const out: string[] = [];
   const dice = [...DICE].sort(() => Math.random() - 0.5);
   for (const d of dice) {
     out.push(d[Math.floor(Math.random() * d.length)]);
   }
-  return out;
+  if (!seedWord) return { grid: out };
+
+  const word = seedWord.toUpperCase().replace(/[^A-Z]/g, "");
+  if (word.length === 0 || word.length > GRID_SIZE * GRID_SIZE) {
+    return { grid: out };
+  }
+
+  // Random walk on the grid placing each letter into an unvisited adjacent
+  // cell. Try multiple starts before giving up.
+  const cells = GRID_SIZE * GRID_SIZE;
+  const neighborsOf = (idx: number): number[] => {
+    const r = Math.floor(idx / GRID_SIZE);
+    const c = idx % GRID_SIZE;
+    const out: number[] = [];
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = r + dr, nc = c + dc;
+        if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) continue;
+        out.push(nr * GRID_SIZE + nc);
+      }
+    }
+    return out.sort(() => Math.random() - 0.5);
+  };
+  for (let tries = 0; tries < 40; tries++) {
+    const start = Math.floor(Math.random() * cells);
+    const path: number[] = [start];
+    let ok = true;
+    for (let i = 1; i < word.length; i++) {
+      const last = path[path.length - 1];
+      const next = neighborsOf(last).find((n) => !path.includes(n));
+      if (next === undefined) {
+        ok = false;
+        break;
+      }
+      path.push(next);
+    }
+    if (ok && path.length === word.length) {
+      const seeded = out.slice();
+      for (let i = 0; i < word.length; i++) seeded[path[i]] = word[i];
+      return { grid: seeded, seededPath: path };
+    }
+  }
+  return { grid: out };
 }
 
 function scoreFor(word: string) {
@@ -59,8 +105,12 @@ function areAdjacent(a: number, b: number) {
   return Math.abs(ra - rb) <= 1 && Math.abs(ca - cb) <= 1 && a !== b;
 }
 
-export function Wordshake() {
-  const [grid, setGrid] = useState<string[]>(() => rollGrid());
+export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
+  const initial = useMemo(() => rollGrid(keyWord), [keyWord]);
+  const [grid, setGrid] = useState<string[]>(initial.grid);
+  const [keyWordPath, setKeyWordPath] = useState<number[] | undefined>(
+    initial.seededPath,
+  );
   const [path, setPath] = useState<number[]>([]);
   const [found, setFound] = useState<{ word: string; points: number }[]>([]);
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
@@ -191,14 +241,24 @@ export function Wordshake() {
     setMascotNudge((n) => n + 1);
 
     // Award 1 FeatherPop per 4 points (rounded down, min 0) to the active child.
-    const award = Math.floor(pts / 4);
+    // Big bonus (+5) when they nail the seeded key word from Feather Sort.
+    let award = Math.floor(pts / 4);
+    if (keyWord && w === keyWord.toUpperCase()) {
+      award += 5;
+      setMood("wow");
+      setMascotMessage(`MAGIC WORD! "${w}" — bonus FeatherPop!`);
+      setMascotNudge((n) => n + 1);
+      childCheer();
+    }
     if (award > 0) {
       void awardFeatherPopAction(award).catch(() => {});
     }
   }
 
   function newGame() {
-    setGrid(rollGrid());
+    const fresh = rollGrid(keyWord);
+    setGrid(fresh.grid);
+    setKeyWordPath(fresh.seededPath);
     setGridSeed((s) => s + 1);
     setPath([]);
     setFound([]);
@@ -291,6 +351,14 @@ export function Wordshake() {
             <Sparkles aria-hidden className="h-4 w-4" />
             {totalPoints} pts
           </div>
+          {keyWord ? (
+            <div
+              className={`keyword-pill ${found.some((f) => f.word === keyWord.toUpperCase()) ? "is-found" : ""}`}
+            >
+              <Sparkles aria-hidden className="h-4 w-4" />
+              Goal:&nbsp;<strong>{keyWord.toUpperCase()}</strong>
+            </div>
+          ) : null}
         </div>
 
         <div ref={boardRef} className={`shake-board ${boardClass}`}>
@@ -298,6 +366,7 @@ export function Wordshake() {
             const sel = path.indexOf(idx);
             const isSel = sel !== -1;
             const isLast = sel === path.length - 1 && isSel;
+            const isKeyCell = keyWordPath?.includes(idx) ?? false;
             return (
               <button
                 key={`${gridSeed}-${idx}`}
@@ -309,7 +378,7 @@ export function Wordshake() {
                 disabled={!running}
                 className={`shake-cell ${isSel ? "is-selected" : ""} ${
                   isLast ? "is-last" : ""
-                }`}
+                } ${isKeyCell ? "is-key" : ""}`}
                 style={{ animationDelay: `${idx * 30}ms` }}
                 aria-label={`Letter ${letter}${isSel ? `, selected ${sel + 1}` : ""}`}
               >

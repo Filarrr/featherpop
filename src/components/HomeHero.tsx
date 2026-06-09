@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Camera, Feather, Sparkles } from "lucide-react";
+import { Feather, Gamepad2, Sparkles, Wand2 } from "lucide-react";
 import { useActiveChild } from "@/lib/use-active-child";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { HomeStats } from "@/components/HomeStats";
@@ -40,25 +40,26 @@ export function HomeHero() {
             {active ? `, ${active.nickname}` : ""}
           </span>
           <h1 className="h-display hero-title mt-2">
-            <span className="h-gradient">Today&apos;s adventure</span>
+            <span className="h-gradient">Sort the feathers,</span>
             <br />
-            <span className="h-stroke">awaits</span>
+            <span className="h-stroke">hatch a word</span>
           </h1>
           <p className="hero-subtitle">
-            Open the camera at any Ms. Feather Pop QR — earn a magical feather,
-            grow your flock, and level up.
+            Drag scattered feathers into matching nests. A magical bird flies
+            in carrying a key word — play Letter Pop with it for bonus
+            FeatherPop.
           </p>
 
           <HomeStats />
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Link href="/scan" className="btn btn-primary btn-lg btn-pulse">
-              <Camera aria-hidden className="h-5 w-5" />
-              Scan a QR
+            <Link href="/sort" className="btn btn-primary btn-lg btn-pulse">
+              <Wand2 aria-hidden className="h-5 w-5" />
+              Play Feather Sort
             </Link>
-            <Link href="/missions" className="btn btn-sky">
-              <Sparkles aria-hidden className="h-5 w-5" />
-              My missions
+            <Link href="/play" className="btn btn-sky">
+              <Gamepad2 aria-hidden className="h-5 w-5" />
+              Letter Pop
             </Link>
             <Link href="/feathers" className="btn btn-ghost">
               <Feather aria-hidden className="h-5 w-5" />

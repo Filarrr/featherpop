@@ -507,3 +507,143 @@ Once you have a batch of PNGs in `public/media/avatars/`, tell me
 4. Lay the kid PNGs into the existing animated containers (so they
    wave / jump / cheer — the keyframe animation already exists, the
    PNG just rides on top).
+
+---
+
+# Feather Sort Game (v1.5 — new client direction)
+
+The Feather Sort game replaces the random-mission flow as the primary
+play loop. Six feathers scatter across the sky → child drag-sorts
+them into matching colored nests → on success, a magical bird flies
+across with a parchment banner revealing a **key word** → tap the
+word to play Letter Pop using that word as the goal. On failure, a
+cute (not scary) spider crawls in and eats the scattered letters.
+
+All prompts below use the same brand palette and "soft 2D storybook,
+Pixar-influenced lighting" style. Drop generated PNGs into
+`public/media/sort/` with the filenames shown — the code uses them
+automatically the moment they exist, falling back to inline SVG until
+then.
+
+## Recommended free / cheap models
+
+1. **Flux.1 [schnell]** via Hugging Face Spaces — free, very good
+2. **Leonardo AI** — 150 free credits/day, Phoenix model
+3. **DALL-E 3** in ChatGPT (Plus subscription or pay-per-image)
+4. **Midjourney v6** — paid but best — add `--ar 16:9 --style raw`
+
+## Background — `bg-sort.png` (1920×1080)
+
+> A magical purple-and-pink sky at golden hour over the cliffs of a
+> fantasy kingdom. Soft pink clouds drifting low. A glowing crescent
+> moon. Distant rolling hills in lavender silhouette. Two tall,
+> friendly trees on the left and right edges with mint-green leaves.
+> Empty central space — the sky takes the middle 70% of the frame —
+> ready for floating feathers to be composited. Soft painterly
+> storybook style, no text, no characters, no birds. Color palette:
+> #6a2dff purple, #b13bff magenta, #ff2d8e pink, #ffd14a gold,
+> #7cd1ff sky, #34e3a4 mint. Children's picture book illustration,
+> Pixar-influenced lighting, 4k. --ar 16:9 --style raw
+
+## Feather sprites — `feather-{type}.png` (six total, 512×512, transparent)
+
+Each is one magical feather, isolated, with a soft same-color glow halo.
+
+| Type        | Color   | Prompt fragment                                                                                                                   |
+| ----------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| falcon      | #ffb24a | "Warm orange and amber, top-down 3/4 view, slightly fluffy down at the base"                                                      |
+| courage     | #ff4d8a | "Hot pink and rose, slightly heart-shaped tip"                                                                                    |
+| wind        | #7ad3ff | "Sky blue with white cloud-wisp tips, looks ready to blow away"                                                                   |
+| confidence  | #a76bff | "Royal purple with iridescent shimmer, strong upright posture"                                                                    |
+| wisdom      | #5ee0c8 | "Mint green with darker emerald veins, calm and ancient feel"                                                                     |
+| joy         | #ffd24a | "Sunshine yellow with gold sparkles, bouncy and playful, curled tip"                                                              |
+
+Wrap each with:
+
+> A single magical {fragment} feather floating in the air. Soft {color}
+> glow halo. Painterly children's storybook style, isolated on
+> transparent background, no shadow on ground. Disney-Pixar lighting.
+> Ultra detailed barbs. --ar 1:1 --no background
+
+## Nests — `nest-{type}.png` (six total, 512×384, transparent)
+
+> A cozy round nest made of twigs and soft fluffy feathers, sitting
+> on a small pink-and-gold cloud. The nest interior glows softly in
+> {COLOR_HEX}. Empty (no eggs, no birds). Children's storybook style,
+> painterly, isolated on transparent background, no shadow. 3/4 view
+> from slightly above. --ar 4:3 --no background
+
+## Bird — `bird-fly.png` (1024×256, transparent)
+
+> A friendly magical cartoon bird in mid-flight, side view, wings
+> spread wide and slightly downward, carrying a small rolled-up
+> parchment banner in its beak. Warm purple-magenta gradient feathers
+> (#6a2dff to #ff2d8e), gold trim on wing tips, big shiny black eye
+> with white highlight, soft smile. Like a tiny phoenix made of love.
+> Painterly children's storybook style, isolated on transparent
+> background, no shadow. --ar 4:1 --no background
+
+Optional sprite sheet for wing-flap animation:
+
+> 8-frame sprite sheet of the same cartoon magical bird flying
+> side-view, wings flapping through the full cycle. 4×2 grid (each
+> frame 256×256), isolated on transparent background. Children's
+> storybook style. --ar 2:1 --no background
+
+Save as: `bird-fly-frames.png`.
+
+## Spider — `spider-creep.png` (1024×512, transparent) — **friendly, not scary**
+
+> A cute cartoon spider with 8 cuddly legs, slightly mischievous
+> smile showing ONE tiny fang, big round shiny eyes with sparkle
+> highlights, fluffy black body with a small purple tuft on its head.
+> Hanging from a single thin silk thread descending from above.
+> Painterly children's storybook style, isolated on transparent
+> background, no shadow. Disney-Pixar lighting. Looks like it's
+> about to play a prank, NOT scary. --ar 2:1 --no background
+
+Optional sprite sheet (creeping walk cycle, 6 frames, 3×2 grid, 256×256 each):
+
+> 6-frame sprite sheet of the same cute cartoon spider creeping
+> side-view, legs alternating through walk cycle. 3×2 grid, isolated
+> transparent background. Children's storybook style. --ar 3:2
+
+Save as: `spider-frames.png`.
+
+Optional eating frame for letter-chomp moment:
+
+> The same cute cartoon spider opening its mouth wide, eyes squinting
+> closed in delight, a cartoon letter "W" partially inside its mouth
+> being chomped. Web silk strands trailing behind. Isolated on
+> transparent background. NOT scary, looks like it's enjoying a snack.
+> --ar 1:1 --no background
+
+Save as: `spider-eating.png`.
+
+## Word banner — `banner-parchment.png` (1024×256, transparent)
+
+> A small rolled parchment banner with frayed edges and gold ribbon
+> ties at each end, slightly curled. Soft cream paper color (#fff7e6)
+> with a thin gold border. Center area EMPTY (text added in code).
+> Painterly children's storybook style, isolated on transparent
+> background. --ar 4:1 --no background
+
+## Optional flourishes
+
+- `glow-burst.png` (512×512) — golden glow halo for correct drops
+- `cloud-sad.png` (512×384) — tiny crying cloud for retry screens
+
+## Sound — fully procedural, no files needed
+
+New SFX added to `src/lib/audio.ts` alongside the existing engine:
+`featherPickup`, `featherDrop`, `wrongDrop`, `spiderApproach`,
+`birdWhoosh`, `wordReveal`. All synthesized with Web Audio — no
+external assets.
+
+## After generating
+
+Drop PNGs into `public/media/sort/` with the filenames above. The
+code already references them; SVG fallbacks render until each PNG
+lands. Tell me **"sort assets are in"** and I'll do a polish pass:
+sprite-sheet wing-flap, parallax background layers, bird shadow on
+the sky, particle sparkles when the parchment unrolls, etc.

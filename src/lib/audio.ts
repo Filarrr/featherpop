@@ -237,6 +237,51 @@ export function kidCrowdCheer() {
   childGiggle();
 }
 
+/* -------------------- Feather Sort SFX -------------------- */
+
+/** Soft "shwip" when a feather is picked up. */
+export function featherPickup() {
+  chirp(1200, 800, 90, "sine", 0.12);
+  chirp(800, 600, 60, "triangle", 0.08, 0.04);
+}
+
+/** Bright chime when a feather lands in the correct nest. */
+export function featherDrop() {
+  chirp(660, 990, 140, "triangle", 0.22, 0);
+  chirp(990, 1320, 160, "sine", 0.18, 0.06);
+  chirp(1320, 1760, 120, "triangle", 0.14, 0.16);
+}
+
+/** Soft buzz for wrong-nest drop. Not harsh — kid-safe. */
+export function wrongDrop() {
+  chirp(320, 220, 180, "sawtooth", 0.18);
+  chirp(220, 140, 140, "triangle", 0.12, 0.06);
+}
+
+/** Creeping descending slide as the spider appears. */
+export function spiderApproach() {
+  chirp(440, 110, 900, "triangle", 0.22);
+  // little tick-tick-tick of legs
+  [0.2, 0.4, 0.6, 0.8].forEach((d) => tone(180, 60, "square", 0.12, d));
+}
+
+/** Wind-up flute-like swell as the bird flies in. */
+export function birdWhoosh() {
+  chirp(220, 1200, 700, "sine", 0.22);
+  chirp(440, 1600, 500, "triangle", 0.15, 0.2);
+}
+
+/** Magical sparkle chord when the parchment word reveals. */
+export function wordReveal() {
+  // Major 7th chord arpeggio
+  const notes = [523, 659, 784, 988]; // C E G B
+  notes.forEach((n, i) => tone(n, 280, "triangle", 0.18, i * 0.07));
+  // sparkle dust
+  [1200, 1480, 1760, 2000].forEach((f, i) =>
+    tone(f, 120, "sine", 0.1, 0.35 + i * 0.05),
+  );
+}
+
 /* -------------------- Background arcade music -------------------- */
 // A simple, cheerful 8-step arpeggio over a I-V-vi-IV in C major.
 // We schedule one bar at a time and re-schedule with setInterval to loop.

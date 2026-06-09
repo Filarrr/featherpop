@@ -1,31 +1,39 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, Camera, Feather, Gamepad2, Gift, Sparkles } from "lucide-react";
+import {
+  BookOpen,
+  Feather,
+  Gamepad2,
+  Gift,
+  HandMetal,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
 import { HomeHero } from "@/components/HomeHero";
 import { resolveActiveChild } from "@/lib/active-child-server";
 
-const features = [
+const steps = [
   {
-    title: "Scan",
-    text: "Aim at any Ms. Feather Pop QR code.",
-    icon: Camera,
-    color: "var(--sky-4)",
-  },
-  {
-    title: "Mission",
-    text: "A new adventure appears every scan.",
-    icon: Sparkles,
-    color: "var(--gold)",
-  },
-  {
-    title: "Earn",
-    text: "Magical feathers + FeatherPop.",
-    icon: Feather,
+    title: "Sort",
+    text: "Drag scattered feathers into matching nests.",
+    icon: HandMetal,
     color: "var(--magenta)",
   },
   {
-    title: "Unlock",
-    text: "Real prizes — stickers, crowns, art prints.",
+    title: "Hatch",
+    text: "A bird flies in with a magic word for you.",
+    icon: Wand2,
+    color: "var(--gold)",
+  },
+  {
+    title: "Play",
+    text: "Letter Pop opens with your word as the goal.",
+    icon: Gamepad2,
+    color: "var(--sky-4)",
+  },
+  {
+    title: "Earn",
+    text: "FeatherPop in your wallet → real prizes.",
     icon: Gift,
     color: "var(--mint)",
   },
@@ -49,11 +57,11 @@ export default async function HomePage() {
             How it works
           </span>
           <h2 className="h-display mt-1 text-3xl">
-            Four little steps to soar
+            Sort → Hatch → Play → Earn
           </h2>
         </div>
         <div className="feature-row">
-          {features.map((f) => {
+          {steps.map((f) => {
             const Icon = f.icon;
             return (
               <article key={f.title} className="feature-pill">
@@ -69,11 +77,11 @@ export default async function HomePage() {
       </section>
 
       <section className="mt-10 quick-links">
-        <Link href="/story" className="quick-link">
-          <BookOpen aria-hidden className="h-5 w-5" />
+        <Link href="/feathers" className="quick-link">
+          <Feather aria-hidden className="h-5 w-5" />
           <span>
-            <strong>Story Time</strong>
-            <small>Ms. Feather Pop reads to you</small>
+            <strong>My Feathers</strong>
+            <small>See your collection</small>
           </span>
         </Link>
         <Link href="/rewards" className="quick-link">
@@ -83,11 +91,11 @@ export default async function HomePage() {
             <small>Spend your FeatherPop</small>
           </span>
         </Link>
-        <Link href="/play" className="quick-link">
-          <Gamepad2 aria-hidden className="h-5 w-5" />
+        <Link href="/story" className="quick-link">
+          <BookOpen aria-hidden className="h-5 w-5" />
           <span>
-            <strong>Letter Pop</strong>
-            <small>Spell words, earn bonus FeatherPop</small>
+            <strong>Story Time</strong>
+            <small>Ms. Feather Pop reads to you</small>
           </span>
         </Link>
       </section>
