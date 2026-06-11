@@ -13,15 +13,18 @@ import {
   Trophy,
 } from "lucide-react";
 import {
+  birdWhoosh,
   childCheer,
   ding,
   eagleVoice,
   fanfare,
   featherDrop,
+  pop,
   wordReveal,
   wrongDrop,
 } from "@/lib/audio";
 import { Confetti } from "@/components/Confetti";
+import { CountUp } from "@/components/CountUp";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { useActiveChild } from "@/lib/use-active-child";
 import { awardFeatherPopAction } from "@/lib/child-progress-actions";
@@ -114,15 +117,22 @@ export function QrScanner() {
     return true;
   }
 
-  // Detect completion + award.
+  // Detect completion + award + cascade of celebrations.
   useEffect(() => {
     if (!complete && foundCount === word.length && word.length > 0) {
       setComplete(true);
       setStatus("You did it! Word complete!");
-      // Stage the celebration: word reveal chord, fanfare, eagle voice.
-      wordReveal();
-      window.setTimeout(() => fanfare(), 600);
-      window.setTimeout(() => eagleVoice(), 1200);
+      // Layered audio cascade
+      pop();
+      window.setTimeout(() => wordReveal(), 100);
+      window.setTimeout(() => birdWhoosh(), 350);
+      window.setTimeout(() => fanfare(), 800);
+      window.setTimeout(() => eagleVoice(), 1400);
+      window.setTimeout(() => childCheer(), 2100);
+      // Multi-burst confetti for visual scale.
+      setConfettiKey((k) => k + 1);
+      window.setTimeout(() => setConfettiKey((k) => k + 1), 400);
+      window.setTimeout(() => setConfettiKey((k) => k + 1), 900);
       // Award FeatherPop equal to the word length.
       (async () => {
         try {
@@ -370,6 +380,35 @@ export function QrScanner() {
             <Check aria-hidden className="h-4 w-4" />
             Grown-up: we found them all
           </button>
+        </div>
+      ) : null}
+
+      {/* Full-stage celebration overlay on completion — eagle flies across,
+          big WORD COMPLETE banner, +N FeatherPop floats up, mascot dances. */}
+      {complete ? (
+        <div className="parkhunt-celebration" aria-hidden>
+          <div className="parkhunt-celebration-rays" />
+          <div className="parkhunt-celebration-eagle">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/media/sort/bird-fly.png" alt="" />
+          </div>
+          <div className="parkhunt-celebration-content">
+            <p className="parkhunt-celebration-kicker">
+              <Sparkles aria-hidden className="h-5 w-5" />
+              You found them all!
+            </p>
+            <h2 className="parkhunt-celebration-word">{word}</h2>
+            <p className="parkhunt-celebration-pop">
+              <span>+</span>
+              <CountUp to={word.length} duration={1200} />
+              <span>&nbsp;FeatherPop</span>
+            </p>
+          </div>
+          <div className="parkhunt-celebration-sparkles">
+            {Array.from({ length: 14 }).map((_, i) => (
+              <span key={i} style={{ ["--i" as string]: i }} />
+            ))}
+          </div>
         </div>
       ) : null}
     </div>
