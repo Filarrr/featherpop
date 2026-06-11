@@ -376,13 +376,11 @@ export function FeatherSortGame() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/media/sort/bird-fly.png" alt="" />
             </div>
-            <div className="sort-reveal-scroll">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/media/sort/banner-parchment.png"
-                alt=""
-                className="sort-reveal-scroll-img"
-              />
+            <div
+              className="sort-reveal-scroll"
+              role="img"
+              aria-label={`Eagle's magic word: ${keyWord.word}`}
+            >
               <div className="sort-reveal-scroll-text">
                 <p className="kicker">
                   <Sparkles aria-hidden className="h-4 w-4" />
