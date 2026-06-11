@@ -2972,10 +2972,10 @@ a { color: inherit; }
   place-items: center;
 }
 .bird-flier.is-flying {
-  animation: bird-path 2.2s cubic-bezier(.4, .1, .6, 1) forwards;
+  animation: bird-path 3.4s cubic-bezier(.4, .1, .6, 1) forwards;
 }
 .bird-flier.is-dropping {
-  animation: bird-drop-out 1.2s ease forwards;
+  animation: bird-drop-out 1.4s ease forwards;
 }
 .bird-flier.is-reveal {
   transform: translate(0, -8vh);

@@ -80,10 +80,9 @@ export function AnimatedAvatar({
     }
   }, [kind]);
 
-  if (kind === "probing") {
-    return <div style={{ width, height, ...style }} className={className} aria-hidden />;
-  }
-  if (kind === "missing") return <>{fallback}</>;
+  // Render the fallback (inline SVG mascot) during probing AND when nothing
+  // else is found, so the user never sees a blank rectangle.
+  if (kind === "probing" || kind === "missing") return <>{fallback}</>;
 
   if (kind === "sprite") {
     // CSS animation plays through the strip frame-by-frame

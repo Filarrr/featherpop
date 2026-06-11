@@ -50,11 +50,11 @@ export function BirdFlight({
   }, []);
 
   useEffect(() => {
-    const t1 = window.setTimeout(() => setPhase("dropping"), 2200);
+    const t1 = window.setTimeout(() => setPhase("dropping"), 3400);
     const t2 = window.setTimeout(() => {
       setPhase("reveal");
       onReveal?.();
-    }, 3400);
+    }, 4800);
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);

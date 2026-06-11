@@ -40,6 +40,28 @@ export function HomeHero() {
     router.push("/sort");
   }
 
+  // Pre-warm the sort assets the moment the home page renders so the bird
+  // and spider are in the browser cache when the child reaches them, not
+  // a fresh network fetch in the middle of the celebration.
+  useEffect(() => {
+    const preload = [
+      "/media/sort/bg-sort.png",
+      "/media/sort/bird-fly.png",
+      "/media/sort/bird-fly-frames.png",
+      "/media/sort/banner-parchment.png",
+      "/media/sort/spider-creep.png",
+      "/media/sort/spider-eating.png",
+      ...["falcon", "courage", "wind", "confidence", "wisdom", "joy"].flatMap((t) => [
+        `/media/sort/feather-${t}.png`,
+        `/media/sort/nest-${t}.png`,
+      ]),
+    ];
+    preload.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
+
   return (
     <section className="hero-home">
       <div className="hero-home-top">

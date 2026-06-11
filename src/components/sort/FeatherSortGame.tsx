@@ -52,8 +52,8 @@ interface FeatherInstance {
   placed: FeatherType | null;
 }
 
-const LIVES = 3;
-const ROUND_SECONDS = 40;
+const LIVES = 5;
+const ROUND_SECONDS = 60;
 
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
@@ -65,9 +65,9 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function pickColorsForRound(round: number): FeatherType[] {
-  // Round 1 = 3 colors, growing to 5 by round 4+. Always RANDOM subset, so
-  // the same round number doesn't always show the same colors.
-  const count = Math.min(5, 2 + round);
+  // Round 1 = 2 colors (very gentle, lets the child see the bird quickly),
+  // 2 = 3, 3 = 4, 4+ = 5. Random subset each round.
+  const count = Math.min(5, 1 + round);
   return shuffle(FEATHER_ORDER).slice(0, count);
 }
 
@@ -371,10 +371,24 @@ export function FeatherSortGame() {
         <div className="sort-lost">
           <h2 className="h-display text-3xl">Try again, brave friend!</h2>
           <p>Every sorter wobbles. Tap the button — you&apos;ve got this.</p>
-          <button type="button" onClick={resetRound} className="btn btn-gold btn-lg">
-            <RefreshCw aria-hidden className="h-5 w-5" />
-            Try this round again
-          </button>
+          <div className="sort-reveal-actions">
+            <button type="button" onClick={resetRound} className="btn btn-gold btn-lg">
+              <RefreshCw aria-hidden className="h-5 w-5" />
+              Try this round again
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPhase("bird");
+                pop();
+                window.setTimeout(() => birdWhoosh(), 200);
+                window.setTimeout(() => eagleVoice(), 700);
+              }}
+              className="btn btn-sky"
+            >
+              See the eagle anyway
+            </button>
+          </div>
         </div>
       ) : null}
 
