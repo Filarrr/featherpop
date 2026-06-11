@@ -46,6 +46,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  // Edge-to-edge under the iPhone notch / Dynamic Island. The CSS uses
+  // env(safe-area-inset-*) to pad correctly.
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({

@@ -38,24 +38,52 @@
   --font-display: var(--font-baloo);
 }
 
-* { box-sizing: border-box; }
-html, body {
+* { box-sizing: border-box; min-width: 0; }
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: clip;
+}
+body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  /* Constrain to exact viewport width so any overflowing descendant
-     (brandbar content, sprite sheets, etc.) is clipped instead of
-     widening the body and shifting every centered element off-axis. */
-  width: 100%;
-  max-width: 100vw;
+  /* Use 100dvw so iOS Safari's address-bar resizing doesn't briefly
+     widen the body during scroll. */
+  width: 100dvw;
+  max-width: 100dvw;
   overflow-x: clip;
+  /* Honor the iPhone notch / Dynamic Island safe-areas in landscape and
+     on devices where they're non-zero in portrait. Padding here pulls
+     the entire layout inside the safe inset so nothing renders under
+     the rounded screen corners. */
+  padding-inline:
+    env(safe-area-inset-left, 0)
+    env(safe-area-inset-right, 0);
 }
-/* Belt-and-suspenders: anything that would dare exceed the viewport
-   width is clipped at the shell, not body. */
 .app-shell {
-  max-width: 100vw;
+  width: 100%;
+  max-width: 100%;
   overflow-x: clip;
+  position: relative;
 }
+/* Universal safety net: stop any descendant from forcing its parent
+   wider than the viewport. */
+.app-shell *,
+.app-shell *::before,
+.app-shell *::after {
+  max-width: 100%;
+}
+/* …except for known-good full-bleed positioned overlays that legitimately
+   span the viewport. */
+.app-shell .confetti-overlay,
+.app-shell .parkhunt-celebration,
+.app-shell .bird-stage,
+.app-shell .spider-stage,
+.app-shell .sort-stage::before,
+.app-shell .parkhunt::before,
+.app-shell .forest-overlay { max-width: none; }
 
 body {
   background:
@@ -80,9 +108,13 @@ a { color: inherit; }
 @media (min-width: 900px) { .app-shell { padding-bottom: 0; } }
 
 .page {
-  width: min(1100px, calc(100% - 2rem));
-  margin: 0 auto;
-  padding: 1.25rem 0 2rem;
+  width: 100%;
+  max-width: min(1100px, calc(100% - 1.5rem));
+  margin-inline: auto;
+  padding: 1rem 0 2rem;
+}
+@media (min-width: 640px) {
+  .page { max-width: min(1100px, calc(100% - 2rem)); padding: 1.25rem 0 2rem; }
 }
 
 /* ---------- Brand bar ---------- */
