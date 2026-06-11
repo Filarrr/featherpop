@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Feather, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
+import { Camera, Feather, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
 
 const links = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/sort", label: "Sort", icon: Wand2 },
+  { href: "/sort", label: "Feather Match", icon: Wand2 },
   { href: "/play", label: "Letter Pop", icon: Gamepad2 },
+  { href: "/scan", label: "ParkHunt", icon: Camera },
   { href: "/feathers", label: "Feathers", icon: Feather },
   { href: "/rewards", label: "Prizes", icon: Gift },
 ];

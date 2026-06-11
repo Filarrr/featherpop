@@ -2,47 +2,64 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BrowserQRCodeReader, IScannerControls } from "@zxing/browser";
 import { Camera, Keyboard, Sparkles } from "lucide-react";
 import { ding } from "@/lib/audio";
 
-// V1 pivot: every QR is a portal to a random mission. The slug seeds the
-// mission picker — same QR can be replayed and rolls a different mission.
-// We accept anything that looks like a slug or a /quest/<slug> URL.
-function extractSlug(rawValue: string): string | null {
+// Park Hunt flow: every QR detected in the park reveals a word for Letter
+// Pop. The QR content can be:
+//   - A word (e.g. "WIND") — used directly
+//   - A URL with ?word=XYZ — extracted
+//   - A /play/<word> path — extracted
+// Anything else is sanitized into A-Z letters and used as-is.
+function extractWord(rawValue: string): string | null {
   const value = rawValue.trim();
   if (!value) return null;
   try {
     const url = new URL(value);
-    const match = url.pathname.match(/\/quest\/([^/?#]+)/);
-    if (match?.[1]) return slugify(match[1]);
+    const wq = url.searchParams.get("word");
+    if (wq) return sanitize(wq);
+    const m = url.pathname.match(/\/play\/([^/?#]+)/i);
+    if (m?.[1]) return sanitize(m[1]);
+    // bare path segment
+    const last = url.pathname.split("/").filter(Boolean).pop();
+    if (last) return sanitize(last);
   } catch {
-    /* not a URL */
+    /* not a URL — treat as bare text */
   }
-  const normalized = value.replace(/^quest:/i, "");
-  return slugify(normalized);
+  return sanitize(value);
 }
 
-function slugify(s: string): string | null {
-  const out = s.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
-  return out || null;
+function sanitize(s: string): string | null {
+  const out = s.toUpperCase().replace(/[^A-Z]/g, "");
+  return out.length >= 2 && out.length <= 12 ? out : null;
 }
 
 const SAMPLES = [
-  { slug: "welcome", label: "Welcome scan" },
-  { slug: "feather", label: "Feather portal" },
-  { slug: "wind", label: "Wind portal" },
-  { slug: "courage", label: "Courage portal" },
-  { slug: "joy", label: "Joy portal" },
+  { word: "WIND",  label: "Wind portal" },
+  { word: "STAR",  label: "Star portal" },
+  { word: "BRAVE", label: "Brave portal" },
+  { word: "EAGLE", label: "Eagle portal" },
+  { word: "JOY",   label: "Joy portal" },
 ];
 
 export function QrScanner() {
   const router = useRouter();
+  const params = useSearchParams();
+  const incomingWord = sanitize(params.get("word") ?? "");
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
-  const [manualCode, setManualCode] = useState("");
-  const [status, setStatus] = useState("Aim at a Ms. Feather Pop QR.");
+  const [manualCode, setManualCode] = useState(incomingWord ?? "");
+  const [status, setStatus] = useState(
+    incomingWord
+      ? `Find the letters for "${incomingWord}" at the park — scan any QR!`
+      : "Aim at a QR code at the park.",
+  );
+
+  function goPlay(word: string) {
+    router.push(`/play?word=${encodeURIComponent(word)}`);
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -56,25 +73,32 @@ export function QrScanner() {
           videoRef.current,
           (result) => {
             if (!result) return;
-            const slug = extractSlug(result.getText());
-            if (!slug) {
-              setStatus("Couldn't read that QR — try again.");
+            // Prefer the word baked into the URL (the one the eagle gave).
+            // If none was passed, use the word extracted from the QR.
+            const detected = extractWord(result.getText());
+            const word = incomingWord ?? detected;
+            if (!word) {
+              setStatus("Couldn't read that QR — try another one.");
               return;
             }
             ding(1100, 110);
             controlsRef.current?.stop();
-            router.push(`/quest/${slug}`);
+            goPlay(word);
           },
         );
 
         if (mounted) {
           controlsRef.current = controls;
-          setStatus("Camera ready · aim at a QR.");
+          setStatus(
+            incomingWord
+              ? `Find "${incomingWord}" at the park — scan any QR to unlock it!`
+              : "Camera ready · aim at a QR.",
+          );
         } else {
           controls.stop();
         }
       } catch {
-        setStatus("Camera not available — try a code or sample below.");
+        setStatus("Camera not available — try a sample or type a word below.");
       }
     }
 
@@ -83,16 +107,17 @@ export function QrScanner() {
       mounted = false;
       controlsRef.current?.stop();
     };
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incomingWord]);
 
   function submitManual(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const slug = extractSlug(manualCode);
-    if (!slug) {
-      setStatus("Type any code or paste a quest link.");
+    const word = sanitize(manualCode);
+    if (!word) {
+      setStatus("Type a word with 2–12 letters.");
       return;
     }
-    router.push(`/quest/${slug}`);
+    goPlay(word);
   }
 
   return (
@@ -102,11 +127,22 @@ export function QrScanner() {
           <div>
             <span className="kicker">
               <Camera aria-hidden className="h-4 w-4" />
-              Scanner
+              Park Hunt
             </span>
             <h1 className="h-display mt-2 text-3xl md:text-4xl">
-              Scan a mission portal
+              {incomingWord ? (
+                <>
+                  Find <span className="h-gradient">{incomingWord}</span> at the park
+                </>
+              ) : (
+                <>Scan a Park QR</>
+              )}
             </h1>
+            <p className="mt-2 text-[var(--ink-soft)]">
+              {incomingWord
+                ? "Scan any Ms. Feather Pop QR you find — when you do, Letter Pop opens with this word as the goal."
+                : "Each QR at the park hides a word. Scan one to start a Letter Pop round!"}
+            </p>
           </div>
         </div>
 
@@ -128,8 +164,8 @@ export function QrScanner() {
             <Keyboard aria-hidden className="h-5 w-5" />
           </div>
           <div>
-            <span className="kicker">Manual code</span>
-            <h2 className="h-display mt-1 text-xl">Type a code instead</h2>
+            <span className="kicker">No camera?</span>
+            <h2 className="h-display mt-1 text-xl">Type a word instead</h2>
           </div>
         </div>
 
@@ -138,15 +174,16 @@ export function QrScanner() {
           onSubmit={submitManual}
         >
           <label className="field">
-            <span className="sr-only">Code</span>
+            <span className="sr-only">Word</span>
             <input
               value={manualCode}
-              onChange={(e) => setManualCode(e.target.value)}
-              placeholder="e.g. feather"
+              onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+              placeholder="e.g. WIND"
+              maxLength={12}
             />
           </label>
           <button type="submit" className="btn btn-dark self-end">
-            Go
+            Play
           </button>
         </form>
 
@@ -154,7 +191,11 @@ export function QrScanner() {
           <span className="kicker">Try a sample portal</span>
           <div className="row-list mt-2">
             {SAMPLES.map((s) => (
-              <Link key={s.slug} href={`/quest/${s.slug}`} className="row">
+              <Link
+                key={s.word}
+                href={`/play?word=${s.word}`}
+                className="row"
+              >
                 <span className="flex items-center gap-2">
                   <Sparkles
                     aria-hidden
@@ -163,7 +204,7 @@ export function QrScanner() {
                   <strong>{s.label}</strong>
                 </span>
                 <span className="text-xs font-bold text-[var(--ink-soft)]">
-                  /quest/{s.slug}
+                  {s.word}
                 </span>
               </Link>
             ))}

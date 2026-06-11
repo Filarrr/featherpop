@@ -14,7 +14,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Heart, RefreshCw, Sparkles } from "lucide-react";
+import { Heart, RefreshCw, Sparkles, Timer } from "lucide-react";
 import { FEATHER_META, FEATHER_ORDER } from "@/lib/levels";
 import type { FeatherType } from "@/lib/missions";
 import { pickKeyWord } from "@/lib/sort-words";
@@ -28,11 +28,15 @@ import { Confetti } from "@/components/Confetti";
 import {
   birdWhoosh,
   childCheer,
+  eagleVoice,
   fanfare,
   featherDrop,
   featherPickup,
   pop,
   spiderApproach,
+  spiderVoice,
+  startMusic,
+  urgentTick,
   wordReveal,
   wrongDrop,
 } from "@/lib/audio";
@@ -42,14 +46,14 @@ type Phase = "playing" | "bird" | "reveal" | "spider" | "won" | "lost";
 interface FeatherInstance {
   id: string;
   type: FeatherType;
-  // start position (vw / vh) for the scattered scene
-  x: number;
-  y: number;
+  x: number; // % across the play area
+  y: number; // % down the play area
   rot: number;
-  placed: FeatherType | null; // nest type if placed, null if still floating
+  placed: FeatherType | null;
 }
 
 const LIVES = 3;
+const ROUND_SECONDS = 40;
 
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
@@ -60,8 +64,16 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+function pickColorsForRound(round: number): FeatherType[] {
+  // Round 1 = 3 colors, growing to 5 by round 4+. Always RANDOM subset, so
+  // the same round number doesn't always show the same colors.
+  const count = Math.min(5, 2 + round);
+  return shuffle(FEATHER_ORDER).slice(0, count);
+}
+
 function makeRound(types: FeatherType[]): FeatherInstance[] {
-  // Two of each type so the sort has weight. Scatter in the upper play area.
+  // 2 of each → the sort has weight. Scattered on the LEFT portion of the
+  // play area so child drags rightward to the nest column.
   const all: FeatherInstance[] = [];
   let i = 0;
   for (const t of types) {
@@ -69,8 +81,8 @@ function makeRound(types: FeatherType[]): FeatherInstance[] {
       all.push({
         id: `${t}-${k}-${i++}`,
         type: t,
-        x: 8 + Math.random() * 84,
-        y: 8 + Math.random() * 40,
+        x: 6 + Math.random() * 62, // 6%–68% across (left scatter area)
+        y: 6 + Math.random() * 84, // 6%–90% down
         rot: -25 + Math.random() * 50,
         placed: null,
       });
@@ -83,17 +95,18 @@ export function FeatherSortGame() {
   const router = useRouter();
   const { activeChildId } = useActiveChild();
 
-  // Round 1 uses 3 colors → 6 feathers; later rounds add more.
   const [round, setRound] = useState(1);
-  const roundTypes = useMemo<FeatherType[]>(() => {
-    const count = Math.min(6, 2 + round);
-    return FEATHER_ORDER.slice(0, count);
-  }, [round]);
+  // Color subset re-rolled on every round (random each time, NOT
+  // index-based like before).
+  const [roundTypes, setRoundTypes] = useState<FeatherType[]>(() =>
+    pickColorsForRound(1),
+  );
 
   const [feathers, setFeathers] = useState<FeatherInstance[]>(() =>
     makeRound(roundTypes),
   );
   const [lives, setLives] = useState(LIVES);
+  const [timeLeft, setTimeLeft] = useState(ROUND_SECONDS);
   const [phase, setPhase] = useState<Phase>("playing");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [wrongPulse, setWrongPulse] = useState<FeatherType | null>(null);
@@ -102,15 +115,45 @@ export function FeatherSortGame() {
   const [mascotMsg, setMascotMsg] = useState<string | undefined>();
   const [mascotNudge, setMascotNudge] = useState(0);
 
+  // Re-roll key word per round; matches the round size.
   const keyWord = useMemo(
     () => pickKeyWord(Math.min(7, 3 + round)),
     [round],
   );
 
-  // Re-scatter when round changes.
+  // Boot music when the game mounts (the PLAY-button tap on home already
+  // unlocked the AudioContext, so this just keeps the music going).
+  useEffect(() => {
+    startMusic();
+  }, []);
+
+  // Re-scatter and reset timer on every round change.
   useEffect(() => {
     setFeathers(makeRound(roundTypes));
+    setTimeLeft(ROUND_SECONDS);
   }, [roundTypes]);
+
+  // Countdown timer.
+  useEffect(() => {
+    if (phase !== "playing") return;
+    if (timeLeft <= 0) {
+      // Time up → spider.
+      window.setTimeout(() => {
+        setPhase("spider");
+        setMood("oops");
+        setMascotMsg("Out of time! The spider snuck in…");
+        setMascotNudge((n) => n + 1);
+        spiderApproach();
+        window.setTimeout(() => spiderVoice(), 700);
+      }, 200);
+      return;
+    }
+    const t = window.setTimeout(() => {
+      setTimeLeft((s) => s - 1);
+      if (timeLeft <= 11) urgentTick();
+    }, 1000);
+    return () => window.clearTimeout(t);
+  }, [phase, timeLeft]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -119,20 +162,20 @@ export function FeatherSortGame() {
 
   const allPlaced = feathers.every((f) => f.placed !== null);
   useEffect(() => {
-    if (phase === "playing" && allPlaced) {
-      // Win!
+    if (phase === "playing" && allPlaced && feathers.length > 0) {
       setPhase("bird");
       setMood("wow");
-      setMascotMsg("Wonderful! A bird is coming with a magic word!");
+      setMascotMsg("Wonderful! The eagle is coming with a magic word!");
       setMascotNudge((n) => n + 1);
       setConfettiKey((k) => k + 1);
       pop();
       window.setTimeout(() => childCheer(), 200);
       window.setTimeout(() => birdWhoosh(), 500);
-      window.setTimeout(() => fanfare(), 1300);
-      window.setTimeout(() => wordReveal(), 2400);
+      window.setTimeout(() => eagleVoice(), 900); // Strudelay! Strudelay!
+      window.setTimeout(() => fanfare(), 2000);
+      window.setTimeout(() => wordReveal(), 3000);
     }
-  }, [allPlaced, phase]);
+  }, [allPlaced, phase, feathers.length]);
 
   const onDragStart = useCallback((e: DragStartEvent) => {
     setActiveId(String(e.active.id));
@@ -150,26 +193,24 @@ export function FeatherSortGame() {
       if (!feather) return;
 
       if (feather.type === targetType) {
-        // Correct!
         featherDrop();
         setFeathers((list) =>
           list.map((f) => (f.id === featherId ? { ...f, placed: targetType } : f)),
         );
       } else {
-        // Wrong — lose a life, pulse the wrong nest, wobble the feather back.
         wrongDrop();
         setWrongPulse(targetType);
         window.setTimeout(() => setWrongPulse(null), 600);
         setLives((l) => {
           const next = l - 1;
           if (next <= 0) {
-            // Spider time.
             window.setTimeout(() => {
               setPhase("spider");
               setMood("oops");
               setMascotMsg("Oh no — try again, you can do it!");
               setMascotNudge((n) => n + 1);
               spiderApproach();
+              window.setTimeout(() => spiderVoice(), 700);
             }, 350);
           } else {
             setMood("oops");
@@ -184,8 +225,9 @@ export function FeatherSortGame() {
   );
 
   function resetRound() {
-    setFeathers(makeRound(roundTypes));
+    setRoundTypes(pickColorsForRound(round)); // re-roll colors on retry
     setLives(LIVES);
+    setTimeLeft(ROUND_SECONDS);
     setPhase("playing");
     setMood("idle");
     setMascotMsg(undefined);
@@ -193,8 +235,11 @@ export function FeatherSortGame() {
   }
 
   function nextRound() {
-    setRound((r) => r + 1);
+    const r = round + 1;
+    setRound(r);
+    setRoundTypes(pickColorsForRound(r));
     setLives(LIVES);
+    setTimeLeft(ROUND_SECONDS);
     setPhase("playing");
     setMood("idle");
     setMascotMsg(undefined);
@@ -202,7 +247,6 @@ export function FeatherSortGame() {
   }
 
   async function goLetterPop() {
-    // Award FeatherPop bonus for clearing the sort, then jump to Letter Pop.
     const bonus = Math.max(1, Math.floor(roundTypes.length / 2));
     try {
       if (activeChildId) await awardFeatherPopAction(bonus);
@@ -210,9 +254,33 @@ export function FeatherSortGame() {
     router.push(`/play?word=${encodeURIComponent(keyWord.word)}`);
   }
 
+  async function goParkHunt() {
+    // After eagle drops word → child scans QR in the park to "find" the
+    // letters. Pass the word through the URL so /scan can hand it to
+    // Letter Pop once a QR is detected.
+    try {
+      if (activeChildId)
+        await awardFeatherPopAction(Math.max(1, Math.floor(roundTypes.length / 2)));
+    } catch {}
+    router.push(`/scan?word=${encodeURIComponent(keyWord.word)}`);
+  }
+
+  const timeUrgent = phase === "playing" && timeLeft <= 10;
+
   return (
-    <div className="sort-stage">
+    <div className="sort-stage sort-stage-forest">
       <Confetti trigger={confettiKey} pieces={70} />
+
+      {/* Forest silhouette overlay — pure CSS trees flanking the play area */}
+      <div className="forest-overlay" aria-hidden>
+        <div className="forest-trees forest-trees-left">
+          <span /><span /><span />
+        </div>
+        <div className="forest-trees forest-trees-right">
+          <span /><span /><span />
+        </div>
+        <div className="forest-ground" />
+      </div>
 
       <header className="sort-hud">
         <span className="kicker">
@@ -220,22 +288,28 @@ export function FeatherSortGame() {
           Round {round}
         </span>
         <h1 className="h-display text-2xl">
-          <span className="h-gradient">Sort the feathers</span>
+          <span className="h-gradient">Match the feathers</span>
         </h1>
-        <div className="sort-lives">
-          {Array.from({ length: LIVES }).map((_, i) => (
-            <Heart
-              key={i}
-              aria-hidden
-              className={`sort-life ${i < lives ? "is-on" : "is-off"}`}
-            />
-          ))}
+        <div className="sort-hud-right">
+          <span className={`sort-timer ${timeUrgent ? "is-urgent" : ""}`}>
+            <Timer aria-hidden className="h-4 w-4" />
+            {timeLeft}s
+          </span>
+          <div className="sort-lives">
+            {Array.from({ length: LIVES }).map((_, i) => (
+              <Heart
+                key={i}
+                aria-hidden
+                className={`sort-life ${i < lives ? "is-on" : "is-off"}`}
+              />
+            ))}
+          </div>
         </div>
       </header>
 
       {phase === "playing" ? (
         <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-          <div className="sort-board">
+          <div className="sort-board sort-board-horizontal">
             <div className="sort-board-scatter">
               {feathers
                 .filter((f) => f.placed === null)
@@ -248,7 +322,7 @@ export function FeatherSortGame() {
                 ))}
             </div>
 
-            <div className="sort-board-nests">
+            <div className="sort-board-nests sort-board-nests-vertical">
               {roundTypes.map((t) => {
                 const placed = feathers.filter((f) => f.placed === t);
                 return (
@@ -271,12 +345,15 @@ export function FeatherSortGame() {
 
       {phase === "reveal" ? (
         <div className="sort-reveal">
-          <p className="kicker"><Sparkles aria-hidden className="h-4 w-4" /> Magic word</p>
+          <p className="kicker"><Sparkles aria-hidden className="h-4 w-4" /> Eagle&apos;s magic word</p>
           <h2 className="h-display sort-reveal-word">{keyWord.word}</h2>
-          {keyWord.hint ? <p className="text-[var(--ink-soft)]">{keyWord.hint}</p> : null}
+          {keyWord.hint ? <p>{keyWord.hint}</p> : null}
           <div className="sort-reveal-actions">
-            <button type="button" onClick={goLetterPop} className="btn btn-gold btn-lg btn-pulse">
-              Play Letter Pop with this word
+            <button type="button" onClick={goParkHunt} className="btn btn-gold btn-lg btn-pulse">
+              Find it at the park (Scan)
+            </button>
+            <button type="button" onClick={goLetterPop} className="btn btn-sky">
+              Or play Letter Pop now
             </button>
             <button type="button" onClick={nextRound} className="btn btn-ghost">
               <RefreshCw aria-hidden className="h-5 w-5" />
@@ -318,6 +395,7 @@ function DraggableFeather({
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: feather.id,
   });
+  const meta = FEATHER_META[feather.type];
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
     left: `${feather.x}%`,
@@ -326,17 +404,21 @@ function DraggableFeather({
     cursor: "grab",
     touchAction: "none",
     zIndex: isActive ? 50 : 1,
+    ["--feather-color" as string]: meta.color,
+    ["--feather-glow" as string]: meta.glow,
   };
   return (
     <button
       ref={setNodeRef}
       style={style}
       className={`sort-feather ${isActive ? "is-dragging" : ""}`}
-      aria-label={`${feather.type} feather`}
+      aria-label={`${meta.name} feather`}
       {...listeners}
       {...attributes}
     >
-      <FeatherSvg type={feather.type} size={64} />
+      {/* Bold color ring under the feather makes which-color-is-this obvious */}
+      <span className="sort-feather-ring" aria-hidden />
+      <FeatherSvg type={feather.type} size={72} />
     </button>
   );
 }
@@ -361,12 +443,12 @@ function NestDrop({
         ["--feather-glow" as string]: meta.glow,
       }}
     >
-      <NestSvg type={type} size={130} />
+      <NestSvg type={type} size={120} />
       <span className="sort-nest-label">{meta.name}</span>
       <div className="sort-nest-stack">
         {Array.from({ length: placedCount }).map((_, i) => (
           <span key={i} className="sort-nest-feather">
-            <FeatherSvg type={type} size={36} />
+            <FeatherSvg type={type} size={32} />
           </span>
         ))}
       </div>

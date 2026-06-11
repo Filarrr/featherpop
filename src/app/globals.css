@@ -1070,14 +1070,28 @@ a { color: inherit; }
 .shake-board.is-win   { animation: pop 320ms ease; }
 
 .shake-side {
+  position: relative; /* mascot anchors here, not to the viewport */
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
   padding: 1rem;
+  padding-bottom: 7rem; /* room for the mascot bubble at the bottom */
   border-radius: 20px;
   background: linear-gradient(135deg, #1a0f3a, #3d1aa3);
   color: white;
+  min-height: 160px;
 }
+
+/* On phones, force the Mascot out of overlay mode so its bubble can't
+   cover the letter grid above. */
+.shake-side .mascot {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  margin-top: 0.5rem;
+  max-width: 100%;
+}
+.shake-side .mascot-bubble { max-width: 100%; }
 .shake-builder {
   min-height: 3rem;
   padding: 0.6rem;
@@ -2710,6 +2724,29 @@ a { color: inherit; }
   padding: 0.85rem 1.25rem;
   background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0));
 }
+.sort-hud-right { display: flex; align-items: center; gap: 0.75rem; }
+.sort-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: white;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--ink);
+  box-shadow: 0 4px 12px rgba(106, 45, 255, 0.18);
+}
+.sort-timer.is-urgent {
+  background: linear-gradient(135deg, var(--pink), var(--magenta));
+  color: white;
+  animation: timer-flash 0.6s ease-in-out infinite;
+}
+@keyframes timer-flash {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
 .sort-hud .kicker { color: var(--ink-soft); }
 .sort-hud h1 { margin: 0; }
 .sort-lives { display: inline-flex; gap: 0.35rem; }
@@ -2728,15 +2765,25 @@ a { color: inherit; }
   grid-template-rows: 1fr auto;
   min-height: calc(100dvh - 220px);
 }
+/* Horizontal layout: scatter on the LEFT (≈65%) + nest column on RIGHT (≈35%).
+   Child drags left → right so both the source feather and the destination
+   nest are visible at the same time on portrait phones. */
+.sort-board-horizontal {
+  grid-template-rows: 1fr;
+  grid-template-columns: 1.85fr 1fr;
+  min-height: calc(100dvh - 220px);
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
 .sort-board-scatter {
   position: relative;
-  height: 50vh;
+  height: 100%;
   min-height: 320px;
 }
 .sort-feather {
   position: absolute;
-  width: 64px;
-  height: 96px;
+  width: 80px;
+  height: 110px;
   background: transparent;
   border: none;
   padding: 0;
@@ -2745,6 +2792,19 @@ a { color: inherit; }
   filter: drop-shadow(0 6px 14px rgba(0,0,0,0.15));
   animation: feather-float 4s ease-in-out infinite;
   transition: transform 180ms ease;
+}
+/* Bold color disc behind the feather → kids see WHICH COLOR FAMILY at a glance */
+.sort-feather-ring {
+  position: absolute;
+  inset: -8px -16px;
+  margin: auto;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--feather-color) 0%, transparent 70%);
+  opacity: 0.85;
+  z-index: -1;
+  filter: blur(2px);
 }
 .sort-feather:hover { transform: scale(1.06) translateY(-3px); }
 .sort-feather.is-dragging {
@@ -2764,6 +2824,17 @@ a { color: inherit; }
   gap: 0.65rem;
   padding: 0.75rem 1rem 1.5rem;
   background: linear-gradient(0deg, rgba(255,255,255,0.45), rgba(255,255,255,0));
+}
+/* Vertical nest column (used in horizontal layout) — nests stack top-to-
+   bottom on the right side, evenly distributed for easy thumb reach. */
+.sort-board-nests-vertical {
+  grid-template-columns: 1fr;
+  grid-auto-rows: 1fr;
+  align-content: stretch;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.65));
+  padding: 0.5rem;
+  gap: 0.4rem;
 }
 .sort-nest {
   position: relative;
@@ -2811,6 +2882,43 @@ a { color: inherit; }
 @keyframes feather-land {
   0%   { transform: translateY(-30px) scale(0.8); opacity: 0; }
   100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* ---------- Forest overlay (silhouette trees flanking the stage) ---------- */
+.forest-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.forest-trees {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.forest-trees-left  { left: 0;  flex-direction: row; }
+.forest-trees-right { right: 0; flex-direction: row-reverse; }
+.forest-trees span {
+  display: block;
+  width: 56px;
+  height: 130px;
+  background:
+    radial-gradient(50% 70% at 50% 30%, #2a4a18 0%, #1a3010 60%, transparent 70%),
+    linear-gradient(180deg, #2a4a18 0%, #11240a 100%);
+  clip-path: polygon(50% 0%, 100% 60%, 80% 60%, 100% 100%, 0% 100%, 20% 60%, 0% 60%);
+  filter: drop-shadow(0 -4px 12px rgba(0,0,0,0.25));
+}
+.forest-trees span:nth-child(2) { height: 160px; width: 64px; }
+.forest-trees span:nth-child(3) { height: 110px; width: 48px; }
+.forest-ground {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 14%;
+  background: linear-gradient(180deg, rgba(20, 45, 18, 0) 0%, rgba(20, 45, 18, 0.65) 100%);
 }
 
 /* ---------- Mascot anchor on the sort stage ---------- */
@@ -3140,6 +3248,99 @@ a { color: inherit; }
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ---------- Home hero ---------- */
+.home-page { padding-top: 0; }
+.hero-home {
+  display: grid;
+  place-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem 1rem 3rem;
+  min-height: calc(100dvh - 200px);
+  text-align: center;
+}
+.hero-home-top {
+  display: grid;
+  place-items: center;
+  gap: 0.4rem;
+}
+.hero-home-top .kicker {
+  justify-self: center;
+  color: var(--ink-soft);
+}
+.hero-home-top h1 {
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  line-height: 1.05;
+  margin: 0;
+}
+.hero-home-mascot {
+  margin-top: 0.5rem;
+  animation: mascot-bob 3.2s ease-in-out infinite;
+}
+
+/* ---------- Giant PLAY button ---------- */
+.play-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(180px, 40vw, 260px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: none;
+  background: radial-gradient(circle at 30% 25%, #ffe48a, #ffd14a 35%, #ff9a3a 70%, #ff5c8a 100%);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.6),
+    0 0 0 12px rgba(255, 209, 74, 0.45),
+    0 24px 50px rgba(255, 45, 142, 0.45);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  animation: play-button-bounce 1.6s ease-in-out infinite;
+  z-index: 2;
+}
+.play-button:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.85),
+    0 0 0 14px rgba(255, 209, 74, 0.65),
+    0 30px 60px rgba(255, 45, 142, 0.65);
+}
+.play-button:active { transform: scale(0.98); }
+.play-button-ring {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  opacity: 0.6;
+  animation: play-ring 2s ease-out infinite;
+}
+.play-button-ring-2 { animation-delay: 1s; }
+@keyframes play-ring {
+  0%   { transform: scale(0.85); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.play-button-icon {
+  display: grid;
+  place-items: center;
+  margin-bottom: -8px;
+  color: var(--ink);
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.18));
+}
+.play-button-text {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  letter-spacing: 0.08em;
+  color: white;
+  text-shadow: 0 3px 0 rgba(0,0,0,0.18);
+}
+@keyframes play-button-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .play-button, .play-button-ring, .hero-home-mascot { animation: none !important; }
 }
 
 /* ---------- Letter Pop key-word highlights ---------- */

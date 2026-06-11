@@ -4,18 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { BookOpen, Camera, Feather, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
+import { Camera, Feather, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
 import { SoundToggle } from "@/components/SoundToggle";
 import { ActiveChildChip } from "@/components/ActiveChildChip";
 
 const links = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/sort", label: "Feather Sort", icon: Wand2 },
-  { href: "/play", label: "Letter Pop", icon: Gamepad2 },
+  { href: "/sort", label: "Play Feather Match", icon: Wand2 },
+  { href: "/play", label: "Play Letter Pop", icon: Gamepad2 },
+  { href: "/scan", label: "Play ParkHunt Scan", icon: Camera },
   { href: "/feathers", label: "Feathers", icon: Feather },
-  { href: "/rewards", label: "Rewards", icon: Gift },
-  { href: "/story", label: "Story", icon: BookOpen },
-  { href: "/scan", label: "Scan", icon: Camera },
+  { href: "/rewards", label: "Prizes", icon: Gift },
 ];
 
 export function BrandBar() {
@@ -39,7 +38,7 @@ export function BrandBar() {
           </span>
           <span>
             <strong>Ms. Feather Pop</strong>
-            <small>Feather Sort</small>
+            <small>Feather Adventures</small>
           </span>
         </Link>
 

@@ -366,6 +366,53 @@ export function birdWhoosh() {
   chirp(440, 1400, 600, "triangle", 0.12, 0.15);
 }
 
+/** Strudelay! Strudelay! — the eagle's voice via speechSynthesis. */
+export function eagleVoice() {
+  if (typeof window === "undefined") return;
+  if (!isSoundEnabled()) return;
+  if (!("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance("Strudelay! Strudelay!");
+    u.rate = 1.0;
+    u.pitch = 0.7; // deeper for the eagle
+    u.volume = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const v =
+      voices.find((x) => /male|david|mark/i.test(x.name)) ??
+      voices.find((x) => x.lang?.startsWith("en"));
+    if (v) u.voice = v;
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* ignore */
+  }
+  // Add a triumphant fanfare under the call
+  chirp(660, 880, 220, "triangle", 0.18, 0.05);
+  chirp(880, 1320, 260, "sine", 0.16, 0.18);
+}
+
+/** "Try again!" — the spider's voice. Soft, slightly playful, kid-safe. */
+export function spiderVoice() {
+  if (typeof window === "undefined") return;
+  if (!isSoundEnabled()) return;
+  if (!("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance("Try again! All mine!");
+    u.rate = 0.95;
+    u.pitch = 0.85;
+    u.volume = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const v =
+      voices.find((x) => /male|david/i.test(x.name)) ??
+      voices.find((x) => x.lang?.startsWith("en"));
+    if (v) u.voice = v;
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Magical sparkle cascade when the parchment word reveals. */
 export function wordReveal() {
   // Pixie chord — Cmaj9 (C E G B D) arpeggio with triangle bell timbre
