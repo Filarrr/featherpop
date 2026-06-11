@@ -42,11 +42,15 @@ export function PrizeArt({ id, locked = false, size = 120 }: Props) {
         alt=""
         width={size}
         height={size}
+        className="prize-art-img"
         style={{
           width: size,
           height: "auto",
+          maxHeight: size * 1.2,
           objectFit: "contain",
-          filter: locked ? "grayscale(0.85) brightness(0.85)" : "none",
+          filter: locked
+            ? "grayscale(0.85) brightness(0.85) drop-shadow(0 8px 14px rgba(0,0,0,0.18))"
+            : "drop-shadow(0 10px 20px rgba(106, 45, 255, 0.35))",
           opacity: locked ? 0.7 : 1,
         }}
         draggable={false}

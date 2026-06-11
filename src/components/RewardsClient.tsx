@@ -216,26 +216,34 @@ export function RewardsClient() {
             </h3>
           </header>
           <div className="rewards-collection-shelf">
-            {earned.map((r) => (
-              <article
-                key={r.id}
-                className="rewards-collection-tile"
-                style={{
-                  ["--tier-ring" as string]: TIER_META[tierFor(r.featherpopRequired, r.memberOnly)].ring,
-                }}
-              >
-                <div className="rewards-collection-art">
-                  <PrizeArt id={r.id} size={84} />
-                </div>
-                <strong>{r.name}</strong>
-                {r.printable ? (
-                  <Link href={`/print/reward/${r.id}`} className="btn btn-ghost btn-sm">
-                    <Printer aria-hidden className="h-3.5 w-3.5" />
-                    Print
-                  </Link>
-                ) : null}
-              </article>
-            ))}
+            {earned.map((r, i) => {
+              const isNewest = i === earned.length - 1 && earned.length > 0;
+              return (
+                <article
+                  key={r.id}
+                  className={`rewards-collection-tile ${isNewest ? "is-newest" : ""}`}
+                  style={{
+                    ["--tier-ring" as string]: TIER_META[tierFor(r.featherpopRequired, r.memberOnly)].ring,
+                  }}
+                >
+                  {isNewest ? (
+                    <span className="rewards-new-ribbon" aria-hidden>
+                      NEW!
+                    </span>
+                  ) : null}
+                  <div className="rewards-collection-art">
+                    <PrizeArt id={r.id} size={92} />
+                  </div>
+                  <strong>{r.name}</strong>
+                  {r.printable ? (
+                    <Link href={`/print/reward/${r.id}`} className="btn btn-ghost btn-sm">
+                      <Printer aria-hidden className="h-3.5 w-3.5" />
+                      Print
+                    </Link>
+                  ) : null}
+                </article>
+              );
+            })}
           </div>
         </section>
       ) : null}
