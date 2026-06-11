@@ -340,16 +340,53 @@ export function FeatherSortGame() {
       ) : null}
 
       {phase === "bird" ? (
-        <BirdFlight word={keyWord.word} onReveal={() => setPhase("reveal")} />
+        <BirdFlight
+          word={keyWord.word}
+          onReveal={() => {
+            setPhase("reveal");
+            setMood("cheer");
+            setMascotMsg(
+              `Magic word: ${keyWord.word}! Find it at the park or play now!`,
+            );
+            setMascotNudge((n) => n + 1);
+          }}
+        />
       ) : null}
 
       {phase === "reveal" ? (
         <div className="sort-reveal">
-          <p className="kicker"><Sparkles aria-hidden className="h-4 w-4" /> Eagle&apos;s magic word</p>
-          <h2 className="h-display sort-reveal-word">{keyWord.word}</h2>
-          {keyWord.hint ? <p>{keyWord.hint}</p> : null}
+          {/* Eagle perched on top of a big center-stage parchment */}
+          <div className="sort-reveal-stage">
+            <div className="sort-reveal-eagle" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/media/sort/bird-fly.png" alt="" />
+            </div>
+            <div className="sort-reveal-scroll">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/media/sort/banner-parchment.png"
+                alt=""
+                className="sort-reveal-scroll-img"
+              />
+              <div className="sort-reveal-scroll-text">
+                <p className="kicker">
+                  <Sparkles aria-hidden className="h-4 w-4" />
+                  Eagle&apos;s magic word
+                </p>
+                <h2 className="sort-reveal-word">{keyWord.word}</h2>
+                {keyWord.hint ? (
+                  <p className="sort-reveal-hint">{keyWord.hint}</p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
           <div className="sort-reveal-actions">
-            <button type="button" onClick={goParkHunt} className="btn btn-gold btn-lg btn-pulse">
+            <button
+              type="button"
+              onClick={goParkHunt}
+              className="btn btn-gold btn-lg btn-pulse"
+            >
               Find it at the park (Scan)
             </button>
             <button type="button" onClick={goLetterPop} className="btn btn-sky">
