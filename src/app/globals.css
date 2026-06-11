@@ -76,14 +76,22 @@ body {
   max-width: 100%;
 }
 /* …except for known-good full-bleed positioned overlays that legitimately
-   span the viewport. */
+   span the viewport, AND avatars/sprites whose height is intrinsically
+   tied to width via aspect ratio — clamping max-width on those squeezes
+   them visually. */
 .app-shell .confetti-overlay,
 .app-shell .parkhunt-celebration,
 .app-shell .bird-stage,
 .app-shell .spider-stage,
 .app-shell .sort-stage::before,
 .app-shell .parkhunt::before,
-.app-shell .forest-overlay { max-width: none; }
+.app-shell .forest-overlay,
+.app-shell .fp-avatar,
+.app-shell .fp-avatar-wrap,
+.app-shell .fp-avatar-wrap *,
+.app-shell .sprite-anim,
+.app-shell .mascot-figure,
+.app-shell .mascot-figure * { max-width: none; }
 
 body {
   background:
@@ -243,6 +251,26 @@ a { color: inherit; }
 }
 @media (min-width: 420px) {
   .bottom-nav a { font-size: 0.65rem; padding: 0.45rem 0.5rem; }
+}
+.bottom-nav a.is-featured {
+  /* Featured center button — Letter Pop sits raised, gold-glowing,
+     bigger so it's the obvious "play" target. */
+  flex: 0 1 auto;
+  min-width: 80px;
+  background: linear-gradient(135deg, var(--gold), #ff9a3a);
+  color: var(--ink);
+  font-weight: 800;
+  padding: 0.7rem 0.85rem;
+  margin: -0.5rem 0.1rem;
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 4px rgba(255, 209, 74, 0.45),
+    0 12px 22px rgba(255, 154, 58, 0.55);
+  transform: translateY(-4px) scale(1.08);
+}
+.bottom-nav a.is-featured.is-active {
+  background: linear-gradient(135deg, var(--gold), var(--pink));
+  color: white;
 }
 .bottom-nav a.is-active {
   color: white;
@@ -1078,6 +1106,39 @@ a { color: inherit; }
 }
 @keyframes reward-letter-in {
   to { transform: scale(1) rotate(0); }
+}
+
+/* ---------- Wordshake intro / PLAY entry ---------- */
+.wordshake-intro {
+  display: grid;
+  place-items: center;
+  padding: 1rem 0.5rem 4rem;
+  min-height: calc(100dvh - 220px);
+}
+.wordshake-intro-card {
+  display: grid;
+  place-items: center;
+  gap: 0.85rem;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.95));
+  border-radius: 1.75rem;
+  padding: 1.5rem 1.25rem 1.75rem;
+  box-shadow: 0 22px 44px rgba(106, 45, 255, 0.22);
+  max-width: 460px;
+}
+.wordshake-intro-title {
+  font-size: clamp(1.6rem, 5.5vw, 2.4rem);
+  margin: 0.1rem 0;
+  line-height: 1.1;
+}
+.wordshake-intro-sub {
+  color: var(--ink-soft);
+  max-width: 30ch;
+  margin: 0;
+  font-size: 0.95rem;
+}
+.wordshake-intro-play {
+  margin: 0.75rem 0 0.25rem;
 }
 
 /* ---------- Wordshake (side game) ---------- */

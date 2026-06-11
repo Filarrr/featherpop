@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Camera, Feather, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
+import { Camera, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
 
+// 5 items, Letter Pop centered + styled as the featured button.
+// Feathers moved off the bottom nav — accessible from Prizes and the
+// BrandBar (it was making the row feel crowded on phones).
 const links = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/sort", label: "Feather Match", icon: Wand2 },
-  { href: "/play", label: "Letter Pop", icon: Gamepad2 },
-  { href: "/scan", label: "ParkHunt", icon: Camera },
-  { href: "/feathers", label: "Feathers", icon: Feather },
-  { href: "/rewards", label: "Prizes", icon: Gift },
+  { href: "/", label: "Home", icon: Home, featured: false },
+  { href: "/sort", label: "Feather Match", icon: Wand2, featured: false },
+  { href: "/play", label: "Letter Pop", icon: Gamepad2, featured: true },
+  { href: "/scan", label: "ParkHunt", icon: Camera, featured: false },
+  { href: "/rewards", label: "Prizes", icon: Gift, featured: false },
 ];
 
 export function BottomNav() {
@@ -19,7 +21,7 @@ export function BottomNav() {
     return null;
   }
   return (
-    <nav className="bottom-nav" aria-label="Quest navigation">
+    <nav className="bottom-nav" aria-label="Game navigation">
       {links.map((link) => {
         const isActive =
           link.href === "/"
@@ -30,7 +32,9 @@ export function BottomNav() {
           <Link
             key={link.href}
             href={link.href}
-            className={isActive ? "is-active" : ""}
+            className={`${isActive ? "is-active" : ""} ${
+              link.featured ? "is-featured" : ""
+            }`}
           >
             <Icon aria-hidden className="h-5 w-5" />
             {link.label}

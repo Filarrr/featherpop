@@ -53,7 +53,12 @@ interface FeatherInstance {
 }
 
 const LIVES = 5;
-const ROUND_SECONDS = 60;
+
+// Timer scales with round so later rounds (more feathers, more nests) stay
+// achievable. Round 1 = 60s, +10s per round to a max of 100s.
+function timerForRound(round: number): number {
+  return Math.min(100, 60 + (round - 1) * 10);
+}
 
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
@@ -64,26 +69,34 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+// How many feather TYPES to use this round (nest count).
 function pickColorsForRound(round: number): FeatherType[] {
-  // Round 1 = 2 colors (very gentle, lets the child see the bird quickly),
-  // 2 = 3, 3 = 4, 4+ = 5. Random subset each round.
-  const count = Math.min(5, 1 + round);
+  // 1 → 3 colors, 2 → 4, 3 → 5, 4+ → 6 (all colors).
+  const count = Math.min(6, 2 + round);
   return shuffle(FEATHER_ORDER).slice(0, count);
 }
 
-function makeRound(types: FeatherType[]): FeatherInstance[] {
-  // 2 of each → the sort has weight. Scattered on the LEFT portion of the
-  // play area so child drags rightward to the nest column.
+// How many feathers of EACH color to scatter — grows with the round so a
+// later round has a denser, more chaotic scatter.
+function feathersPerColor(round: number): number {
+  if (round <= 1) return 2;
+  if (round <= 3) return 3;
+  return 4;
+}
+
+function makeRound(types: FeatherType[], perColor: number): FeatherInstance[] {
+  // `perColor` of each → density grows with the round. Scattered on the LEFT
+  // portion of the play area so child drags rightward to the nest column.
   const all: FeatherInstance[] = [];
   let i = 0;
   for (const t of types) {
-    for (let k = 0; k < 2; k++) {
+    for (let k = 0; k < perColor; k++) {
       all.push({
         id: `${t}-${k}-${i++}`,
         type: t,
-        x: 6 + Math.random() * 62, // 6%–68% across (left scatter area)
-        y: 6 + Math.random() * 84, // 6%–90% down
-        rot: -25 + Math.random() * 50,
+        x: 4 + Math.random() * 64, // 4%–68% across (left scatter area)
+        y: 4 + Math.random() * 88, // 4%–92% down
+        rot: -28 + Math.random() * 56,
         placed: null,
       });
     }
@@ -103,10 +116,10 @@ export function FeatherSortGame() {
   );
 
   const [feathers, setFeathers] = useState<FeatherInstance[]>(() =>
-    makeRound(roundTypes),
+    makeRound(roundTypes, feathersPerColor(1)),
   );
   const [lives, setLives] = useState(LIVES);
-  const [timeLeft, setTimeLeft] = useState(ROUND_SECONDS);
+  const [timeLeft, setTimeLeft] = useState(() => timerForRound(1));
   const [phase, setPhase] = useState<Phase>("playing");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [wrongPulse, setWrongPulse] = useState<FeatherType | null>(null);
@@ -129,9 +142,9 @@ export function FeatherSortGame() {
 
   // Re-scatter and reset timer on every round change.
   useEffect(() => {
-    setFeathers(makeRound(roundTypes));
-    setTimeLeft(ROUND_SECONDS);
-  }, [roundTypes]);
+    setFeathers(makeRound(roundTypes, feathersPerColor(round)));
+    setTimeLeft(timerForRound(round));
+  }, [roundTypes, round]);
 
   // Countdown timer.
   useEffect(() => {
@@ -225,9 +238,11 @@ export function FeatherSortGame() {
   );
 
   function resetRound() {
-    setRoundTypes(pickColorsForRound(round)); // re-roll colors on retry
+    const types = pickColorsForRound(round);
+    setRoundTypes(types);
+    setFeathers(makeRound(types, feathersPerColor(round)));
     setLives(LIVES);
-    setTimeLeft(ROUND_SECONDS);
+    setTimeLeft(timerForRound(round));
     setPhase("playing");
     setMood("idle");
     setMascotMsg(undefined);
@@ -239,7 +254,7 @@ export function FeatherSortGame() {
     setRound(r);
     setRoundTypes(pickColorsForRound(r));
     setLives(LIVES);
-    setTimeLeft(ROUND_SECONDS);
+    setTimeLeft(timerForRound(round));
     setPhase("playing");
     setMood("idle");
     setMascotMsg(undefined);

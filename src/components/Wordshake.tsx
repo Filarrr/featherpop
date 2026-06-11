@@ -114,7 +114,10 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
   const [path, setPath] = useState<number[]>([]);
   const [found, setFound] = useState<{ word: string; points: number }[]>([]);
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
-  const [running, setRunning] = useState(true);
+  // Don't auto-start — show the PLAY entry screen first so the AudioContext
+  // can unlock on the user's tap (browsers block auto-play music + ticks).
+  const [running, setRunning] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
   const [boardClass, setBoardClass] = useState("");
   const [musicOn, setMusicOn] = useState(true);
   const [gridSeed, setGridSeed] = useState(0);
@@ -317,6 +320,53 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
     ro.observe(board);
     return () => ro.disconnect();
   }, [path]);
+
+  function startGame() {
+    setShowIntro(false);
+    setRunning(true);
+    pop();
+    // Music will start via the existing musicOn effect; the tap unlocks it.
+  }
+
+  if (showIntro) {
+    return (
+      <div className="wordshake-intro">
+        <div className="wordshake-intro-card">
+          <span className="kicker">
+            <Sparkles aria-hidden className="h-4 w-4" />
+            Letter Pop
+          </span>
+          <h2 className="h-display wordshake-intro-title">
+            {keyWord ? (
+              <>
+                Spell <span className="h-gradient">{keyWord}</span>
+              </>
+            ) : (
+              <span className="h-gradient">Build words to earn FeatherPop</span>
+            )}
+          </h2>
+          <p className="wordshake-intro-sub">
+            Tap connected letters to spell words. You have 2 minutes — every
+            word scores points, and points become FeatherPop.
+          </p>
+          <button
+            type="button"
+            onClick={startGame}
+            className="play-button wordshake-intro-play"
+            aria-label="Play Letter Pop"
+          >
+            <span className="play-button-ring" aria-hidden />
+            <span className="play-button-ring play-button-ring-2" aria-hidden />
+            <span className="play-button-text">PLAY</span>
+          </button>
+          <Link href="/" className="btn btn-ghost btn-sm">
+            <Home aria-hidden className="h-4 w-4" />
+            Back home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="wordshake">
