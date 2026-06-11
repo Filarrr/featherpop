@@ -1,39 +1,46 @@
 "use client";
 
+import { useState } from "react";
 import { FEATHER_META } from "@/lib/levels";
 import type { FeatherType } from "@/lib/missions";
 
 /**
- * Renders a single feather. If the user has placed a PNG asset at
- * /media/sort/feather-<type>.png it gets used automatically (via <img>'s
- * native fallback would fail — we use a lightweight loaded-flag trick).
- * Otherwise we render an inline SVG that already looks good.
+ * Renders a single feather. Prefers the PNG at
+ * /public/media/sort/feather-<type>.png when available; falls back to an
+ * inline SVG glyph if the PNG fails to load (e.g. during early dev before
+ * assets are dropped in).
  */
 export function FeatherSvg({
   type,
   size = 96,
-  asset,
 }: {
   type: FeatherType;
   size?: number;
-  asset?: boolean;
 }) {
   const meta = FEATHER_META[type];
-  if (asset) {
+  const [fallback, setFallback] = useState(false);
+
+  if (!fallback) {
     return (
-      // Production: drop /public/media/sort/feather-<type>.png and this <img>
-      // will resolve to it. Until then, the SVG below is the fallback.
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={`/media/sort/feather-${type}.png`}
         alt=""
         width={size}
-        height={size}
-        style={{ width: size, height: size, objectFit: "contain" }}
+        height={size * 1.4}
+        style={{
+          width: size,
+          height: "auto",
+          objectFit: "contain",
+          filter: `drop-shadow(0 6px 14px ${meta.glow})`,
+          pointerEvents: "none",
+        }}
         draggable={false}
+        onError={() => setFallback(true)}
       />
     );
   }
+
   return (
     <svg
       viewBox="0 0 64 96"
@@ -95,6 +102,29 @@ export function NestSvg({
   size?: number;
 }) {
   const meta = FEATHER_META[type];
+  const [fallback, setFallback] = useState(false);
+
+  if (!fallback) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`/media/sort/nest-${type}.png`}
+        alt=""
+        width={size}
+        height={size * 0.8}
+        style={{
+          width: size,
+          height: "auto",
+          objectFit: "contain",
+          filter: `drop-shadow(0 8px 20px ${meta.glow})`,
+          pointerEvents: "none",
+        }}
+        draggable={false}
+        onError={() => setFallback(true)}
+      />
+    );
+  }
+
   return (
     <svg
       viewBox="0 0 200 140"

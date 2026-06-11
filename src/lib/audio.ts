@@ -237,49 +237,149 @@ export function kidCrowdCheer() {
   childGiggle();
 }
 
+/* -------------------- Filtered-noise helpers -------------------- */
+
+/**
+ * A short burst of bandpass-filtered noise — used as the "body" of wind,
+ * whoosh and impact sounds. The filter sweep gives motion.
+ */
+function noiseBurst(
+  startFreq: number,
+  endFreq: number,
+  durationMs: number,
+  q: number = 4,
+  startGain: number = 0.18,
+  delay: number = 0,
+) {
+  const ctx = getCtx();
+  if (!ctx) return;
+  const t0 = ctx.currentTime + delay;
+  const dur = durationMs / 1000;
+  // Buffer of white noise — generated once per call (small).
+  const sr = ctx.sampleRate;
+  const len = Math.max(1, Math.floor(sr * dur));
+  const buf = ctx.createBuffer(1, len, sr);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.value = q;
+  bp.frequency.setValueAtTime(startFreq, t0);
+  bp.frequency.exponentialRampToValueAtTime(Math.max(endFreq, 40), t0 + dur);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(startGain, t0 + Math.min(0.05, dur * 0.2));
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(bp).connect(gain).connect(ctx.destination);
+  src.start(t0);
+  src.stop(t0 + dur + 0.02);
+}
+
+/** FM-synthesized bird chirp — sounds organic, more "real bird" than a chirp. */
+function birdChirp(
+  carrierFreq: number,
+  modIndex: number,
+  durationMs: number,
+  startGain: number = 0.18,
+  delay: number = 0,
+) {
+  const ctx = getCtx();
+  if (!ctx) return;
+  const t0 = ctx.currentTime + delay;
+  const dur = durationMs / 1000;
+  const carrier = ctx.createOscillator();
+  const mod = ctx.createOscillator();
+  const modGain = ctx.createGain();
+  const gain = ctx.createGain();
+  carrier.type = "sine";
+  mod.type = "sine";
+  carrier.frequency.value = carrierFreq;
+  mod.frequency.setValueAtTime(carrierFreq * 1.7, t0);
+  mod.frequency.exponentialRampToValueAtTime(carrierFreq * 2.4, t0 + dur);
+  modGain.gain.setValueAtTime(modIndex, t0);
+  modGain.gain.exponentialRampToValueAtTime(modIndex * 0.3, t0 + dur);
+  mod.connect(modGain).connect(carrier.frequency);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(startGain, t0 + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  carrier.connect(gain).connect(ctx.destination);
+  mod.start(t0);
+  carrier.start(t0);
+  mod.stop(t0 + dur + 0.05);
+  carrier.stop(t0 + dur + 0.05);
+}
+
 /* -------------------- Feather Sort SFX -------------------- */
 
-/** Soft "shwip" when a feather is picked up. */
+/** Soft "shwip" when a feather is picked up — short, airy. */
 export function featherPickup() {
-  chirp(1200, 800, 90, "sine", 0.12);
-  chirp(800, 600, 60, "triangle", 0.08, 0.04);
+  noiseBurst(2400, 4200, 110, 8, 0.12);
+  chirp(900, 1500, 70, "sine", 0.08, 0.03);
 }
 
-/** Bright chime when a feather lands in the correct nest. */
+/** Bright crystalline chime when a feather lands in the correct nest. */
 export function featherDrop() {
-  chirp(660, 990, 140, "triangle", 0.22, 0);
-  chirp(990, 1320, 160, "sine", 0.18, 0.06);
-  chirp(1320, 1760, 120, "triangle", 0.14, 0.16);
+  // Pluck attack
+  tone(880, 60, "triangle", 0.18);
+  // Layered chime
+  chirp(660, 990, 180, "sine", 0.18, 0.02);
+  chirp(990, 1320, 200, "triangle", 0.14, 0.08);
+  chirp(1760, 2200, 160, "sine", 0.1, 0.18);
+  // Sparkle dust tail
+  [2400, 2800, 3200].forEach((f, i) => tone(f, 80, "sine", 0.06, 0.22 + i * 0.05));
 }
 
-/** Soft buzz for wrong-nest drop. Not harsh — kid-safe. */
+/** Soft "wuh" for wrong-nest drop. Disappointed, not harsh. */
 export function wrongDrop() {
-  chirp(320, 220, 180, "sawtooth", 0.18);
-  chirp(220, 140, 140, "triangle", 0.12, 0.06);
+  chirp(340, 220, 200, "triangle", 0.18);
+  chirp(220, 150, 150, "sine", 0.12, 0.08);
+  noiseBurst(300, 200, 120, 2, 0.06, 0.04);
 }
 
-/** Creeping descending slide as the spider appears. */
+/** Creeping descending wobble + skittering tick-tick of spider legs. */
 export function spiderApproach() {
-  chirp(440, 110, 900, "triangle", 0.22);
-  // little tick-tick-tick of legs
-  [0.2, 0.4, 0.6, 0.8].forEach((d) => tone(180, 60, "square", 0.12, d));
+  // Descending creepy slide on a "wow-wah" filter wobble
+  chirp(540, 130, 950, "triangle", 0.2);
+  chirp(380, 90, 950, "sine", 0.1, 0.05);
+  // Skittering: rapid filtered noise pulses
+  for (let i = 0; i < 12; i++) {
+    noiseBurst(2200 + Math.random() * 1200, 800, 40, 12, 0.06, 0.15 + i * 0.07);
+  }
+  // Low ominous swell tail
+  chirp(80, 60, 600, "sawtooth", 0.05, 0.6);
 }
 
-/** Wind-up flute-like swell as the bird flies in. */
+/** Wing-flap whoosh + ascending whistle as the bird flies in. */
 export function birdWhoosh() {
-  chirp(220, 1200, 700, "sine", 0.22);
-  chirp(440, 1600, 500, "triangle", 0.15, 0.2);
+  // Wind body — wide-bandpass noise sweeping low→high (whoosh)
+  noiseBurst(220, 1800, 800, 3, 0.2);
+  // Ascending bird whistle (the FM chirp sounds organic)
+  birdChirp(880, 200, 360, 0.16, 0.1);
+  birdChirp(1100, 240, 320, 0.14, 0.32);
+  // 3 wing-beat noise pulses underneath
+  [0.05, 0.22, 0.4].forEach((d) =>
+    noiseBurst(160, 60, 100, 2, 0.18, d),
+  );
+  // Cheerful flute swell on top
+  chirp(440, 1400, 600, "triangle", 0.12, 0.15);
 }
 
-/** Magical sparkle chord when the parchment word reveals. */
+/** Magical sparkle cascade when the parchment word reveals. */
 export function wordReveal() {
-  // Major 7th chord arpeggio
-  const notes = [523, 659, 784, 988]; // C E G B
-  notes.forEach((n, i) => tone(n, 280, "triangle", 0.18, i * 0.07));
-  // sparkle dust
-  [1200, 1480, 1760, 2000].forEach((f, i) =>
-    tone(f, 120, "sine", 0.1, 0.35 + i * 0.05),
-  );
+  // Pixie chord — Cmaj9 (C E G B D) arpeggio with triangle bell timbre
+  const notes = [523, 659, 784, 988, 1175];
+  notes.forEach((n, i) => {
+    tone(n, 380, "triangle", 0.18, i * 0.08);
+    tone(n * 2, 380, "sine", 0.08, i * 0.08); // octave shimmer
+  });
+  // Cascading sparkle dust — high tones tumbling down
+  const dust = [3200, 2800, 2400, 2000, 1760, 1480];
+  dust.forEach((f, i) => tone(f, 90, "sine", 0.07, 0.45 + i * 0.05));
+  // Magic "ting" at the climax
+  tone(2640, 160, "triangle", 0.18, 0.55);
+  tone(3960, 220, "sine", 0.1, 0.55);
 }
 
 /* -------------------- Background arcade music -------------------- */
