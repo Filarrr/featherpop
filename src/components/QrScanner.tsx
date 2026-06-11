@@ -1,65 +1,141 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BrowserQRCodeReader, IScannerControls } from "@zxing/browser";
-import { Camera, Keyboard, Sparkles } from "lucide-react";
-import { ding } from "@/lib/audio";
+import {
+  Camera,
+  Check,
+  Keyboard,
+  RefreshCw,
+  Sparkles,
+  Trophy,
+} from "lucide-react";
+import {
+  childCheer,
+  ding,
+  eagleVoice,
+  fanfare,
+  featherDrop,
+  wordReveal,
+  wrongDrop,
+} from "@/lib/audio";
+import { Confetti } from "@/components/Confetti";
+import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
+import { useActiveChild } from "@/lib/use-active-child";
+import { awardFeatherPopAction } from "@/lib/child-progress-actions";
 
-// Park Hunt flow: every QR detected in the park reveals a word for Letter
-// Pop. The QR content can be:
-//   - A word (e.g. "WIND") — used directly
-//   - A URL with ?word=XYZ — extracted
-//   - A /play/<word> path — extracted
-// Anything else is sanitized into A-Z letters and used as-is.
-function extractWord(rawValue: string): string | null {
-  const value = rawValue.trim();
-  if (!value) return null;
+// Each QR placed in the park contains one of:
+//   - A bare letter ("S")
+//   - A URL/path with ?letter=S
+//   - A URL/path ending in /letter/S
+// The scanner pulls the letter out, and we fill the next unrevealed slot
+// for that letter in the target word.
+function extractLetter(rawValue: string): string | null {
+  const v = rawValue.trim();
+  if (!v) return null;
   try {
-    const url = new URL(value);
-    const wq = url.searchParams.get("word");
-    if (wq) return sanitize(wq);
-    const m = url.pathname.match(/\/play\/([^/?#]+)/i);
-    if (m?.[1]) return sanitize(m[1]);
-    // bare path segment
-    const last = url.pathname.split("/").filter(Boolean).pop();
-    if (last) return sanitize(last);
+    const u = new URL(v);
+    const q = u.searchParams.get("letter");
+    if (q) return clampLetter(q);
+    const m = u.pathname.match(/\/letter\/([A-Za-z])/i);
+    if (m?.[1]) return clampLetter(m[1]);
+    const last = u.pathname.split("/").filter(Boolean).pop() ?? "";
+    return clampLetter(last);
   } catch {
-    /* not a URL — treat as bare text */
+    return clampLetter(v);
   }
-  return sanitize(value);
 }
-
-function sanitize(s: string): string | null {
+function clampLetter(s: string): string | null {
   const out = s.toUpperCase().replace(/[^A-Z]/g, "");
-  return out.length >= 2 && out.length <= 12 ? out : null;
+  return out.length >= 1 ? out[0] : null;
 }
 
-const SAMPLES = [
+const SAMPLE_PORTALS = [
+  { word: "SOAR",  label: "Soar portal" },
   { word: "WIND",  label: "Wind portal" },
-  { word: "STAR",  label: "Star portal" },
   { word: "BRAVE", label: "Brave portal" },
   { word: "EAGLE", label: "Eagle portal" },
-  { word: "JOY",   label: "Joy portal" },
 ];
 
 export function QrScanner() {
   const router = useRouter();
   const params = useSearchParams();
-  const incomingWord = sanitize(params.get("word") ?? "");
+  const { activeChildId } = useActiveChild();
+  const word = useMemo(() => {
+    const w = (params.get("word") ?? "").toUpperCase().replace(/[^A-Z]/g, "");
+    return w.length >= 2 && w.length <= 12 ? w : "SOAR";
+  }, [params]);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
-  const [manualCode, setManualCode] = useState(incomingWord ?? "");
-  const [status, setStatus] = useState(
-    incomingWord
-      ? `Find the letters for "${incomingWord}" at the park — scan any QR!`
-      : "Aim at a QR code at the park.",
-  );
+  const [found, setFound] = useState<boolean[]>(() => word.split("").map(() => false));
+  const [manualLetter, setManualLetter] = useState("");
+  const [status, setStatus] = useState(`Find ${word.length} letters at the park!`);
+  const [recentLetter, setRecentLetter] = useState<string | null>(null);
+  const [confettiKey, setConfettiKey] = useState(0);
+  const [complete, setComplete] = useState(false);
+  const [rewarded, setRewarded] = useState(false);
 
-  function goPlay(word: string) {
-    router.push(`/play?word=${encodeURIComponent(word)}`);
+  const foundCount = found.filter(Boolean).length;
+
+  // Reset state when word changes.
+  useEffect(() => {
+    setFound(word.split("").map(() => false));
+    setComplete(false);
+    setRewarded(false);
+    setStatus(`Find ${word.length} letters at the park!`);
+  }, [word]);
+
+  function tryAccept(letter: string) {
+    // Match the FIRST unfound slot whose target letter matches.
+    const idx = word.split("").findIndex((l, i) => l === letter && !found[i]);
+    if (idx === -1) {
+      wrongDrop();
+      setStatus(
+        word.includes(letter)
+          ? `Already found "${letter}". Look for another letter!`
+          : `"${letter}" isn't in this word. Keep searching!`,
+      );
+      return false;
+    }
+    setFound((f) => {
+      const next = f.slice();
+      next[idx] = true;
+      return next;
+    });
+    setRecentLetter(letter);
+    setStatus(`Found "${letter}"! Keep going.`);
+    setConfettiKey((k) => k + 1);
+    featherDrop();
+    window.setTimeout(() => childCheer(), 200);
+    window.setTimeout(() => setRecentLetter(null), 1200);
+    return true;
   }
+
+  // Detect completion + award.
+  useEffect(() => {
+    if (!complete && foundCount === word.length && word.length > 0) {
+      setComplete(true);
+      setStatus("You did it! Word complete!");
+      // Stage the celebration: word reveal chord, fanfare, eagle voice.
+      wordReveal();
+      window.setTimeout(() => fanfare(), 600);
+      window.setTimeout(() => eagleVoice(), 1200);
+      // Award FeatherPop equal to the word length.
+      (async () => {
+        try {
+          if (activeChildId && !rewarded) {
+            await awardFeatherPopAction(word.length);
+            setRewarded(true);
+          }
+        } catch {
+          /* ignore */
+        }
+      })();
+    }
+  }, [foundCount, word.length, complete, activeChildId, rewarded, word]);
 
   useEffect(() => {
     let mounted = true;
@@ -73,32 +149,19 @@ export function QrScanner() {
           videoRef.current,
           (result) => {
             if (!result) return;
-            // Prefer the word baked into the URL (the one the eagle gave).
-            // If none was passed, use the word extracted from the QR.
-            const detected = extractWord(result.getText());
-            const word = incomingWord ?? detected;
-            if (!word) {
+            const letter = extractLetter(result.getText());
+            if (!letter) {
               setStatus("Couldn't read that QR — try another one.");
               return;
             }
-            ding(1100, 110);
-            controlsRef.current?.stop();
-            goPlay(word);
+            ding(1100, 90);
+            tryAccept(letter);
           },
         );
-
-        if (mounted) {
-          controlsRef.current = controls;
-          setStatus(
-            incomingWord
-              ? `Find "${incomingWord}" at the park — scan any QR to unlock it!`
-              : "Camera ready · aim at a QR.",
-          );
-        } else {
-          controls.stop();
-        }
+        if (mounted) controlsRef.current = controls;
+        else controls.stop();
       } catch {
-        setStatus("Camera not available — try a sample or type a word below.");
+        setStatus("Camera not available — try a letter below.");
       }
     }
 
@@ -108,109 +171,207 @@ export function QrScanner() {
       controlsRef.current?.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [incomingWord]);
+  }, [word]);
 
   function submitManual(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const word = sanitize(manualCode);
-    if (!word) {
-      setStatus("Type a word with 2–12 letters.");
+    const letter = clampLetter(manualLetter);
+    if (!letter) {
+      setStatus("Type a single letter.");
       return;
     }
-    goPlay(word);
+    tryAccept(letter);
+    setManualLetter("");
+  }
+
+  function resetHunt() {
+    setFound(word.split("").map(() => false));
+    setComplete(false);
+    setRewarded(false);
+    setRecentLetter(null);
+    setStatus(`Find ${word.length} letters at the park!`);
+  }
+
+  function goLetterPop() {
+    router.push(`/play?word=${encodeURIComponent(word)}`);
   }
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-      <section className="card">
-        <div className="mb-4 flex items-end justify-between gap-3">
-          <div>
-            <span className="kicker">
-              <Camera aria-hidden className="h-4 w-4" />
-              Park Hunt
-            </span>
-            <h1 className="h-display mt-2 text-3xl md:text-4xl">
-              {incomingWord ? (
-                <>
-                  Find <span className="h-gradient">{incomingWord}</span> at the park
-                </>
-              ) : (
-                <>Scan a Park QR</>
-              )}
-            </h1>
-            <p className="mt-2 text-[var(--ink-soft)]">
-              {incomingWord
-                ? "Scan any Ms. Feather Pop QR you find — when you do, Letter Pop opens with this word as the goal."
-                : "Each QR at the park hides a word. Scan one to start a Letter Pop round!"}
-            </p>
-          </div>
-        </div>
+    <div className="parkhunt">
+      <Confetti trigger={confettiKey} pieces={50} />
 
-        <div className="scanner-frame">
-          <video ref={videoRef} muted playsInline />
-          <div className="scanner-reticle" />
-        </div>
-        <p className="mt-3 text-center font-semibold text-[var(--ink-soft)]">
-          {status}
+      <header className="parkhunt-head">
+        <span className="kicker">
+          <Sparkles aria-hidden className="h-4 w-4" />
+          Park Hunt
+        </span>
+        <h1 className="h-display parkhunt-title">
+          <span className="h-gradient">Find the letters in the park</span>
+        </h1>
+        <p className="parkhunt-subtitle">
+          The eagle dropped this word into the park. Look for the hidden Ms.
+          Feather Pop letter QRs and scan them — each one fills in a slot
+          below. Find them all to complete the word!
         </p>
+      </header>
+
+      {/* The HUGE word display — slot per letter, fills in as kids scan */}
+      <section className="parkhunt-word" aria-label={`Target word ${word}`}>
+        {word.split("").map((l, i) => {
+          const isFound = found[i];
+          const isRecent = recentLetter === l && isFound;
+          return (
+            <span
+              key={i}
+              className={`parkhunt-letter ${isFound ? "is-found" : ""} ${
+                isRecent ? "is-recent" : ""
+              }`}
+              aria-label={isFound ? l : "missing letter"}
+            >
+              <span className="parkhunt-letter-glyph">{isFound ? l : "?"}</span>
+              <span className="parkhunt-letter-base" aria-hidden />
+            </span>
+          );
+        })}
       </section>
 
-      <aside className="card">
-        <div className="flex items-center gap-3">
-          <div
-            className="grid h-11 w-11 place-items-center rounded-2xl text-white"
-            style={{ background: "var(--magenta)" }}
-          >
-            <Keyboard aria-hidden className="h-5 w-5" />
-          </div>
-          <div>
-            <span className="kicker">No camera?</span>
-            <h2 className="h-display mt-1 text-xl">Type a word instead</h2>
-          </div>
-        </div>
+      <p
+        className={`parkhunt-progress ${complete ? "is-complete" : ""}`}
+        aria-live="polite"
+      >
+        {complete ? (
+          <>
+            <Trophy aria-hidden className="h-5 w-5" />
+            Word complete — +{word.length} FeatherPop!
+          </>
+        ) : (
+          <>
+            Found <strong>{foundCount}</strong> of {word.length}
+          </>
+        )}
+      </p>
 
-        <form
-          className="mt-4 grid grid-cols-[1fr_auto] gap-2"
-          onSubmit={submitManual}
-        >
-          <label className="field">
-            <span className="sr-only">Word</span>
-            <input
-              value={manualCode}
-              onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-              placeholder="e.g. WIND"
-              maxLength={12}
+      <div className="parkhunt-grid">
+        <section className="parkhunt-scanner">
+          <div className="scanner-frame parkhunt-scanner-frame">
+            <video ref={videoRef} muted playsInline />
+            <div className="scanner-reticle" />
+          </div>
+          <p className="parkhunt-status">{status}</p>
+        </section>
+
+        <aside className="parkhunt-side">
+          <div className="parkhunt-mascot" aria-hidden>
+            <MsFeatherPopAvatar
+              pose={complete ? "cheer" : recentLetter ? "wow" : "hint"}
+              size={120}
             />
-          </label>
-          <button type="submit" className="btn btn-dark self-end">
-            Play
-          </button>
-        </form>
-
-        <div className="mt-5">
-          <span className="kicker">Try a sample portal</span>
-          <div className="row-list mt-2">
-            {SAMPLES.map((s) => (
-              <Link
-                key={s.word}
-                href={`/play?word=${s.word}`}
-                className="row"
-              >
-                <span className="flex items-center gap-2">
-                  <Sparkles
-                    aria-hidden
-                    className="h-4 w-4 text-[var(--magenta)]"
-                  />
-                  <strong>{s.label}</strong>
-                </span>
-                <span className="text-xs font-bold text-[var(--ink-soft)]">
-                  {s.word}
-                </span>
-              </Link>
-            ))}
           </div>
+
+          {complete ? (
+            <div className="parkhunt-celebrate">
+              <h2 className="h-display text-2xl">
+                <span className="h-gradient">Wonderful, explorer!</span>
+              </h2>
+              <p>You found every letter of <strong>{word}</strong>.</p>
+              <div className="parkhunt-celebrate-actions">
+                <button
+                  type="button"
+                  className="btn btn-gold btn-lg btn-pulse"
+                  onClick={resetHunt}
+                >
+                  Hunt another word
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sky"
+                  onClick={goLetterPop}
+                >
+                  Play Letter Pop with {word}
+                </button>
+                <Link href="/sort" className="btn btn-ghost">
+                  <RefreshCw aria-hidden className="h-5 w-5" />
+                  Back to Feather Match
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div>
+                <span className="kicker">
+                  <Keyboard aria-hidden className="h-4 w-4" />
+                  No QRs in your park yet?
+                </span>
+                <p className="parkhunt-helper-text">
+                  Type a letter you spotted to fill it in by hand.
+                </p>
+              </div>
+
+              <form
+                className="parkhunt-manual"
+                onSubmit={submitManual}
+                aria-label="Type a letter"
+              >
+                <label className="field">
+                  <span className="sr-only">Letter</span>
+                  <input
+                    value={manualLetter}
+                    onChange={(e) =>
+                      setManualLetter(
+                        e.target.value.toUpperCase().slice(0, 1),
+                      )
+                    }
+                    placeholder="A"
+                    maxLength={1}
+                    inputMode="text"
+                    autoCapitalize="characters"
+                  />
+                </label>
+                <button type="submit" className="btn btn-dark">
+                  Add
+                </button>
+              </form>
+
+              <div className="parkhunt-samples">
+                <span className="kicker">Demo portals</span>
+                <p className="parkhunt-helper-text">
+                  No park nearby? Try a sample word.
+                </p>
+                <div className="parkhunt-samples-row">
+                  {SAMPLE_PORTALS.map((s) => (
+                    <Link
+                      key={s.word}
+                      href={`/scan?word=${s.word}`}
+                      className="parkhunt-sample"
+                    >
+                      <span>{s.label}</span>
+                      <strong>{s.word}</strong>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </aside>
+      </div>
+
+      {/* The "I'm done" checkpoint — for parents/guardians to mark the hunt
+          complete if a QR went missing, etc. */}
+      {!complete ? (
+        <div className="parkhunt-skip">
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => {
+              setFound(word.split("").map(() => true));
+            }}
+            aria-label="Mark hunt as done (grown-up override)"
+          >
+            <Check aria-hidden className="h-4 w-4" />
+            Grown-up: we found them all
+          </button>
         </div>
-      </aside>
+      ) : null}
     </div>
   );
 }

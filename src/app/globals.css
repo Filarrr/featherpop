@@ -39,7 +39,15 @@
 }
 
 * { box-sizing: border-box; }
-html, body { min-height: 100%; }
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  /* Kill horizontal scroll caused by any rogue absolute-positioned child
+     extending past the viewport — was throwing off-center layouts on
+     mobile (sign-in form drifting right, bottom nav misaligned). */
+  overflow-x: hidden;
+}
 
 body {
   background:
@@ -3514,6 +3522,294 @@ a { color: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .shake-cell.is-key, .keyword-pill { animation: none !important; }
+}
+
+/* ============================================================
+   Park Hunt — the main game. Children find QR letters hidden in
+   the park; each scan fills a letter slot.
+   ============================================================ */
+
+.parkhunt {
+  --slot-empty: rgba(255, 255, 255, 0.85);
+  --slot-found: linear-gradient(180deg, #ffd14a, #ff9a3a);
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 0.75rem 6rem;
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgba(255,255,255,0.65), transparent 70%),
+    linear-gradient(180deg, #b9e8ff 0%, #f3e3ff 45%, #ffd6f0 75%, #ffe9b8 100%);
+  min-height: calc(100dvh - 130px);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+.parkhunt::before {
+  /* Painted-park background overlay (uses the sort scene since it's
+     already loaded — keeps total payload tiny) */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    url("/media/sort/bg-sort.png") center top / cover no-repeat;
+  opacity: 0.4;
+  z-index: 0;
+  pointer-events: none;
+}
+.parkhunt > * { position: relative; z-index: 1; }
+
+.parkhunt-head {
+  text-align: center;
+  padding: 0.25rem 0.75rem 0;
+}
+.parkhunt-head .kicker { justify-self: center; }
+.parkhunt-title {
+  font-size: clamp(1.5rem, 6vw, 2.6rem);
+  line-height: 1.1;
+  margin: 0.35rem 0 0.3rem;
+}
+.parkhunt-subtitle {
+  color: var(--ink-soft);
+  font-size: clamp(0.85rem, 3.4vw, 1rem);
+  max-width: 36rem;
+  margin: 0 auto;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+}
+
+/* The marquee word with letter slots */
+.parkhunt-word {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.5rem 0.25rem;
+  min-height: 100px;
+}
+.parkhunt-letter {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(46px, 12vw, 84px);
+  height: clamp(60px, 14vw, 100px);
+  border-radius: 18px;
+  background: var(--slot-empty);
+  border: 3px dashed rgba(106, 45, 255, 0.4);
+  box-shadow: 0 8px 18px rgba(106, 45, 255, 0.15);
+  transition: transform 220ms ease, background 320ms ease, border-color 320ms ease;
+}
+.parkhunt-letter-glyph {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 5.5vw, 2.8rem);
+  color: rgba(106, 45, 255, 0.45);
+  line-height: 1;
+  transition: color 320ms ease, transform 320ms ease;
+}
+.parkhunt-letter-base {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 6px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(106, 45, 255, 0.25);
+}
+.parkhunt-letter.is-found {
+  background: var(--slot-found);
+  border-color: var(--gold);
+  border-style: solid;
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.6),
+    0 12px 28px rgba(255, 154, 58, 0.45);
+}
+.parkhunt-letter.is-found .parkhunt-letter-glyph {
+  color: var(--ink);
+  text-shadow: 0 2px 0 rgba(255,255,255,0.4);
+  transform: scale(1.04);
+}
+.parkhunt-letter.is-found .parkhunt-letter-base { background: rgba(255,255,255,0.55); }
+.parkhunt-letter.is-recent {
+  animation: parkhunt-letter-pop 0.7s cubic-bezier(.2,.9,.3,1.4);
+}
+@keyframes parkhunt-letter-pop {
+  0%   { transform: translateY(-30px) scale(0.5) rotate(-12deg); opacity: 0; }
+  50%  { transform: translateY(0)     scale(1.18) rotate(4deg); opacity: 1; }
+  100% { transform: translateY(0)     scale(1)    rotate(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .parkhunt-letter.is-recent { animation: none; }
+}
+
+.parkhunt-progress {
+  text-align: center;
+  font-weight: 800;
+  font-family: var(--font-baloo), sans-serif;
+  font-size: clamp(1rem, 3.6vw, 1.2rem);
+  color: var(--ink);
+  margin: 0;
+  display: inline-flex;
+  justify-self: center;
+  background: white;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(106, 45, 255, 0.18);
+  align-items: center;
+  gap: 0.4rem;
+  margin-inline: auto;
+  width: fit-content;
+}
+.parkhunt-progress.is-complete {
+  background: linear-gradient(135deg, var(--gold), var(--pink));
+  color: white;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.18);
+  animation: parkhunt-pulse 1.4s ease-in-out infinite;
+}
+@keyframes parkhunt-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+.parkhunt-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 0 0.5rem;
+}
+@media (min-width: 800px) {
+  .parkhunt-grid { grid-template-columns: 1.3fr 1fr; align-items: start; }
+}
+
+.parkhunt-scanner {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 0.75rem;
+  box-shadow: 0 18px 38px rgba(106, 45, 255, 0.25);
+}
+.parkhunt-scanner-frame {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  background: #1a0f3a;
+  border: 3px solid var(--magenta);
+}
+.parkhunt-scanner-frame video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.parkhunt-scanner-frame .scanner-reticle {
+  position: absolute;
+  inset: 12%;
+  border: 3px dashed rgba(255, 209, 74, 0.85);
+  border-radius: 1rem;
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.35);
+  animation: reticle-pulse 1.8s ease-in-out infinite;
+}
+@keyframes reticle-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.8; }
+  50%      { transform: scale(0.96); opacity: 1; }
+}
+.parkhunt-status {
+  text-align: center;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0.65rem 0 0;
+  min-height: 1.5rem;
+}
+
+.parkhunt-side {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 18px 38px rgba(106, 45, 255, 0.18);
+}
+.parkhunt-mascot {
+  display: grid;
+  place-items: center;
+}
+.parkhunt-helper-text {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0;
+}
+
+.parkhunt-manual {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+.parkhunt-manual .field input {
+  text-align: center;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+}
+
+.parkhunt-samples-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+.parkhunt-sample {
+  display: grid;
+  place-items: center;
+  gap: 0.15rem;
+  padding: 0.6rem 0.5rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(106,45,255,0.08), rgba(255,45,142,0.08));
+  border: 2px solid rgba(106,45,255,0.18);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.8rem;
+  text-align: center;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+.parkhunt-sample:hover {
+  transform: translateY(-2px);
+  border-color: var(--magenta);
+}
+.parkhunt-sample strong {
+  font-family: var(--font-baloo), sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  color: var(--magenta);
+}
+
+.parkhunt-celebrate {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0;
+  animation: parkhunt-celebrate-in 0.7s cubic-bezier(.2,.9,.3,1.4) both;
+}
+.parkhunt-celebrate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 320px;
+}
+.parkhunt-celebrate-actions .btn { justify-content: center; }
+@keyframes parkhunt-celebrate-in {
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.parkhunt-skip {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 
