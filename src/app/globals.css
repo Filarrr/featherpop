@@ -4108,7 +4108,15 @@ a { color: inherit; }
   display: grid;
   gap: 0.25rem;
 }
-.rewards-wallet .kicker { color: rgba(255,255,255,0.85); }
+/* On dark gradient cards, the default white-pill kicker becomes
+   white-on-white. Restyle with a translucent dark fill + gold text. */
+.rewards-wallet .kicker,
+.rewards-member-body .kicker {
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--gold);
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
 .rewards-wallet-balance {
   margin: 0;
   font-family: var(--font-baloo), sans-serif;
@@ -4419,7 +4427,7 @@ a { color: inherit; }
   box-shadow: 0 10px 22px rgba(255, 209, 74, 0.5);
 }
 .rewards-member-body { position: relative; display: grid; gap: 0.35rem; }
-.rewards-member-body .kicker { color: rgba(255,255,255,0.85); }
+/* (kicker on dark cards handled above) */
 .rewards-member-body ul {
   margin: 0.5rem 0;
   padding: 0;
