@@ -2,7 +2,8 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Home, RefreshCw, Sparkles, Timer, Volume2, VolumeX } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Feather, Home, RefreshCw, Sparkles, Timer, Volume2, VolumeX } from "lucide-react";
 import {
   buzz,
   childCheer,
@@ -106,6 +107,7 @@ function areAdjacent(a: number, b: number) {
 }
 
 export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
+  const router = useRouter();
   const initial = useMemo(() => rollGrid(keyWord), [keyWord]);
   const [grid, setGrid] = useState<string[]>(initial.grid);
   const [keyWordPath, setKeyWordPath] = useState<number[] | undefined>(
@@ -127,12 +129,31 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
   const [mood, setMood] = useState<MascotMood>("idle");
   const [mascotMessage, setMascotMessage] = useState<string | undefined>();
   const [mascotNudge, setMascotNudge] = useState(0);
+  // Visible counter of FeatherPop earned this session — so the kid actually
+  // sees the reward land instead of having to navigate to /rewards to
+  // confirm the server got it.
+  const [sessionPop, setSessionPop] = useState(0);
+  const pendingAwardsRef = useRef(0);
+  const refreshTimerRef = useRef<number | null>(null);
   const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const boardRef = useRef<HTMLDivElement | null>(null);
   const [boardSize, setBoardSize] = useState({ w: 0, h: 0 });
   const [linePx, setLinePx] = useState<{ x: number; y: number }[]>([]);
 
   useEffect(() => setMusicOn(isMusicEnabled()), []);
+
+  // On unmount: if there's still a pending refresh queued, fire it now so
+  // the navigation target sees the updated FeatherPop total.
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current !== null) {
+        window.clearTimeout(refreshTimerRef.current);
+        // The server already has the updated total; just trigger a refresh
+        // on the next paint after navigation by NOT clearing here.
+        router.refresh();
+      }
+    };
+  }, [router]);
 
   useEffect(() => {
     if (musicOn && running) startMusic();
@@ -254,7 +275,35 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
       childCheer();
     }
     if (award > 0) {
-      void awardFeatherPopAction(award).catch(() => {});
+      // Show it RIGHT NOW so the kid sees the reward (optimistic).
+      setSessionPop((n) => n + award);
+      pendingAwardsRef.current += award;
+      // Persist on the server. Batch by debouncing router.refresh() so we
+      // don't hammer the layout with 20 refreshes during a 2-minute game.
+      void (async () => {
+        try {
+          const result = await awardFeatherPopAction(award);
+          if (!result) {
+            console.warn(
+              "[wordshake] awardFeatherPopAction returned null — likely no active child cookie. " +
+                "FeatherPop won't persist beyond this session.",
+            );
+          }
+        } catch (err) {
+          console.warn("[wordshake] award failed:", err);
+        }
+        // Debounced refresh: 1.2s after the last award call. The server
+        // total is already updated; this just nudges the React tree to
+        // re-read it for BrandBar / /rewards / HomeStats.
+        if (refreshTimerRef.current !== null) {
+          window.clearTimeout(refreshTimerRef.current);
+        }
+        refreshTimerRef.current = window.setTimeout(() => {
+          router.refresh();
+          refreshTimerRef.current = null;
+          pendingAwardsRef.current = 0;
+        }, 1200);
+      })();
     }
   }
 
@@ -401,6 +450,12 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
             <Sparkles aria-hidden className="h-4 w-4" />
             {totalPoints} pts
           </div>
+          {sessionPop > 0 ? (
+            <div className="featherpop-pill" aria-live="polite">
+              <Feather aria-hidden className="h-4 w-4" />
+              +{sessionPop} FeatherPop
+            </div>
+          ) : null}
           {keyWord ? (
             <div
               className={`keyword-pill ${found.some((f) => f.word === keyWord.toUpperCase()) ? "is-found" : ""}`}

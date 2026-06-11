@@ -1,6 +1,9 @@
 import { RewardsClient } from "@/components/RewardsClient";
 
 export const metadata = { title: "Prizes" };
+// Always re-render so a fresh FeatherPop balance shows after the kid earns
+// some in Letter Pop / Feather Match / Park Hunt.
+export const dynamic = "force-dynamic";
 
 export default function RewardsPage() {
   return (
