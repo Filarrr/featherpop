@@ -17,40 +17,79 @@ After generation: trim with [Clipchamp](https://app.clipchamp.com/) or
 
 ## 1. `eagle-banner-reveal.mp4` — THE big moment (most important)
 
-**Duration:** 4–5 seconds. **Format:** 1080×1920 portrait (or 1920×1080
+**Duration:** 5 seconds. **Format:** 1080×1920 portrait (or 1920×1080
 landscape — both work, code handles either).
 
-### The prompt
+The bird visibly calls out **"Strudelay! Strudelay!"** twice during the
+clip — the audio is added in-app via speechSynthesis (the app already
+does the "Strudelay! Strudelay!" voice line), but the VIDEO needs to
+make it OBVIOUS the bird is shouting. Two beats:
+
+1. The bird's beak opens wide twice in dramatic sync with the call
+2. A cartoon speech bubble pops out next to the beak with the word
+   "STRUDELAY!" visible inside, then fades
+
+### The prompt (with the speaking moment baked in)
 
 ```
-A 4-second cinematic animated shot, 2D children's storybook style with
-Disney-Pixar finish. A magical cartoon eagle bird with iridescent
-purple-and-pink feathers (deep purple #6a2dff fading to magenta
-#b13bff to hot pink #ff2d8e), gold-tipped wing tips, a big shiny
-black eye with a small white highlight, and a friendly soft smile,
-flies into frame from the lower-left along a graceful arc. The bird
-carries a small rolled-up parchment scroll in its beak, held by a
-gold ribbon tie. The scroll is rolled tight, parchment-cream color,
-visible gold ribbon ends fluttering. Wings flap in slow,
-character-animation style across the entire 4 seconds — pronounced
-up-stroke, soft glide, second flap as it brakes. Background: a
-magical purple-and-pink sunset sky over the distant cliffs of a
-fantasy kingdom, soft pink clouds, a glowing crescent moon, faint
-hilltop castles in lavender silhouette far behind. Tiny gold glitter
-particles trail behind the bird's wing tips. At t=2.5s the bird
-slows, hovers in dead-center frame, and gently releases the scroll
-from its beak. The scroll falls about 30 pixels and unrolls open
-horizontally — the unrolling motion is satisfying and bouncy, gold
-ribbons untying with a small spring. The unrolled parchment now fills
-the center of the frame and is BLANK in the middle (cream, with
-visible paper texture and frayed edges — text will be overlaid in
-code). The bird continues hovering above the unrolled scroll until
-t=4.5s, wings flapping. Tiny sparkle stars POP into existence around
-the parchment in the final second. End frame: bird above, unrolled
-blank parchment below, sparkles everywhere, ready to overlay text.
+A 5-second cinematic animated shot, 2D children's storybook style
+with Disney-Pixar finish. A magical cartoon eagle bird with
+iridescent purple-and-pink feathers (deep purple #6a2dff fading to
+magenta #b13bff to hot pink #ff2d8e), gold-tipped wing tips, a big
+shiny black eye with a small white highlight, and a friendly soft
+smile, flies into frame from the lower-left along a graceful arc.
+The bird carries a small rolled-up parchment scroll clutched in its
+beak, held by a gold ribbon tie. The scroll is rolled tight,
+parchment-cream color with visible gold ribbon ends fluttering.
+Wings flap in slow character-animation style across the entire 5
+seconds.
+
+THE BIRD CALLS OUT TWICE:
+
+At t=0.6s the bird tilts its head up, beak opens WIDE (drops the
+scroll temporarily? no — keeps it firmly in the corner of its beak),
+and a cartoon comic-book speech bubble POPS into existence floating
+just to the right of the bird's beak. The speech bubble is a white
+rounded cloud-shape with a clean gold border and a curved tail
+pointing to the bird's beak. Inside the bubble, the word
+"STRUDELAY!" appears in bold playful storybook lettering, deep purple
+(#6a2dff) color, with a small exclamation mark. The bubble pops in
+with a small spring (scale 0 → 1.1 → 1 over 0.2s) and bobs gently.
+At t=1.4s the speech bubble fades out as the bird closes its beak.
+
+At t=1.9s the bird calls out a SECOND TIME — beak opens wide again,
+the SAME speech bubble (white rounded cloud, gold border, tail to
+beak) pops back in with "STRUDELAY!" in the same purple lettering,
+holds for 0.7s, then fades out by t=2.7s as the bird closes its beak.
+
+Both times the bird's beak opens noticeably wide so it is OBVIOUS
+the bird is shouting joyously, head tilted up slightly.
+
+Background throughout: a magical purple-and-pink sunset sky over the
+distant cliffs of a fantasy kingdom, soft pink clouds, a glowing
+crescent moon, faint hilltop castles in lavender silhouette far
+behind. Tiny gold glitter particles trail behind the bird's wing
+tips.
+
+At t=3.2s the bird slows, hovers in dead-center frame, and gently
+releases the scroll from its beak. The scroll falls about 30 pixels
+and unrolls open horizontally — the unrolling motion is satisfying
+and bouncy, gold ribbons untying with a small spring. The unrolled
+parchment now fills the center of the frame and is BLANK in the
+middle (cream, with visible paper texture and frayed edges — DO NOT
+write anything in the unrolled parchment, the word will be added
+later in code). The bird continues hovering above the unrolled
+scroll until t=5s, wings flapping. Tiny sparkle stars POP into
+existence around the parchment in the final second.
+
+End frame at t=5s: bird above, unrolled BLANK parchment below,
+sparkles everywhere, no speech bubble visible.
+
 Soft warm storybook lighting, gentle camera push-in 5% over the
-duration. No text, no letters, no logo, no watermark anywhere in the
-video. --ar 9:16 --quality high
+duration. The ONLY text anywhere in the video is "STRUDELAY!" inside
+the speech bubble, appearing only at t=0.6–1.4s and t=1.9–2.7s. No
+watermark, no logo, no text on the unrolled parchment, no captions.
+--ar 9:16 --quality high
 ```
 
 **Why this works:**
@@ -80,6 +119,31 @@ If the first generation looks off:
   background with minimal detail, soft out-of-focus clouds`
 - **Camera shake** → add: `static camera, no shake, no zoom, locked-off
   composition`
+- **AI mangles "STRUDELAY!" in the speech bubble** (common — most
+  video models can't write clean text):
+
+  **Plan B — symbolic call instead of a text bubble.** Replace the
+  speech-bubble paragraph with:
+
+  > At t=0.6s and again at t=1.9s the bird's beak opens WIDE in a
+  > clear "calling out" pose, head tilted up. Each time the beak
+  > opens, three small gold musical notes and two purple sparkle
+  > stars POP outward from the beak in a small arc, then fade. NO
+  > speech bubble, NO words. The mouth-open pose makes it obvious
+  > the bird is calling, and the gold notes are the only thing
+  > coming out of its beak.
+
+  The app's speechSynthesis says "Strudelay! Strudelay!" out loud
+  when the clip plays — together the audio + the symbolic "calling
+  out" sells the moment without the AI text-mangling risk.
+
+- **AI puts the speech bubble in the wrong place** → add: `the
+  speech bubble appears directly attached to the bird's beak by a
+  short curved tail, never floating in empty space far from the
+  bird`
+- **AI shows the bubble for the wrong duration** → add: `the speech
+  bubble appears exactly twice, briefly, then disappears completely
+  before the scroll unrolls`
 
 ---
 
