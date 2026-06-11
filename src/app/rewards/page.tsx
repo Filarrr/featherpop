@@ -1,36 +1,20 @@
-import Image from "next/image";
 import { RewardsClient } from "@/components/RewardsClient";
-import { KidRow } from "@/components/KidAvatar";
+
+export const metadata = { title: "Prizes" };
 
 export default function RewardsPage() {
   return (
     <main className="page">
-      <header className="mb-5">
-        <span className="kicker">Step 6 · Prizes</span>
-        <h1 className="h-display mt-2 text-4xl md:text-5xl">
-          <span className="h-gradient">Reward shelf</span>
+      <header className="rewards-page-head">
+        <span className="kicker">Prizes</span>
+        <h1 className="h-display text-3xl md:text-4xl">
+          <span className="h-gradient">Prize wall</span>
         </h1>
-        <p className="mt-2 max-w-2xl text-[var(--ink-soft)]">
-          Spend FeatherPop earned from quests on real-world prizes. Parents
-          activate rewards in person at events or at home.
+        <p>
+          Every feather earned brings a prize closer. Some you can print at
+          home, some come as physical merch — and a few are Members-only.
         </p>
       </header>
-
-      <section className="badge-shelf mb-5">
-        <Image
-          src="/media/ui/badges.png"
-          alt="Achievement badges: First Word, Five Words, Word Hunter, Word Champ, Word Legend"
-          width={1200}
-          height={400}
-          unoptimized
-          priority
-          className="badge-shelf-image"
-        />
-      </section>
-
-      <section className="kid-stage mb-4">
-        <KidRow kids={["bee", "lila", "mo", "ari"]} pose="jump" size={86} />
-      </section>
       <RewardsClient />
     </main>
   );

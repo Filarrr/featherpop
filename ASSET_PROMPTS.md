@@ -509,3 +509,97 @@ Once you have a batch of PNGs in `public/media/avatars/`, tell me
    PNG just rides on top).
 
 ---
+
+# Prize Wall art (v1.5 — drives subscriptions)
+
+The Prize Wall page ships with rich inline SVG illustrations for every
+prize so it looks premium on day one. Generating real PNG renderings
+and dropping them into `public/media/rewards/<id>.png` swaps the
+matching SVG out automatically — same fallback pattern as every other
+asset.
+
+## Brand bible
+
+Reuse for every prompt:
+
+> A premium kid-friendly product render in the Ms. Feather Pop brand
+> palette (#6a2dff purple, #b13bff magenta, #ff2d8e pink, #ffd14a gold,
+> #34e3a4 mint). Top-down 3/4 view, soft studio lighting, gentle
+> shadow on a creamy off-white background, painterly storybook style
+> with Disney-Pixar finish, ultra detailed, 4K. Isolated on a pure
+> white background. --ar 1:1 --style raw
+
+## Per-prize prompts
+
+Match the filename to the `id` field in `defaultRewards` (see
+`src/lib/game-data.ts`). Save into `public/media/rewards/<id>.png`.
+
+### `sticker.png` — Feather Sticker (Bronze)
+
+> Add to brand bible: a single circular holographic vinyl sticker
+> with a die-cut wavy edge, lying on a wooden park bench. The face
+> of the sticker shows a single magical glowing gold feather inside
+> a swirling holographic rainbow background. The sticker reflects
+> rainbow light on its surface. A small piece of the backing paper
+> visible at the edge. Cute children's craft style, photoreal.
+
+### `bookmark.png` — Quest Bookmark (Silver)
+
+> Add to brand bible: a printed paper bookmark, slightly curled at
+> the corners, standing upright on a stack of children's storybooks.
+> The bookmark has a purple-to-pink gradient background, a gold
+> "FEATHER QUEST" title bar at top, a big gold magical feather
+> illustration in the middle, and a small gold tassel hanging from a
+> hole punched at the top. Storybook style, photoreal.
+
+### `patch.png` — Word Champion Patch (Gold)
+
+> Add to brand bible: an embroidered iron-on circle patch sewn onto
+> a denim jacket sleeve, viewed close-up at a slight angle. The
+> patch has gold embroidered outer rim, pink-to-purple gradient
+> inner field with embroidered stars at the four diagonals, and a
+> gold ribbon banner across the middle that reads "CHAMPION" in bold
+> embroidered letters. The denim background has visible stitching
+> around the patch edge. Premium craft style, photoreal.
+
+### `glitter-badge.png` — Glitter Feather Badge (Diamond / Members)
+
+> Add to brand bible: a sparkling enamel pin in the shape of a
+> magical feather with a gold royal crown on top, displayed on a
+> jewelry pad. The feather glints with iridescent purple-pink
+> glitter, the crown has tiny ruby and amethyst gems set in it, and
+> two trailing pink-purple ribbon tails extend from the bottom.
+> The pin has a polished gold metal trim. Members-only luxury
+> children's collectible. Photoreal.
+
+### `gold-frame.png` — Gold Avatar Frame (Diamond / Members)
+
+> Add to brand bible: an ornate gold circular picture frame with
+> baroque leaf and laurel ornaments around the outside, viewed
+> straight-on, displayed against a velvet purple background. Inside
+> the frame a soft purple-pink gradient window. At the bottom of the
+> frame a small banner says "★ MEMBER ★" in elegant gold lettering.
+> Royal heirloom aesthetic, photoreal.
+
+## Folder layout
+
+Drop the generated PNGs here — code already references them:
+
+```
+public/media/rewards/
+  sticker.png
+  bookmark.png
+  patch.png
+  glitter-badge.png
+  gold-frame.png
+```
+
+Each file is optional — if missing, the inline SVG illustration
+renders instead. Add prizes one at a time, no full-batch required.
+
+## After generating
+
+Tell me **"prize assets are in"** and I'll do a polish pass on the
+Prize Wall: tighter shadows under each tile, a "new!" ribbon on the
+most recently unlocked prize, and a "next is members-only" upsell
+moment when a free-tier kid is close to running out of free prizes.
