@@ -4,17 +4,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Camera, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
 
-// 5 items, Letter Pop centered + styled as the featured button.
-// Feathers moved off the bottom nav — accessible from Prizes and the
-// BrandBar (it was making the row feel crowded on phones).
-const links = [
-  { href: "/", label: "Home", icon: Home, featured: false },
-  { href: "/sort", label: "Feather Match", icon: Wand2, featured: false },
-  { href: "/play", label: "Letter Pop", icon: Gamepad2, featured: true },
-  // Free users hit Word Hero (in-app game); membership flow can route
-  // members to /scan for the physical 6-station park hunt later.
-  { href: "/word-hero", label: "Park Hunt", icon: Camera, featured: false },
-  { href: "/rewards", label: "Prizes", icon: Gift, featured: false },
+type LinkDef = {
+  href: string;
+  label: string;
+  // When true, the label renders as a small 'Play' kicker on top of the
+  // game name (per client: kids don't realize the nav items are games).
+  prefix?: "Play";
+  icon: typeof Home;
+  featured?: boolean;
+};
+
+const links: LinkDef[] = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/sort", label: "Feather Match", icon: Wand2, prefix: "Play" },
+  { href: "/play", label: "Letter Pop", icon: Gamepad2, prefix: "Play", featured: true },
+  { href: "/word-hero", label: "Park Hunt", icon: Camera, prefix: "Play" },
+  { href: "/rewards", label: "Prizes", icon: Gift },
 ];
 
 export function BottomNav() {
@@ -39,7 +44,12 @@ export function BottomNav() {
             }`}
           >
             <Icon aria-hidden className="h-5 w-5" />
-            {link.label}
+            <span className="bottom-nav-label">
+              {link.prefix ? (
+                <small className="bottom-nav-prefix">{link.prefix}</small>
+              ) : null}
+              <span className="bottom-nav-name">{link.label}</span>
+            </span>
           </Link>
         );
       })}

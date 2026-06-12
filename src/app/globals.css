@@ -237,7 +237,7 @@ a { color: inherit; }
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 0.4rem 0.15rem;
+  padding: 0.35rem 0.15rem;
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.72);
   font-size: 0.6rem;
@@ -247,11 +247,42 @@ a { color: inherit; }
   transition: background 150ms ease, color 150ms ease, transform 150ms ease;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 @media (min-width: 420px) {
-  .bottom-nav a { font-size: 0.65rem; padding: 0.45rem 0.5rem; }
+  .bottom-nav a { font-size: 0.65rem; padding: 0.4rem 0.5rem; }
 }
+
+/* Stacked label: tiny 'Play' kicker over the game name */
+.bottom-nav-label {
+  display: grid;
+  place-items: center;
+  line-height: 1.05;
+  max-width: 100%;
+  overflow: hidden;
+}
+.bottom-nav-prefix {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.95;
+  line-height: 1;
+}
+@media (min-width: 420px) {
+  .bottom-nav-prefix { font-size: 0.58rem; }
+}
+.bottom-nav-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  white-space: nowrap;
+}
+.bottom-nav a.is-active .bottom-nav-prefix { color: rgba(255,255,255,0.95); }
+.bottom-nav a.is-featured .bottom-nav-prefix { color: var(--ink); opacity: 0.75; }
+.bottom-nav a.is-featured.is-active .bottom-nav-prefix { color: rgba(255,255,255,0.95); }
 .bottom-nav a.is-featured {
   /* Featured center button — Letter Pop sits raised, gold-glowing,
      bigger so it's the obvious "play" target. */
