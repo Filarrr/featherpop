@@ -1,383 +1,208 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowRight,
-  Camera,
-  Crown,
   Gift,
-  Lock,
-  Printer,
+  HelpCircle,
+  Palette,
+  Puzzle,
   Sparkles,
-  Trophy,
+  User as UserIcon,
 } from "lucide-react";
-import { listRewards } from "@/lib/admin-store";
-import { Reward } from "@/lib/game-data";
-import { useMembership } from "@/lib/use-membership";
 import { useActiveChild } from "@/lib/use-active-child";
-import { PrizeArt } from "@/components/rewards/PrizeArt";
-import { CountUp } from "@/components/CountUp";
-import { Confetti } from "@/components/Confetti";
-import { childCheer, fanfare, pop, wordReveal } from "@/lib/audio";
+import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 
-type Tier = "bronze" | "silver" | "gold" | "diamond";
-
-function tierFor(featherpop: number, memberOnly?: boolean): Tier {
-  if (memberOnly) return "diamond";
-  if (featherpop <= 6) return "bronze";
-  if (featherpop <= 15) return "silver";
-  return "gold";
+interface ShopReward {
+  id: string;
+  title: string;
+  cost: number;
+  icon: typeof Palette;
+  iconBg: string;
+  buttonBg: string;
 }
-const TIER_META: Record<
-  Tier,
-  { label: string; color: string; ring: string }
-> = {
-  bronze: {
-    label: "Bronze",
-    color: "#c98a52",
-    ring: "linear-gradient(135deg, #f0c897, #c98a52, #8a4a1e)",
+
+// Matches her spec exactly. Get-Reward action is wired in a follow-up
+// pass (today it logs a placeholder; the deduction lives server-side).
+const REWARDS: ShopReward[] = [
+  {
+    id: "coloring",
+    title: "Surprise Coloring Page",
+    cost: 100,
+    icon: Palette,
+    iconBg: "linear-gradient(135deg, #ffe7a0, #ffd14a)",
+    buttonBg: "linear-gradient(135deg, var(--pink), var(--magenta))",
   },
-  silver: {
-    label: "Silver",
-    color: "#a3acc5",
-    ring: "linear-gradient(135deg, #f3f5fb, #b9c3df, #7a87a8)",
+  {
+    id: "puzzle",
+    title: "Surprise Puzzle",
+    cost: 100,
+    icon: Puzzle,
+    iconBg: "linear-gradient(135deg, #cfe8ff, #7cd1ff)",
+    buttonBg: "linear-gradient(135deg, var(--sky-4), #4cb6e0)",
   },
-  gold: {
-    label: "Gold",
-    color: "#f0a900",
-    ring: "linear-gradient(135deg, #fff8b0, #ffd14a, #c98a00)",
+  {
+    id: "character",
+    title: "Surprise Character Card",
+    cost: 150,
+    icon: UserIcon,
+    iconBg: "linear-gradient(135deg, #e2d2ff, #b13bff)",
+    buttonBg: "linear-gradient(135deg, var(--purple), var(--magenta))",
   },
-  diamond: {
-    label: "Members Only",
-    color: "#b13bff",
-    ring: "linear-gradient(135deg, #ffd6f0, #b13bff, #6a2dff)",
+  {
+    id: "mystery",
+    title: "Mystery Reward",
+    cost: 250,
+    icon: HelpCircle,
+    iconBg: "linear-gradient(135deg, #ffd6f0, #ff7ab8)",
+    buttonBg: "linear-gradient(135deg, #ff9a3a, #ff6b3a)",
   },
-};
+];
 
 export function RewardsClient() {
-  const { progress } = useActiveChild();
-  const { isMember } = useMembership();
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [unlockedShown, setUnlockedShown] = useState<Set<string>>(new Set());
-  const [celebrating, setCelebrating] = useState<Reward | null>(null);
-  const [confettiKey, setConfettiKey] = useState(0);
-  const prevPopRef = useRef(progress.featherPop);
-
-  useEffect(() => {
-    setRewards(listRewards().filter((r) => r.active));
-  }, []);
-
+  const { progress, active } = useActiveChild();
   const featherPop = progress.featherPop;
 
-  // Sort by cost ascending so the "next prize" is always first un-earned.
-  const sortedRewards = useMemo(
-    () => rewards.slice().sort((a, b) => a.featherpopRequired - b.featherpopRequired),
-    [rewards],
-  );
+  const [pending, setPending] = useState<string | null>(null);
+  const [unlocked, setUnlocked] = useState<ShopReward | null>(null);
 
-  const earned = sortedRewards.filter(
-    (r) => featherPop >= r.featherpopRequired && (!r.memberOnly || isMember),
-  );
-  const upcoming = sortedRewards.filter(
-    (r) => featherPop < r.featherpopRequired || (r.memberOnly && !isMember),
-  );
-  const nextPrize = upcoming[0] ?? null;
-  const remaining = nextPrize
-    ? Math.max(0, nextPrize.featherpopRequired - featherPop)
-    : 0;
-  const nextPct = nextPrize
-    ? Math.min(100, Math.round((featherPop / nextPrize.featherpopRequired) * 100))
-    : 100;
-
-  // Detect a newly-unlocked prize the moment FeatherPop crosses a threshold.
-  // Show one celebration overlay, then mark the prize as "shown" so we don't
-  // re-celebrate on every page render.
-  useEffect(() => {
-    const prev = prevPopRef.current;
-    if (featherPop > prev) {
-      const justUnlocked = sortedRewards.find(
-        (r) =>
-          prev < r.featherpopRequired &&
-          featherPop >= r.featherpopRequired &&
-          !r.memberOnly &&
-          !unlockedShown.has(r.id),
-      );
-      if (justUnlocked) {
-        setCelebrating(justUnlocked);
-        setUnlockedShown((s) => new Set(s).add(justUnlocked.id));
-        setConfettiKey((k) => k + 1);
-        pop();
-        window.setTimeout(() => wordReveal(), 220);
-        window.setTimeout(() => fanfare(), 700);
-        window.setTimeout(() => childCheer(), 1400);
-        window.setTimeout(() => setCelebrating(null), 3600);
-      }
+  async function claim(reward: ShopReward) {
+    if (featherPop < reward.cost || pending) return;
+    setPending(reward.id);
+    try {
+      // TODO: server action to deduct featherPop + roll the surprise.
+      // For now we just show the unlock celebration; the server-side
+      // deduction is wired in the follow-up pass.
+      await new Promise((r) => window.setTimeout(r, 300));
+      setUnlocked(reward);
+    } finally {
+      setPending(null);
     }
-    prevPopRef.current = featherPop;
-  }, [featherPop, sortedRewards, unlockedShown]);
+  }
 
   return (
-    <div className="rewards-shell">
-      <Confetti trigger={confettiKey} pieces={70} />
+    <div className="prizes-page">
+      {/* Header — My Feathers count + Ms. Feather Pop avatar */}
+      <header className="prizes-header">
+        <Link href="/" aria-label="Back" className="prizes-back">
+          <span aria-hidden>←</span>
+        </Link>
+        <div className="prizes-header-mid">
+          <h1>My Feathers</h1>
+          <div className="prizes-balance">
+            <span className="prizes-balance-feather" aria-hidden>🪶</span>
+            <strong>{featherPop}</strong>
+            <small>Feathers</small>
+          </div>
+        </div>
+        <div className="prizes-header-avatar" aria-hidden>
+          <MsFeatherPopAvatar
+            pose={active ? "cheer" : "wave"}
+            size={92}
+          />
+        </div>
+      </header>
 
-      {/* WALLET — clear, kid-readable balance */}
-      <section className="rewards-wallet">
-        <div className="rewards-wallet-inner">
-          <span className="kicker">
-            <Sparkles aria-hidden className="h-4 w-4" />
-            FeatherPop wallet
-          </span>
-          <h2 className="rewards-wallet-balance">
-            <CountUp to={featherPop} duration={900} />
-            <small>FeatherPop</small>
-          </h2>
-          <p className="rewards-wallet-tag">
-            Earned <strong>{earned.length}</strong> of {sortedRewards.length} prizes so far.
-          </p>
-          <Link href="/sort" className="btn btn-gold btn-sm">
-            <Camera aria-hidden className="h-4 w-4" />
-            Earn more
-          </Link>
+      {/* Choose a Reward */}
+      <section className="prizes-choose">
+        <h2 className="prizes-choose-title">
+          <span className="prizes-choose-icon" aria-hidden>🎁</span>
+          Choose a Reward!
+        </h2>
+        <p className="prizes-choose-sub">
+          Spend your <strong>feathers</strong> to get awesome surprises!
+        </p>
+      </section>
+
+      {/* 4 reward cards */}
+      <section className="prizes-grid">
+        {REWARDS.map((r) => {
+          const Icon = r.icon;
+          const canAfford = featherPop >= r.cost;
+          const remaining = Math.max(0, r.cost - featherPop);
+          return (
+            <article
+              key={r.id}
+              className={`prize-card ${canAfford ? "is-available" : "is-locked"}`}
+            >
+              <div className="prize-card-art" style={{ background: r.iconBg }}>
+                <Icon aria-hidden className="prize-card-icon" />
+                <span className="prize-card-stars" aria-hidden>✨</span>
+              </div>
+              <h3>{r.title}</h3>
+              <p className="prize-card-cost">
+                <span aria-hidden>🪶</span> <strong>{r.cost}</strong> Feathers
+              </p>
+              <button
+                type="button"
+                onClick={() => claim(r)}
+                disabled={!canAfford || pending === r.id}
+                className="prize-card-button"
+                style={{ background: canAfford ? r.buttonBg : undefined }}
+              >
+                {pending === r.id
+                  ? "Unlocking…"
+                  : canAfford
+                    ? "GET REWARD"
+                    : `Need ${remaining} more`}
+              </button>
+            </article>
+          );
+        })}
+      </section>
+
+      {/* Ultimate Achievement — Golden Feather */}
+      <section className="prizes-ultimate">
+        <span className="prizes-ultimate-band">★ THE ULTIMATE ACHIEVEMENT ★</span>
+        <div className="prizes-ultimate-grid">
+          <div className="prizes-ultimate-trophy" aria-hidden>
+            <span>🪶</span>
+          </div>
+          <div className="prizes-ultimate-body">
+            <h3 className="prizes-ultimate-title">GOLDEN FEATHER</h3>
+            <p className="prizes-ultimate-tag">The Rarest Reward of All!</p>
+            <p className="prizes-ultimate-req">
+              Complete <strong>1,000 words</strong> in a Month
+            </p>
+            <ul className="prizes-ultimate-items">
+              <li>🏆<span>Golden Feather Badge</span></li>
+              <li>🥚<span>Golden Egg</span></li>
+              <li>🦅<span>Golden Eagle Coloring Pack</span></li>
+              <li>📜<span>Achievement Certificate</span></li>
+            </ul>
+          </div>
+          <div className="prizes-ultimate-side">
+            <p>
+              Only the most dedicated readers earn the Golden Feather!
+            </p>
+            <span className="prizes-ultimate-crown" aria-hidden>👑</span>
+            <p className="prizes-ultimate-encourage">You can do it!</p>
+          </div>
         </div>
       </section>
 
-      {/* NEXT PRIZE HERO — countdown + big art + animated progress ring */}
-      {nextPrize ? (
-        <section
-          className={`rewards-next ${nextPrize.memberOnly ? "is-member-locked" : ""}`}
-        >
-          <div className="rewards-next-shimmer" aria-hidden />
-          <div className="rewards-next-grid">
-            <div className="rewards-next-art-wrap">
-              <div
-                className="rewards-next-art"
-                style={{ ["--tier-ring" as string]: TIER_META[tierFor(nextPrize.featherpopRequired, nextPrize.memberOnly)].ring }}
-              >
-                <PrizeArt id={nextPrize.id} locked size={160} />
-              </div>
-            </div>
-            <div className="rewards-next-body">
-              <span className="rewards-tier-pill">
-                <TierIcon tier={tierFor(nextPrize.featherpopRequired, nextPrize.memberOnly)} />
-                {TIER_META[tierFor(nextPrize.featherpopRequired, nextPrize.memberOnly)].label}
-              </span>
-              <h3 className="rewards-next-name">{nextPrize.name}</h3>
-              <p className="rewards-next-desc">{nextPrize.description}</p>
-
-              <div className="rewards-next-progress">
-                <span style={{ width: `${nextPct}%` }} />
-              </div>
-
-              {nextPrize.memberOnly && !isMember ? (
-                <p className="rewards-next-cta">
-                  <strong>Members-only.</strong> Unlock the Diamond tier with a
-                  Ms. Feather Pop membership.
-                </p>
-              ) : (
-                <p className="rewards-next-cta">
-                  <strong>{remaining}</strong> more FeatherPop and {nextPrize.name} is yours!
-                </p>
-              )}
-
-              <div className="rewards-next-actions">
-                {nextPrize.memberOnly && !isMember ? (
-                  <Link href="/membership" className="btn btn-gold btn-lg btn-pulse">
-                    <Crown aria-hidden className="h-5 w-5" />
-                    Unlock with membership
-                  </Link>
-                ) : (
-                  <Link href="/sort" className="btn btn-gold btn-lg btn-pulse">
-                    <ArrowRight aria-hidden className="h-5 w-5" />
-                    Earn more FeatherPop
-                  </Link>
-                )}
-                <Link href="/scan" className="btn btn-sky">
-                  <Camera aria-hidden className="h-4 w-4" />
-                  Park Hunt
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      ) : null}
-
-      {/* YOUR COLLECTION — earned prizes shelf */}
-      {earned.length > 0 ? (
-        <section className="rewards-collection">
-          <header className="rewards-collection-head">
-            <span className="kicker">
-              <Trophy aria-hidden className="h-4 w-4" />
-              Your collection
-            </span>
-            <h3 className="h-display text-2xl">
-              {earned.length}{" "}
-              {earned.length === 1 ? "prize" : "prizes"} unlocked
-            </h3>
-          </header>
-          <div className="rewards-collection-shelf">
-            {earned.map((r, i) => {
-              const isNewest = i === earned.length - 1 && earned.length > 0;
-              return (
-                <article
-                  key={r.id}
-                  className={`rewards-collection-tile ${isNewest ? "is-newest" : ""}`}
-                  style={{
-                    ["--tier-ring" as string]: TIER_META[tierFor(r.featherpopRequired, r.memberOnly)].ring,
-                  }}
-                >
-                  {isNewest ? (
-                    <span className="rewards-new-ribbon" aria-hidden>
-                      NEW!
-                    </span>
-                  ) : null}
-                  <div className="rewards-collection-art">
-                    <PrizeArt id={r.id} size={92} />
-                  </div>
-                  <strong>{r.name}</strong>
-                  {r.printable ? (
-                    <Link href={`/print/reward/${r.id}`} className="btn btn-ghost btn-sm">
-                      <Printer aria-hidden className="h-3.5 w-3.5" />
-                      Print
-                    </Link>
-                  ) : null}
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {/* UPCOMING — tier-sectioned gallery of locked prizes */}
-      {upcoming.length > 0 ? (
-        <section className="rewards-upcoming">
-          <header className="rewards-upcoming-head">
-            <span className="kicker">
-              <Gift aria-hidden className="h-4 w-4" />
-              What's waiting
-            </span>
-            <h3 className="h-display text-2xl">Keep going — these are next</h3>
-          </header>
-
-          <div className="rewards-grid">
-            {upcoming.map((r) => {
-              const tier = tierFor(r.featherpopRequired, r.memberOnly);
-              const memberGated = r.memberOnly && !isMember;
-              const earnedGated = featherPop < r.featherpopRequired;
-              const pct = Math.min(1, featherPop / r.featherpopRequired);
-              return (
-                <article
-                  key={r.id}
-                  className={`rewards-card ${tier === "diamond" ? "is-diamond" : ""}`}
-                  style={{
-                    ["--tier-ring" as string]: TIER_META[tier].ring,
-                    ["--tier-color" as string]: TIER_META[tier].color,
-                  }}
-                >
-                  <div className="rewards-card-art">
-                    <PrizeArt id={r.id} locked size={120} />
-                    {memberGated ? (
-                      <span className="rewards-card-crown" aria-hidden>
-                        <Crown aria-hidden className="h-4 w-4" />
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="rewards-card-body">
-                    <span className="rewards-tier-pill">
-                      <TierIcon tier={tier} />
-                      {TIER_META[tier].label}
-                    </span>
-                    <h4 className="rewards-card-name">{r.name}</h4>
-                    <p className="rewards-card-desc">{r.description}</p>
-                    <div className="rewards-card-progress">
-                      <span style={{ width: `${Math.round(pct * 100)}%` }} />
-                    </div>
-                    <p className="rewards-card-req">
-                      {memberGated ? (
-                        <>
-                          <Lock aria-hidden className="h-3.5 w-3.5" />
-                          Members only
-                        </>
-                      ) : earnedGated ? (
-                        <>
-                          <strong>{r.featherpopRequired - featherPop}</strong> more
-                          FeatherPop to unlock
-                        </>
-                      ) : (
-                        "Ready to claim"
-                      )}
-                    </p>
-                    {memberGated ? (
-                      <Link href="/membership" className="btn btn-gold btn-sm">
-                        Get membership
-                      </Link>
-                    ) : null}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {/* MEMBERSHIP BANNER */}
-      {!isMember ? (
-        <section className="rewards-member-banner">
-          <div className="rewards-member-rays" aria-hidden />
-          <Crown aria-hidden className="rewards-member-crown" />
-          <div className="rewards-member-body">
+      {unlocked ? (
+        <div className="prize-unlock-modal" role="dialog">
+          <div className="prize-unlock-card">
             <span className="kicker">
               <Sparkles aria-hidden className="h-4 w-4" />
-              Membership
+              Reward unlocked!
             </span>
-            <h3 className="h-display text-2xl text-white">
-              Unlock every Diamond prize
-            </h3>
-            <ul>
-              <li>
-                <Sparkles aria-hidden className="h-4 w-4" />
-                Members-only Diamond tier prizes (badges, frames, certificates)
-              </li>
-              <li>
-                <Printer aria-hidden className="h-4 w-4" />
-                Printable certificates for every win
-              </li>
-              <li>
-                <Trophy aria-hidden className="h-4 w-4" />
-                Priority pre-orders on physical merch
-              </li>
-            </ul>
-            <Link href="/membership" className="btn btn-gold btn-lg btn-pulse">
-              <Crown aria-hidden className="h-5 w-5" />
-              Try 3 days free
-            </Link>
-          </div>
-        </section>
-      ) : null}
-
-      {/* UNLOCK CELEBRATION OVERLAY */}
-      {celebrating ? (
-        <div className="rewards-celebrate" aria-live="polite">
-          <div className="rewards-celebrate-rays" />
-          <div className="rewards-celebrate-card">
-            <PrizeArt id={celebrating.id} size={180} />
-            <span className="rewards-tier-pill">
-              <Sparkles aria-hidden className="h-4 w-4" />
-              Prize unlocked!
-            </span>
-            <h2 className="rewards-celebrate-name">{celebrating.name}</h2>
-            <p>{celebrating.description}</p>
+            <h2 className="h-display">
+              <span className="h-gradient">{unlocked.title}</span>
+            </h2>
+            <p>Your surprise is on the way!</p>
+            <button
+              type="button"
+              onClick={() => setUnlocked(null)}
+              className="btn btn-gold btn-lg"
+            >
+              <Gift aria-hidden className="h-5 w-5" />
+              Got it!
+            </button>
           </div>
         </div>
       ) : null}
     </div>
   );
-}
-
-function TierIcon({ tier }: { tier: Tier }) {
-  if (tier === "diamond")
-    return <Crown aria-hidden className="h-3.5 w-3.5" />;
-  if (tier === "gold")
-    return <Trophy aria-hidden className="h-3.5 w-3.5" />;
-  return <Sparkles aria-hidden className="h-3.5 w-3.5" />;
 }

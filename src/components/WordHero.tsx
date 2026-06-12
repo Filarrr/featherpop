@@ -14,7 +14,11 @@ import {
 } from "lucide-react";
 import { pickRound, validateWord, WordHeroRound } from "@/lib/word-hero";
 import { useActiveChild } from "@/lib/use-active-child";
-import { awardFeatherPopAction } from "@/lib/child-progress-actions";
+import {
+  recordWordsFoundAction,
+} from "@/lib/child-progress-actions";
+import type { HatchedEntry } from "@/lib/child-profile";
+import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
 import {
   buzz,
   childCheer,
@@ -41,6 +45,7 @@ export function WordHero() {
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
   const [status, setStatus] = useState<{ msg: string; ok: boolean } | null>(null);
   const [confettiKey, setConfettiKey] = useState(0);
+  const [hatched, setHatched] = useState<HatchedEntry | null>(null);
   const refreshTimerRef = useRef<number | null>(null);
 
   // Letter usage tracking: how many times each bank letter is already
@@ -136,13 +141,20 @@ export function WordHero() {
     else childOoh();
     window.setTimeout(() => setStatus(null), 1800);
 
-    // Award 1 FeatherPop per valid word, debounced refresh as in Wordshake.
+    // Record the word found — 1 FeatherPop + 1 word toward the egg.
     void (async () => {
       try {
-        const res = await awardFeatherPopAction(1);
-        if (!res) console.warn("[word-hero] award returned null");
+        const res = await recordWordsFoundAction(1);
+        if (!res) {
+          console.warn("[word-hero] recordWordsFound returned null");
+          return;
+        }
+        if (res.hatched) {
+          // Egg hatched! Show the reveal overlay.
+          setHatched(res.hatched);
+        }
       } catch (err) {
-        console.warn("[word-hero] award failed:", err);
+        console.warn("[word-hero] recordWordsFound failed:", err);
       }
       if (refreshTimerRef.current !== null) {
         window.clearTimeout(refreshTimerRef.current);
@@ -350,6 +362,10 @@ export function WordHero() {
       </section>
 
       <p className="word-hero-footer">Be a Word Hero, Feather Friend!</p>
+
+      {hatched ? (
+        <EggHatchReveal hatched={hatched} onClose={() => setHatched(null)} />
+      ) : null}
 
       {phase === "done" ? (
         <div className="word-hero-done" role="dialog" aria-labelledby="wh-done-title">

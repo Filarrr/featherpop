@@ -8,6 +8,10 @@ import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import {
   ChildProgress,
   CompletedMissionEntry,
+  EggColor,
+  EggState,
+  HatchedCharacter,
+  HatchedEntry,
   defaultChildProgress,
 } from "@/lib/child-profile";
 import { Mission, getMission } from "@/lib/missions";
@@ -129,6 +133,99 @@ export async function awardFeatherPopAction(
   await writeMap({ ...map, [childId]: next });
   revalidatePath("/", "layout");
   return next;
+}
+
+// ============================================================
+// Word-found + Egg system
+// ============================================================
+
+const EGG_COLORS: EggColor[] = ["purple", "blue", "pink", "gold", "rainbow", "silver"];
+// Roll: 14% golden-eagle (the ultra-rare per the spec), 6% sparkle-unicorn,
+// 10% feather-dragon, 10% rainbow-peacock, balance split across commons.
+const HATCH_WEIGHTS: Array<[HatchedCharacter, number]> = [
+  ["baby-eagle", 22],
+  ["baby-peacock", 18],
+  ["baby-bunny", 18],
+  ["baby-butterfly", 18],
+  ["rainbow-peacock", 8],
+  ["feather-dragon", 8],
+  ["sparkle-unicorn", 5],
+  ["golden-eagle", 3], // ULTRA-rare. Per client: kids keep coming back for this.
+];
+
+function pickEggColor(): EggColor {
+  return EGG_COLORS[Math.floor(Math.random() * EGG_COLORS.length)];
+}
+
+function pickHatchedCharacter(): HatchedCharacter {
+  const total = HATCH_WEIGHTS.reduce((s, [, w]) => s + w, 0);
+  let r = Math.random() * total;
+  for (const [c, w] of HATCH_WEIGHTS) {
+    if (r < w) return c;
+    r -= w;
+  }
+  return "baby-eagle";
+}
+
+const WORDS_PER_HATCH = 50;
+
+export interface WordRecordResult {
+  progress: ChildProgress;
+  hatched: HatchedEntry | null; // non-null when this submission triggered a hatch
+}
+
+/**
+ * Record N words found by the active child. Awards N FeatherPop (the
+ * client spec: 1 word = 1 feather), increments wordsFound, advances the
+ * egg, and if the egg crosses the hatch threshold, rolls a character and
+ * spawns a fresh random-color egg.
+ */
+export async function recordWordsFoundAction(count: number): Promise<WordRecordResult | null> {
+  if (!Number.isFinite(count) || count <= 0) return null;
+  const childId = await getActiveChildId();
+  if (!childId) return null;
+
+  const user = await currentUser();
+  if (!user) return null;
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+
+  const prevWords = prev.wordsFound ?? 0;
+  const nextWords = prevWords + Math.floor(count);
+
+  // Ensure there's a current egg in flight.
+  let egg: EggState = prev.egg ?? { color: pickEggColor(), wordsAtStart: prevWords };
+
+  let hatched: HatchedEntry | null = null;
+  let nextHatched = (prev.hatched ?? []).slice();
+  let freeSpins = prev.freeSpins ?? 0;
+
+  // Has this egg crossed the hatch threshold?
+  if (nextWords - egg.wordsAtStart >= WORDS_PER_HATCH) {
+    const character = pickHatchedCharacter();
+    hatched = {
+      character,
+      color: egg.color,
+      hatchedAt: Date.now(),
+      wordsRead: nextWords,
+    };
+    nextHatched = [hatched, ...nextHatched].slice(0, 100);
+    freeSpins += 1; // per spec: every 50 words = +1 free spin
+    egg = { color: pickEggColor(), wordsAtStart: nextWords };
+  }
+
+  const next: ChildProgress = {
+    ...prev,
+    featherPop: prev.featherPop + Math.floor(count), // 1 word = 1 feather
+    wordsFound: nextWords,
+    egg,
+    hatched: nextHatched,
+    freeSpins,
+  };
+
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/", "layout");
+  return { progress: next, hatched };
 }
 
 export async function deleteChildProgressAction(childId: string): Promise<void> {
