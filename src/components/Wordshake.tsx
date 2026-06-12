@@ -19,7 +19,12 @@ import {
   urgentTick,
 } from "@/lib/audio";
 import { isDictWord } from "@/lib/wordshake-dict";
-import { awardFeatherPopAction } from "@/lib/child-progress-actions";
+import {
+  awardFeatherPopAction,
+  recordWordsFoundAction,
+} from "@/lib/child-progress-actions";
+import type { HatchedEntry } from "@/lib/child-profile";
+import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
 import { Mascot, MascotMood } from "@/components/Mascot";
 
 const GRID_SIZE = 4;
@@ -133,6 +138,7 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
   // sees the reward land instead of having to navigate to /rewards to
   // confirm the server got it.
   const [sessionPop, setSessionPop] = useState(0);
+  const [hatched, setHatched] = useState<HatchedEntry | null>(null);
   const pendingAwardsRef = useRef(0);
   const refreshTimerRef = useRef<number | null>(null);
   const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -280,15 +286,15 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
       pendingAwardsRef.current += award;
       // Persist on the server. Batch by debouncing router.refresh() so we
       // don't hammer the layout with 20 refreshes during a 2-minute game.
+      // recordWordsFoundAction handles the +1 base feather + word count
+      // + egg progress; awardFeatherPopAction adds any length bonus on top.
+      const baseFeather = 1;
+      const bonus = Math.max(0, award - baseFeather);
       void (async () => {
         try {
-          const result = await awardFeatherPopAction(award);
-          if (!result) {
-            console.warn(
-              "[wordshake] awardFeatherPopAction returned null — likely no active child cookie. " +
-                "FeatherPop won't persist beyond this session.",
-            );
-          }
+          const recRes = await recordWordsFoundAction(1);
+          if (recRes?.hatched) setHatched(recRes.hatched);
+          if (bonus > 0) await awardFeatherPopAction(bonus);
         } catch (err) {
           console.warn("[wordshake] award failed:", err);
         }
@@ -419,6 +425,9 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
 
   return (
     <div className="wordshake">
+      {hatched ? (
+        <EggHatchReveal hatched={hatched} onClose={() => setHatched(null)} />
+      ) : null}
       <section>
         <div className="quest-toolbar mb-3">
           <div className={`timer-pill ${timeFlash ? "is-flash" : ""}`}>

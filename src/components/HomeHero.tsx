@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Play, Sparkles } from "lucide-react";
@@ -94,6 +95,15 @@ export function HomeHero() {
         </span>
         <span className="play-button-text">PLAY</span>
       </button>
+
+      <div className="home-secondary-links">
+        <Link href="/progress" className="home-secondary-link">
+          <span aria-hidden>📊</span> My Progress
+        </Link>
+        <Link href="/membership" className="home-secondary-link is-gold">
+          <span aria-hidden>👑</span> Membership
+        </Link>
+      </div>
     </section>
   );
 }

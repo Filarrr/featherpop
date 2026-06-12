@@ -58,6 +58,9 @@ export interface ChildProgress {
   egg?: EggState;
   hatched?: HatchedEntry[];
   freeSpins?: number;
+  videosWatched?: number;
+  songsUnlocked?: number;
+  claimedRewards?: { id: string; at: number; cost: number }[];
 }
 
 export const defaultChildProgress: ChildProgress = {

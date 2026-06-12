@@ -10,8 +10,11 @@ import {
   Sparkles,
   User as UserIcon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useActiveChild } from "@/lib/use-active-child";
+import { claimRewardAction } from "@/lib/child-progress-actions";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
+import { childCheer, fanfare, pop, wordReveal } from "@/lib/audio";
 
 interface ShopReward {
   id: string;
@@ -60,21 +63,33 @@ const REWARDS: ShopReward[] = [
 ];
 
 export function RewardsClient() {
+  const router = useRouter();
   const { progress, active } = useActiveChild();
   const featherPop = progress.featherPop;
 
   const [pending, setPending] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState<ShopReward | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function claim(reward: ShopReward) {
     if (featherPop < reward.cost || pending) return;
     setPending(reward.id);
+    setError(null);
     try {
-      // TODO: server action to deduct featherPop + roll the surprise.
-      // For now we just show the unlock celebration; the server-side
-      // deduction is wired in the follow-up pass.
-      await new Promise((r) => window.setTimeout(r, 300));
+      const result = await claimRewardAction(reward.id, reward.cost);
+      if (!result.ok) {
+        setError(result.reason);
+        return;
+      }
+      pop();
+      window.setTimeout(() => wordReveal(), 200);
+      window.setTimeout(() => fanfare(), 700);
+      window.setTimeout(() => childCheer(), 1200);
       setUnlocked(reward);
+      router.refresh();
+    } catch (err) {
+      console.warn("[rewards] claim failed:", err);
+      setError("Couldn't claim — try again.");
     } finally {
       setPending(null);
     }
@@ -180,6 +195,10 @@ export function RewardsClient() {
           </div>
         </div>
       </section>
+
+      {error ? (
+        <p className="prize-claim-error" role="alert">{error}</p>
+      ) : null}
 
       {unlocked ? (
         <div className="prize-unlock-modal" role="dialog">

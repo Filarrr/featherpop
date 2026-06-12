@@ -5607,4 +5607,502 @@ a { color: inherit; }
   .egg-hatch-card { animation: none !important; }
 }
 
+/* Prize claim error pill */
+.prize-claim-error {
+  margin: 0 auto;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 45, 142, 0.15);
+  color: var(--pink);
+  font-weight: 800;
+  text-align: center;
+  width: max-content;
+}
+
+/* ============================================================
+   Progress page
+   ============================================================ */
+.progress-page-wrap { padding-top: 0; padding-bottom: 5rem; }
+.progress-page { display: grid; gap: 1rem; padding-bottom: 4rem; }
+
+.progress-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0 0.5rem;
+}
+.progress-header-mid { text-align: center; }
+.progress-title {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  margin: 0;
+  background: linear-gradient(180deg, #fff8b0, var(--gold) 50%, #ff9a3a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.05);
+}
+.progress-subtitle {
+  margin: 0.1rem 0 0;
+  font-weight: 700;
+  color: var(--ink);
+}
+.progress-header-avatar {
+  width: 88px;
+  filter: drop-shadow(0 8px 18px rgba(106, 45, 255, 0.35));
+}
+
+/* Golden Feather hero card */
+.progress-golden {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ffd6f0, #ffe7f7);
+  border: 3px solid var(--gold);
+  box-shadow: 0 14px 30px rgba(255, 154, 58, 0.25);
+}
+.progress-golden-feather {
+  font-size: 4rem;
+  filter: drop-shadow(0 0 16px rgba(255, 209, 74, 0.7));
+}
+.progress-golden-body {
+  display: grid;
+  gap: 0.3rem;
+  text-align: center;
+}
+.progress-golden-title {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--purple-deep);
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+.progress-golden-bar {
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(106, 45, 255, 0.15);
+  overflow: hidden;
+}
+.progress-golden-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--pink), var(--magenta));
+  transition: width 600ms cubic-bezier(.2, .9, .3, 1);
+}
+.progress-golden-count {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--magenta);
+  line-height: 1;
+}
+.progress-golden-count small {
+  color: var(--ink-soft);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.progress-golden-label {
+  font-weight: 800;
+  margin: 0;
+  color: var(--purple-deep);
+  letter-spacing: 0.04em;
+}
+.progress-golden-msg {
+  font-size: 0.85rem;
+  color: var(--ink);
+  margin: 0.2rem 0 0;
+  background: rgba(255,255,255,0.7);
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+}
+.progress-golden-msg strong { color: var(--pink); }
+.progress-golden-side {
+  display: grid;
+  place-items: center;
+  gap: 0.2rem;
+  text-align: center;
+}
+.progress-golden-badge {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(106, 45, 255, 0.85);
+  font-size: 2.2rem;
+  filter: drop-shadow(0 0 12px rgba(255, 209, 74, 0.65));
+}
+.progress-golden-side p {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  color: var(--magenta);
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* Stats grid */
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+@media (min-width: 640px) {
+  .progress-stats { grid-template-columns: repeat(3, 1fr); }
+}
+.progress-stat-card {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 0.65rem;
+  border-radius: 16px;
+  background: var(--stat-bg, rgba(106, 45, 255, 0.12));
+  border: 2px solid color-mix(in srgb, var(--stat-color, var(--magenta)) 35%, transparent);
+  text-align: center;
+}
+.progress-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--stat-color, var(--magenta));
+  color: white;
+  margin: 0 auto;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--stat-color, var(--magenta)) 45%, transparent);
+}
+.progress-stat-label {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  color: var(--stat-color, var(--purple-deep));
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+.progress-stat-value {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  color: var(--stat-color, var(--purple-deep));
+  line-height: 1;
+}
+.progress-stat-tag {
+  font-size: 0.7rem;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* Badges row */
+.progress-badges {
+  padding: 1rem;
+  border-radius: 20px;
+  background:
+    radial-gradient(60% 60% at 20% 30%, rgba(255, 209, 74, 0.15), transparent 70%),
+    linear-gradient(135deg, #2a0a4a, #6a2dff);
+  color: white;
+}
+.progress-badges-title {
+  text-align: center;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+}
+.progress-badges-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.4rem;
+}
+@media (max-width: 480px) {
+  .progress-badges-row { grid-template-columns: repeat(3, 1fr); }
+}
+.progress-badge {
+  display: grid;
+  place-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.3rem;
+  background: var(--badge-bg, rgba(255,255,255,0.08));
+  border: 2px solid color-mix(in srgb, var(--badge-color, var(--gold)) 45%, transparent);
+  border-radius: 16px;
+  text-align: center;
+}
+.progress-badge.is-locked { opacity: 0.45; filter: grayscale(0.5); }
+.progress-badge-medal {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--badge-color, var(--gold));
+  color: white;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--badge-color, var(--gold)) 50%, transparent);
+}
+.progress-badge.is-earned .progress-badge-medal {
+  animation: progress-badge-pulse 2.4s ease-in-out infinite;
+}
+@keyframes progress-badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+.progress-badge-count {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  color: var(--badge-color, var(--gold));
+  background: rgba(0,0,0,0.3);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+.progress-badge-name {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 0.7rem;
+  color: white;
+}
+
+/* ============================================================
+   Membership page
+   ============================================================ */
+.membership-page-wrap { padding-top: 0; padding-bottom: 5rem; }
+.membership-page {
+  display: grid;
+  gap: 1rem;
+  padding: 0.5rem 0 3rem;
+}
+.membership-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0 0.5rem;
+  background: linear-gradient(135deg, var(--purple), var(--magenta));
+  color: white;
+  border-radius: 18px;
+  padding: 0.75rem;
+}
+.membership-header-title {
+  text-align: center;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.1rem, 4.5vw, 1.4rem);
+  margin: 0;
+}
+.membership-header-icon { font-size: 1.5rem; }
+
+.membership-hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 1.25rem 1rem;
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 14px 30px rgba(106, 45, 255, 0.18);
+}
+.membership-hero-title {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.2rem, 8vw, 3.2rem);
+  line-height: 0.95;
+  margin: 0;
+}
+.membership-hero-brand {
+  background: linear-gradient(135deg, var(--purple), var(--magenta));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.membership-hero-sub {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  color: var(--purple-deep);
+  font-size: 1.1rem;
+  margin: 0.25rem 0 0.5rem;
+}
+.membership-hero-msg {
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  font-size: 0.95rem;
+}
+.membership-hero-msg strong { color: var(--magenta); }
+.membership-hero-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  font-size: 4rem;
+  min-height: 140px;
+}
+.membership-hero-bird { font-size: 5rem; animation: prizes-trophy-bob 2.8s ease-in-out infinite; }
+.membership-hero-butterfly { position: absolute; top: 10%; right: 0; font-size: 1.5rem; }
+.membership-hero-flowers { position: absolute; bottom: 0; left: 10%; font-size: 1.2rem; }
+
+.membership-price {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  gap: 0.25rem;
+  background: linear-gradient(135deg, var(--pink), var(--magenta));
+  color: white;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  padding: 0.75rem 1.75rem;
+  border-radius: 999px;
+  font-size: clamp(1.6rem, 6vw, 2.2rem);
+  box-shadow: 0 10px 22px rgba(255, 45, 142, 0.4);
+  text-shadow: 0 2px 0 rgba(0,0,0,0.2);
+}
+.membership-price small {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.membership-unlocks-title {
+  text-align: center;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  color: var(--purple-deep);
+  margin: 0 0 0.6rem;
+  font-size: 1.1rem;
+}
+.membership-unlocks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+@media (min-width: 700px) {
+  .membership-unlocks-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.membership-unlock {
+  display: grid;
+  place-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 0.5rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 18px rgba(106, 45, 255, 0.14);
+  text-align: center;
+}
+.membership-unlock-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  color: white;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+}
+.membership-unlock span {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  color: var(--purple-deep);
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.membership-cta-wrap {
+  display: grid;
+  place-items: center;
+  gap: 0.5rem;
+}
+.membership-fine-print {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  justify-self: center;
+}
+.membership-active {
+  display: inline-flex;
+  justify-self: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(52, 227, 164, 0.2);
+  color: #0c6b48;
+  border-radius: 16px;
+  font-weight: 800;
+}
+.membership-active a { color: #0c6b48; text-decoration: underline; }
+
+.membership-coming-soon {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(106, 45, 255, 0.08), rgba(255, 45, 142, 0.08));
+  border: 2px dashed rgba(106, 45, 255, 0.3);
+  text-align: center;
+}
+.membership-coming-soon .kicker { justify-self: center; }
+.membership-coming-soon h3 {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  margin: 0;
+  color: var(--magenta);
+  font-size: 1.2rem;
+}
+.membership-coming-soon ul {
+  list-style: none;
+  margin: 0.5rem auto;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+  max-width: 280px;
+}
+.membership-coming-soon li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--ink);
+}
+.membership-coming-soon-tag {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* Home secondary links (Progress / Membership) below PLAY button */
+.home-secondary-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+.home-secondary-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: white;
+  color: var(--purple-deep);
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 6px 14px rgba(106, 45, 255, 0.18);
+  transition: transform 200ms ease;
+}
+.home-secondary-link:hover { transform: translateY(-2px); }
+.home-secondary-link.is-gold {
+  background: linear-gradient(135deg, var(--gold), #ff9a3a);
+  color: var(--ink);
+  box-shadow: 0 8px 20px rgba(255, 154, 58, 0.4);
+}
+
 

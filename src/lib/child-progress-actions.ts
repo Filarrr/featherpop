@@ -228,6 +228,51 @@ export async function recordWordsFoundAction(count: number): Promise<WordRecordR
   return { progress: next, hatched };
 }
 
+/**
+ * Atomically deduct featherPop and record a claimed reward. Returns
+ * { ok: false, reason } if the child has insufficient funds or no
+ * active session.
+ */
+export async function claimRewardAction(
+  rewardId: string,
+  cost: number,
+): Promise<
+  | { ok: true; progress: ChildProgress }
+  | { ok: false; reason: string }
+> {
+  if (!Number.isFinite(cost) || cost <= 0) {
+    return { ok: false, reason: "Invalid cost." };
+  }
+  const childId = await getActiveChildId();
+  if (!childId) return { ok: false, reason: "No active child." };
+
+  const user = await currentUser();
+  if (!user) return { ok: false, reason: "Not signed in." };
+
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+
+  if (prev.featherPop < cost) {
+    return {
+      ok: false,
+      reason: `Need ${cost - prev.featherPop} more FeatherPop.`,
+    };
+  }
+
+  const next: ChildProgress = {
+    ...prev,
+    featherPop: prev.featherPop - cost,
+    claimedRewards: [
+      { id: rewardId, at: Date.now(), cost },
+      ...(prev.claimedRewards ?? []),
+    ].slice(0, 50),
+  };
+
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/", "layout");
+  return { ok: true, progress: next };
+}
+
 export async function deleteChildProgressAction(childId: string): Promise<void> {
   const user = await currentUser();
   if (!user) return;
