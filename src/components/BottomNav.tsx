@@ -11,7 +11,9 @@ const links = [
   { href: "/", label: "Home", icon: Home, featured: false },
   { href: "/sort", label: "Feather Match", icon: Wand2, featured: false },
   { href: "/play", label: "Letter Pop", icon: Gamepad2, featured: true },
-  { href: "/scan", label: "ParkHunt", icon: Camera, featured: false },
+  // Free users hit Word Hero (in-app game); membership flow can route
+  // members to /scan for the physical 6-station park hunt later.
+  { href: "/word-hero", label: "Park Hunt", icon: Camera, featured: false },
   { href: "/rewards", label: "Prizes", icon: Gift, featured: false },
 ];
 

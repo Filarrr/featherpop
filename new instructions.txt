@@ -1,0 +1,663 @@
+This is a great reward system because it gives kids a reason to keep coming back. I'd write it for the developer like this:
+:::writing{variant="document" id="42817"} MISS FEATHER POP APP
+MAGICAL EGG REWARD SYSTEM
+Goal: Encourage children to return to the app and continue reading words by earning magical eggs that gradually hatch.
+HOW IT WORKS
+When a child successfully finds and reads words in the game, they earn progress toward hatching a magical egg.
+The app should automatically assign a random egg color.
+Examples:
+Purple Egg
+Blue Egg
+Pink Egg
+Gold Egg
+Rainbow Egg
+Silver Egg
+The child does not know what character is inside the egg.
+WORD PROGRESS SYSTEM
+Every 10 words found and read correctly:
+The egg receives a new crack.
+Progress Example:
+10 Words = Small Crack
+20 Words = Medium Crack
+30 Words = Large Crack
+40 Words = Almost Open
+50 Words = Egg Hatches
+Animation:
+Each milestone should show:
+Cracking sound effect
+Sparkles
+Feather animation
+Encouraging message from Miss Feather Pop
+Example:
+"Great Job, Feather Friend! Your egg is beginning to hatch!"
+EGG HATCHING
+When the child reaches 50 words:
+The egg hatches.
+Animation:
+Egg shakes
+Egg glows
+Cracks spread
+Egg opens
+Character appears
+Reward message:
+"Congratulations! You hatched a magical friend!"
+POSSIBLE HATCHED CHARACTERS
+Common Characters:
+Baby Eagle
+Baby Peacock
+Baby Bunny
+Baby Butterfly
+Rare Characters:
+Golden Eagle
+Rainbow Peacock
+Feather Dragon
+Sparkle Unicorn
+COLLECTION SYSTEM
+Children can collect all hatched characters in a Magical Feather Collection Book.
+The collection book should display:
+Character Name
+Date Unlocked
+Number of Words Read
+This encourages children to continue reading to unlock more characters.
+REPEAT SYSTEM
+After an egg hatches:
+A new random egg automatically appears.
+Example:
+First Egg = Purple Egg
+After Hatching:
+Second Egg = Gold Egg
+After Hatching:
+Third Egg = Rainbow Egg
+The cycle continues indefinitely.
+GOAL
+The reward system should motivate children to:
+Read more words
+Return to the app daily
+Collect all egg colors
+Collect all magical creatures
+Continue progressing through the reading game
+The egg cracking and hatching process should feel exciting and magical, similar to opening a surprise toy or mystery treasure chest. :::
+One thing I'd add, is  make the Golden Eagle extremely rare. Kids will keep coming back trying to hatch it, just like people keep opening mystery boxes in games. That one rare character can dramatically increase how often children return to the app. 🥚🦅✨
+
+
+Feather Wallet
+
+You have:
+
+50 Feathers
+3 Stars
+1 Purple Egg
+
+Spend your feathers:
+
+10 Feathers = Digital Sticker
+25 Feathers = Coloring Page
+40 Feathers = Puzzle Sheet
+50 Feathers = Egg Crack Bonus
+100 Feathers = Rare Character Card
+
+I want a simple in-app reward wallet, not real money.
+
+The wallet should track the child’s earned rewards and points.
+
+Reward currency names:
+- Feathers
+- Stars
+
+Children earn Feathers by completing reading/word challenges.
+
+The wallet should allow children to spend Feathers on digital rewards such as:
+- Coloring pages
+- Digital stickers
+- Printable puzzle sheets
+- Character cards
+- Egg hatching bonuses
+
+This wallet should not connect to real money, credit cards, banking, crypto, or purchases. It is only an in-app educational reward system.
+
+FEATHER ECONOMY
+
+Children earn:
+
+1 Word Completed = 1 Feather
+
+Example:
+
+10 Words = 10 Feathers
+
+30 Words = 30 Feathers
+
+50 Words = 50 Feathers + Egg Hatch + Free Spin
+
+REWARD PRICING
+
+Small Rewards
+
+- Surprise Coloring Page = 50 Feathers
+- Surprise Puzzle Page = 50 Feathers
+
+Medium Rewards
+
+- Surprise Character Card Pack = 100 Feathers
+- Rare Feather Collection Page = 150 Feathers
+
+Large Rewards
+
+- Golden Eagle Reward Pack = 300 Feathers
+- Rainbow Feather Reward Pack = 500 Feathers
+
+Premium Rewards
+
+- Special Miss Feather Pop Collection Pack = 1,000 Feathers
+
+GOAL
+
+Children should be able to earn rewards regularly while still having exciting larger rewards that require saving feathers over time.
+
+The reward system should encourage:
+
+- Reading
+- Saving
+- Goal Setting
+- Returning to the App
+- Collecting Rewards
+
+MISS FEATHER POP APP
+
+PRIZES PAGE DESIGN
+
+This page should open when the child clicks the "Prizes" button on the bottom navigation menu.
+
+The page should remain simple, colorful, and easy for children ages 5–10 to understand.
+
+DO NOT make the page crowded.
+
+The goal is for children to quickly understand:
+
+1. How many feathers they have.
+2. What rewards they can unlock.
+3. How many feathers are needed for each reward.
+
+---
+
+TOP OF PAGE
+
+Display:
+
+MY FEATHERS
+
+Example:
+
+245 Feathers
+
+The feather balance should always be visible at the top of the page.
+
+---
+
+REWARD SECTION
+
+Display four reward cards.
+
+Each card should show:
+
+- Reward image
+- Reward title
+- Feather cost
+- Large "GET REWARD" button
+
+---
+
+REWARD #1
+
+Surprise Coloring Page
+
+Cost:
+100 Feathers
+
+When the child presses:
+
+GET REWARD
+
+The system randomly selects a coloring page from the coloring page library.
+
+The child can:
+
+- Color inside the app
+- Save it
+- Print it
+
+---
+
+REWARD #2
+
+Surprise Puzzle
+
+Cost:
+100 Feathers
+
+When the child presses:
+
+GET REWARD
+
+The system randomly selects:
+
+- Word Search
+- Maze
+- Connect the Dots
+- Matching Activity
+
+---
+
+REWARD #3
+
+Surprise Character Card
+
+Cost:
+150 Feathers
+
+When the child presses:
+
+GET REWARD
+
+The system randomly selects a collectible character card.
+
+Examples:
+
+- Eagle Card
+- Miss Feather Pop Card
+- Spider Card
+- Skater Pop Card
+
+The card is added to the child's collection book.
+
+---
+
+REWARD #4
+
+Mystery Reward
+
+Cost:
+250 Feathers
+
+When the child presses:
+
+GET REWARD
+
+The system randomly selects a surprise reward.
+
+Possible rewards:
+
+- Rare Coloring Page
+- Rare Character Card
+- Bonus Feathers
+- Special Puzzle
+- Secret Reward
+
+---
+
+BUTTON RULES
+
+If the child does NOT have enough feathers:
+
+The button should appear locked or disabled.
+
+Example:
+
+Need 100 Feathers
+
+or
+
+Not Enough Feathers
+
+If the child has enough feathers:
+
+The button becomes active.
+
+The child may unlock the reward.
+
+After unlocking:
+
+The correct number of feathers should automatically be deducted from their Feather Wallet.
+
+---
+
+DESIGN REQUIREMENTS
+
+Keep the page:
+
+- Simple
+- Bright
+- Easy to read
+- Large buttons
+- Large text
+- Child friendly
+
+Do not overload the screen with too many reward options.
+
+Only show four reward choices on the page.
+
+The overall look should match the current Miss Feather Pop home screen design.
+
+MISS FEATHER POP APP — PARK HUNT FINAL BREAKDOWN
+
+PARK HUNT SETUP
+
+There will be 6 QR stations around the park.
+
+The physical QR codes stay the same.
+
+The app controls the station word lists.
+
+Each QR station shows 20 words after it is scanned.
+
+Total daily words:
+
+6 stations × 20 words = 120 words per day
+
+---
+
+DAILY WORD ROTATION
+
+Every day, the app should generate a fresh set of 120 words.
+
+Each station gets 20 words.
+
+Each word should belong to only ONE station per day.
+
+The same word should not appear in multiple stations on the same day.
+
+---
+
+EAGLE TARGET WORD
+
+The eagle animation gives the child a target word.
+
+Example:
+
+"Find the word BOOK."
+
+The eagle should only choose words from the current daily word list.
+
+If BOOK is assigned to Station 3 today, the app already knows:
+
+BOOK = Station 3
+
+---
+
+GAME FLOW
+
+1. Child starts Park Hunt.
+
+2. Eagle flies across the screen and gives a target word.
+
+3. Child walks around the park and chooses a QR station.
+
+4. Child scans the QR code.
+
+5. The station’s 20 words appear.
+
+6. A 60-second timer starts.
+
+7. Child searches the 20 words and taps the target word.
+
+8. If correct:
+
+"Great job! You found BOOK!"
+
+Reward:
+
++1 Feather
+
++1 Word Count
+
+Egg progress updates
+
+9. If wrong station or time runs out:
+
+"Try another station!"
+
+No feather is awarded.
+
+---
+
+TIMER RULE
+
+The timer does NOT start when the eagle gives the word.
+
+The child can take time walking around and choosing a station.
+
+The timer starts only after the QR code is scanned and the 20-word list appears.
+
+Timer:
+
+60 seconds
+
+---
+
+MULTIPLE CHILDREN
+
+Each child must have their own game session.
+
+Different children can play at the same time.
+
+Their words, feathers, eggs, and rewards should not mix together.
+
+---
+
+REWARDS
+
+1 word found = 1 feather
+
+Feathers go into the child’s Feather Wallet.
+
+Every 50 words:
+
+- Egg hatches
+- Child earns 1 free spin
+
+Spin wheel rewards can include:
+
+- Coloring page
+- Puzzle
+- Character card
+- Mystery reward
+- Bonus feathers
+
+---
+
+GOLDEN FEATHER ACHIEVEMENT
+
+If a child finds 1,000 words in one month:
+
+Unlock:
+
+- Golden Feather Badge
+- Printable Golden Feather Certificate with child’s name
+- Special Miss Feather Pop congratulations video
+- 500 bonus feathers
+
+The Golden Feather cannot be purchased.
+
+It is earned only as a rare achievement.
+
+---
+
+BONUS VIDEO / MUSIC STATIONS
+
+Video or music stations may give:
+
++5 feathers
+
+Limit:
+
+Only once per day per child.
+
+Children may still watch the video or listen to the song again, but they do not receive more feathers after the first daily reward.
+
+---
+
+GOAL
+
+The goal is to create a fun reading treasure hunt where children:
+
+- Move around the park
+- Scan QR stations
+- Read 20-word lists
+- Find target words
+- Earn feathers
+- Hatch eggs
+- Unlock rewards
+- Work toward the rare Golden Feather
+
+MISS FEATHER POP ADVENTURE MEMBERSHIP
+
+Price:
+$9.99 per month
+
+FREE VERSION
+
+All users receive:
+
+- Feather Match
+- Letter Pop
+- Basic App Access
+- 3 Free Park Hunt Rounds
+
+After 3 Park Hunt Rounds:
+
+Park Hunt becomes locked.
+
+Display:
+
+"You've completed your free Park Hunt Adventure! Unlock unlimited adventures for only $9.99/month."
+
+---
+
+ADVENTURE MEMBERSHIP
+
+Members receive:
+
+Unlimited Park Hunt Access
+
+6 Adventure Stations
+
+Printable QR Adventure Station Signs
+
+Daily Word Rotation
+
+Feather Wallet
+
+Egg Hatching System
+
+Golden Feather Challenge
+
+Spin Wheel Rewards
+
+Coloring Pages
+
+Character Cards
+
+Printable Certificates
+
+Reward System
+
+Progress Tracking
+
+Future Content Updates
+
+---
+
+ADVENTURE STATIONS
+
+Membership includes 6 printable Adventure Stations.
+
+Examples:
+
+- Miss Feather Pop Station
+- Eagle's Nest
+- Magical Garden
+- Laughing Spider's Web
+- Video Station
+- Music Station
+
+Parents may print stations and place them:
+
+- In parks
+- In backyards
+- At birthday parties
+- In libraries
+- In churches
+- At camps
+- In community centers
+
+The same printed stations continue working because the app controls the daily word rotation.
+
+---
+
+COMING SOON SECTION
+
+Include a "Coming Soon" section inside the membership area.
+
+Display:
+
+"Join the VIP Interest List"
+
+Future possibilities:
+
+- Meet Miss Feather Pop
+- Story Times
+- Photo Opportunities
+- Live Adventures
+- Special Events
+
+No payment required at this time.
+
+Collect email addresses only.
+
+---
+
+MEMBERSHIP SCREEN
+
+Headline:
+
+Miss Feather Pop Adventure Membership
+
+Price:
+
+$9.99 Monthly
+
+Message:
+
+Turn any park, backyard, playground, library, or party into a Miss Feather Pop Adventure.
+
+Includes:
+
+✓ Unlimited Park Hunts
+
+✓ 6 Printable Adventure Stations
+
+✓ Daily Word Hunts
+
+✓ Feather Rewards
+
+✓ Egg Hatching
+
+✓ Golden Feather Challenge
+
+✓ Spin Wheel Rewards
+
+✓ Coloring Pages
+
+✓ Character Cards
+
+✓ Certificates
+
+Button:
+
+Unlock Adventure Membership
+
+
+
+
+also she said this yesterday. instead of actualy physically going to the park to play park hun , they will playthis new game instead. the game is a new game where the ird eveals a scrambled number of leters. they now have to create as many words as possible from it. she sent a picture that she said the game has to look as close to as possible.
+

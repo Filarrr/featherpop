@@ -1108,6 +1108,387 @@ a { color: inherit; }
   to { transform: scale(1) rotate(0); }
 }
 
+/* ============================================================
+   Word Hero — new in-app Park Hunt replacement
+   ============================================================ */
+.word-hero-page { padding-top: 0; padding-bottom: 5rem; }
+
+/* Intro screen — big PLAY button entry */
+.word-hero-intro {
+  display: grid;
+  place-items: center;
+  padding: 1rem 0.5rem 4rem;
+  min-height: calc(100dvh - 220px);
+}
+.word-hero-intro-card {
+  display: grid;
+  place-items: center;
+  gap: 0.85rem;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.95));
+  border-radius: 1.75rem;
+  padding: 1.5rem 1.25rem 1.75rem;
+  box-shadow: 0 22px 44px rgba(106, 45, 255, 0.22);
+  max-width: 460px;
+}
+.word-hero-intro-title {
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
+  margin: 0.1rem 0;
+  line-height: 1.1;
+}
+.word-hero-intro-play { margin: 0.75rem 0 0.25rem; }
+
+/* In-game stage */
+.word-hero {
+  position: relative;
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.75rem 0.5rem 1.25rem;
+  min-height: calc(100dvh - 160px);
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(255,255,255,0.55), transparent 70%),
+    linear-gradient(180deg, #d8c8ff 0%, #ffd6f0 60%, #ffe9b8 100%);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+.word-hero::before {
+  /* Decorative scattered feathers (the bg of the spec uses scattered
+     gold/blue/pink feathers — we draw them as soft radial dots) */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(8px 14px at 12% 14%, rgba(255, 209, 74, 0.55), transparent 70%),
+    radial-gradient(8px 14px at 30% 8%,  rgba(255, 122, 184, 0.55), transparent 70%),
+    radial-gradient(6px 12px at 92% 22%, rgba(124, 209, 255, 0.55), transparent 70%),
+    radial-gradient(7px 12px at 18% 80%, rgba(255, 209, 74, 0.4), transparent 70%),
+    radial-gradient(8px 14px at 88% 88%, rgba(255, 122, 184, 0.4), transparent 70%);
+}
+.word-hero > * { position: relative; z-index: 1; }
+
+.word-hero-hud {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+}
+.word-hero-hud-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.word-hero-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: white;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--magenta);
+  box-shadow: 0 4px 12px rgba(106, 45, 255, 0.18);
+}
+
+/* Target letter — huge glowing letter with halo */
+.word-hero-stage {
+  display: grid;
+  place-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+}
+.word-hero-target {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(96px, 22vw, 140px);
+  height: clamp(96px, 22vw, 140px);
+  background: linear-gradient(135deg, #b13bff, #6a2dff);
+  border-radius: 28%;
+  box-shadow:
+    0 0 0 4px white,
+    0 0 0 8px var(--gold),
+    0 22px 40px rgba(106, 45, 255, 0.45);
+  animation: word-hero-target-bob 3s ease-in-out infinite;
+}
+.word-hero-target-glow {
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle, rgba(255, 209, 74, 0.35) 0%, transparent 60%);
+  pointer-events: none;
+  animation: word-hero-target-pulse 2.4s ease-in-out infinite;
+  z-index: -1;
+}
+@keyframes word-hero-target-pulse {
+  0%, 100% { transform: scale(0.95); opacity: 0.7; }
+  50%      { transform: scale(1.1);  opacity: 1; }
+}
+.word-hero-target-letter {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(3.5rem, 12vw, 5.5rem);
+  line-height: 1;
+  color: white;
+  text-shadow: 0 4px 0 rgba(0,0,0,0.18);
+}
+@keyframes word-hero-target-bob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-6px) rotate(2deg); }
+}
+
+.word-hero-tagline {
+  text-align: center;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  max-width: 30ch;
+  font-size: clamp(0.9rem, 3.4vw, 1.05rem);
+}
+
+.word-hero-mascot {
+  position: absolute;
+  right: 0;
+  top: 4.5rem;
+  pointer-events: none;
+  transform: scale(0.7);
+  transform-origin: top right;
+  opacity: 0.95;
+}
+@media (min-width: 640px) {
+  .word-hero-mascot { transform: scale(1); top: 3rem; right: 1rem; }
+}
+
+/* Typed-letters row */
+.word-hero-typed {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.5rem;
+  min-height: 56px;
+  width: 100%;
+  max-width: 540px;
+  background: rgba(255,255,255,0.55);
+  border-radius: 14px;
+  border: 2px dashed rgba(106, 45, 255, 0.3);
+}
+.word-hero-typed-empty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.word-hero-typed-tile {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 44px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, white, #fff8eb);
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--magenta);
+  box-shadow: 0 4px 10px rgba(106, 45, 255, 0.18);
+  animation: word-hero-typed-pop 0.25s cubic-bezier(.2, .9, .3, 1.4);
+}
+@keyframes word-hero-typed-pop {
+  0%   { transform: scale(0.5) rotate(-8deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* Letter bank */
+.word-hero-bank {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  max-width: 600px;
+}
+.word-hero-letter {
+  width: clamp(38px, 9vw, 56px);
+  height: clamp(48px, 11vw, 70px);
+  border-radius: 10px;
+  border: 2px solid #f0e8c8;
+  background: linear-gradient(180deg, white, #fff8eb);
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.2rem, 4.5vw, 1.8rem);
+  color: var(--purple-deep);
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(106, 45, 255, 0.18);
+  transition: transform 120ms ease, background 120ms ease, box-shadow 200ms ease;
+}
+.word-hero-letter:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(106, 45, 255, 0.28);
+}
+.word-hero-letter:active { transform: translateY(0) scale(0.96); }
+.word-hero-letter.is-used,
+.word-hero-letter:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: #eee;
+  box-shadow: none;
+}
+
+.word-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.word-hero-status {
+  text-align: center;
+  font-weight: 800;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  margin: 0;
+  font-size: 0.9rem;
+  animation: word-hero-status-pop 0.3s cubic-bezier(.2, .9, .3, 1.4);
+}
+.word-hero-status.is-ok {
+  background: linear-gradient(135deg, var(--mint), var(--sky-4));
+  color: var(--ink);
+}
+.word-hero-status.is-error {
+  background: rgba(255, 45, 142, 0.15);
+  color: var(--pink);
+}
+@keyframes word-hero-status-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Three-panel info row at the bottom */
+.word-hero-panels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+}
+@media (min-width: 700px) {
+  .word-hero-panels { grid-template-columns: 1fr 1.4fr 1fr; }
+}
+.word-hero-panel {
+  background: rgba(255,255,255,0.85);
+  border-radius: 16px;
+  padding: 0.75rem;
+  border: 2px solid rgba(106, 45, 255, 0.18);
+  display: grid;
+  gap: 0.3rem;
+}
+.word-hero-panel .kicker { justify-self: start; }
+.word-hero-panel p { margin: 0; font-size: 0.85rem; color: var(--ink); }
+.word-hero-panel-empty { color: var(--ink-soft); font-style: italic; }
+.word-hero-panel-words ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem;
+  max-height: 140px;
+  overflow-y: auto;
+}
+.word-hero-panel-words li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(106, 45, 255, 0.08);
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--ink);
+}
+.word-hero-panel-words li svg { color: var(--magenta); }
+.word-hero-panel-reward {
+  text-align: center;
+}
+.word-hero-star {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto;
+  background: radial-gradient(circle, #fff8b0 0%, var(--gold) 60%, #ff9a3a 100%);
+  color: var(--ink);
+  box-shadow: 0 10px 22px rgba(255, 154, 58, 0.45);
+}
+
+.word-hero-footer {
+  text-align: center;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--magenta);
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+}
+
+/* Round-complete overlay */
+.word-hero-done {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 5, 50, 0.55);
+  padding: 1rem;
+  animation: word-hero-done-bg 0.4s ease-out both;
+}
+@keyframes word-hero-done-bg {
+  0%   { background-color: rgba(20, 5, 50, 0); }
+  100% { background-color: rgba(20, 5, 50, 0.55); }
+}
+.word-hero-done-card {
+  display: grid;
+  place-items: center;
+  gap: 0.5rem;
+  background: white;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 360px;
+  box-shadow: 0 30px 60px rgba(106, 45, 255, 0.45);
+  animation: rewards-celebrate-pop 0.7s cubic-bezier(.2, .9, .3, 1.4) both;
+}
+.word-hero-done-pop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, var(--gold), var(--pink));
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 8px 20px rgba(255, 45, 142, 0.45);
+  margin: 0.25rem 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-hero-target,
+  .word-hero-target-glow,
+  .word-hero-typed-tile,
+  .word-hero-status,
+  .word-hero-done,
+  .word-hero-done-card { animation: none !important; }
+}
+
 /* ---------- Wordshake FeatherPop session pill ---------- */
 .featherpop-pill {
   display: inline-flex;
