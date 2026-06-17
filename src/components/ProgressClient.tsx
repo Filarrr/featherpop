@@ -30,6 +30,11 @@ const BADGES: BadgeMeta[] = [
 
 const GOLDEN_FEATHER_GOAL = 1000;
 
+function currentMonthKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, "0")}`;
+}
+
 export function ProgressClient() {
   const { progress, active } = useActiveChild();
   const wordsFound = progress.wordsFound ?? 0;
@@ -39,8 +44,17 @@ export function ProgressClient() {
   const videosWatched = progress.videosWatched ?? 0;
   const songsUnlocked = progress.songsUnlocked ?? 0;
 
-  const goldenPct = Math.min(100, Math.round((wordsFound / GOLDEN_FEATHER_GOAL) * 100));
-  const wordsToGo = Math.max(0, GOLDEN_FEATHER_GOAL - wordsFound);
+  // The Golden Feather progress bar tracks THIS MONTH (per the client
+  // spec: '1000 Words in a Month'). If the stored monthKey doesn't match
+  // today's calendar month, we show 0 — the server-side recorder will
+  // reset on the next word.
+  const mk = currentMonthKey();
+  const inSameMonth = progress.monthKey === mk;
+  const monthlyWords = inSameMonth ? progress.wordsThisMonth ?? 0 : 0;
+  const earnedThisMonth = (progress.goldenFeatherMonths ?? []).includes(mk);
+
+  const goldenPct = Math.min(100, Math.round((monthlyWords / GOLDEN_FEATHER_GOAL) * 100));
+  const wordsToGo = Math.max(0, GOLDEN_FEATHER_GOAL - monthlyWords);
 
   return (
     <div className="progress-page">
@@ -68,23 +82,39 @@ export function ProgressClient() {
             <span style={{ width: `${goldenPct}%` }} />
           </div>
           <p className="progress-golden-count">
-            <strong>{wordsFound}</strong> <small>/ {GOLDEN_FEATHER_GOAL}</small>
+            <strong>{monthlyWords}</strong> <small>/ {GOLDEN_FEATHER_GOAL}</small>
           </p>
-          <p className="progress-golden-label">Words Found</p>
+          <p className="progress-golden-label">Words Found This Month</p>
           <p className="progress-golden-msg">
-            {wordsToGo === 0
-              ? "🎉 You earned the Golden Feather!"
-              : (
-                <>
-                  You're getting closer to earning the{" "}
-                  <strong>Golden Feather!</strong> Keep going!
-                </>
-              )}
+            {earnedThisMonth ? (
+              <>
+                🎉 You earned the Golden Feather this month!{" "}
+                <Link
+                  href="/print/golden-feather"
+                  style={{ color: "var(--magenta)", fontWeight: 800 }}
+                >
+                  Print certificate →
+                </Link>
+              </>
+            ) : wordsToGo === 0 ? (
+              "🎉 You earned the Golden Feather!"
+            ) : (
+              <>
+                You're getting closer to earning the{" "}
+                <strong>Golden Feather!</strong> Keep going!
+              </>
+            )}
           </p>
         </div>
         <div className="progress-golden-side">
           <span className="progress-golden-badge" aria-hidden>🪶</span>
-          <p>{wordsToGo === 0 ? "Unlocked!" : `${wordsToGo} words to go!`}</p>
+          <p>
+            {earnedThisMonth
+              ? "Earned!"
+              : wordsToGo === 0
+                ? "Unlocked!"
+                : `${wordsToGo} words to go!`}
+          </p>
         </div>
       </section>
 

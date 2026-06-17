@@ -61,6 +61,21 @@ export interface ChildProgress {
   videosWatched?: number;
   songsUnlocked?: number;
   claimedRewards?: { id: string; at: number; cost: number }[];
+
+  // Monthly Golden Feather tracking. wordsThisMonth resets to 0 when the
+  // current month rolls over (server-side). monthKey is the YYYY-MM the
+  // counter belongs to; if it doesn't match today's, the counter resets
+  // on next write.
+  wordsThisMonth?: number;
+  monthKey?: string;
+  // Golden Feather earned in YYYY-MM. Persisted so the certificate route
+  // can render it after the fact.
+  goldenFeatherMonths?: string[];
+
+  // Daily +5 video/music bonus gates — keyed by 'YYYY-MM-DD'. The presence
+  // of today's key in either set means the bonus was claimed today.
+  videoBonusDates?: string[];
+  musicBonusDates?: string[];
 }
 
 export const defaultChildProgress: ChildProgress = {

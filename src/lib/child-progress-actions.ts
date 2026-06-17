@@ -168,10 +168,20 @@ function pickHatchedCharacter(): HatchedCharacter {
 }
 
 const WORDS_PER_HATCH = 50;
+const GOLDEN_FEATHER_GOAL = 1000;
+const GOLDEN_FEATHER_BONUS = 500; // +500 feathers when achieved
+
+function monthKey(now: Date = new Date()): string {
+  return `${now.getFullYear()}-${`${now.getMonth() + 1}`.padStart(2, "0")}`;
+}
+function dayKey(now: Date = new Date()): string {
+  return `${now.getFullYear()}-${`${now.getMonth() + 1}`.padStart(2, "0")}-${`${now.getDate()}`.padStart(2, "0")}`;
+}
 
 export interface WordRecordResult {
   progress: ChildProgress;
   hatched: HatchedEntry | null; // non-null when this submission triggered a hatch
+  goldenFeatherJustEarned: boolean; // true if this record crossed 1000 this month
 }
 
 /**
@@ -214,10 +224,28 @@ export async function recordWordsFoundAction(count: number): Promise<WordRecordR
     egg = { color: pickEggColor(), wordsAtStart: nextWords };
   }
 
+  // Monthly Golden Feather tracker — reset to count on month rollover,
+  // otherwise add to existing.
+  const mk = monthKey();
+  const sameMonth = prev.monthKey === mk;
+  const prevMonthly = sameMonth ? prev.wordsThisMonth ?? 0 : 0;
+  const wordsThisMonth = prevMonthly + Math.floor(count);
+  const alreadyEarnedThisMonth = (prev.goldenFeatherMonths ?? []).includes(mk);
+  const goldenFeatherJustEarned =
+    wordsThisMonth >= GOLDEN_FEATHER_GOAL && !alreadyEarnedThisMonth;
+
   const next: ChildProgress = {
     ...prev,
-    featherPop: prev.featherPop + Math.floor(count), // 1 word = 1 feather
+    featherPop:
+      prev.featherPop +
+      Math.floor(count) + // 1 word = 1 feather
+      (goldenFeatherJustEarned ? GOLDEN_FEATHER_BONUS : 0),
     wordsFound: nextWords,
+    wordsThisMonth,
+    monthKey: mk,
+    goldenFeatherMonths: goldenFeatherJustEarned
+      ? [mk, ...(prev.goldenFeatherMonths ?? [])]
+      : prev.goldenFeatherMonths,
     egg,
     hatched: nextHatched,
     freeSpins,
@@ -225,7 +253,7 @@ export async function recordWordsFoundAction(count: number): Promise<WordRecordR
 
   await writeMap({ ...map, [childId]: next });
   revalidatePath("/", "layout");
-  return { progress: next, hatched };
+  return { progress: next, hatched, goldenFeatherJustEarned };
 }
 
 /**
@@ -271,6 +299,134 @@ export async function claimRewardAction(
   await writeMap({ ...map, [childId]: next });
   revalidatePath("/", "layout");
   return { ok: true, progress: next };
+}
+
+/* -------------------- Monthly Golden Feather + daily bonuses -------------------- */
+/**
+ * Increment the active child's monthly word counter. Resets to 1 on month
+ * rollover. If this push crosses the 1000 threshold AND we haven't already
+ * awarded the badge for this month, award +500 feathers + record the month
+ * in goldenFeatherMonths.
+ *
+ * Returns whether the Golden Feather was earned RIGHT NOW so the UI can
+ * show the celebration.
+ */
+export async function tickMonthlyWordsAction(): Promise<{
+  wordsThisMonth: number;
+  monthKey: string;
+  goldenFeatherJustEarned: boolean;
+} | null> {
+  const childId = await getActiveChildId();
+  if (!childId) return null;
+  const user = await currentUser();
+  if (!user) return null;
+
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const mk = monthKey();
+
+  const inSameMonth = prev.monthKey === mk;
+  const wordsThisMonth = (inSameMonth ? prev.wordsThisMonth ?? 0 : 0) + 1;
+  const alreadyEarned = (prev.goldenFeatherMonths ?? []).includes(mk);
+  const goldenFeatherJustEarned =
+    wordsThisMonth >= GOLDEN_FEATHER_GOAL && !alreadyEarned;
+
+  const next: ChildProgress = {
+    ...prev,
+    wordsThisMonth,
+    monthKey: mk,
+    goldenFeatherMonths: goldenFeatherJustEarned
+      ? [mk, ...(prev.goldenFeatherMonths ?? [])]
+      : prev.goldenFeatherMonths,
+    featherPop: prev.featherPop + (goldenFeatherJustEarned ? GOLDEN_FEATHER_BONUS : 0),
+  };
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/progress", "page");
+  if (goldenFeatherJustEarned) revalidatePath("/", "layout");
+  return { wordsThisMonth, monthKey: mk, goldenFeatherJustEarned };
+}
+
+/**
+ * Claim the once-per-day +5 feather bonus for a video station. Idempotent
+ * — calling again the same day no-ops. Returns whether the bonus was
+ * actually awarded.
+ */
+export async function claimVideoBonusAction(): Promise<{
+  awarded: boolean;
+  reason?: string;
+  featherPop: number;
+}> {
+  const childId = await getActiveChildId();
+  if (!childId) return { awarded: false, reason: "No active child.", featherPop: 0 };
+  const user = await currentUser();
+  if (!user) return { awarded: false, reason: "Not signed in.", featherPop: 0 };
+
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const dk = dayKey();
+  const claimed = (prev.videoBonusDates ?? []).includes(dk);
+  if (claimed) {
+    return {
+      awarded: false,
+      reason: "Already claimed today",
+      featherPop: prev.featherPop,
+    };
+  }
+  const next: ChildProgress = {
+    ...prev,
+    featherPop: prev.featherPop + 5,
+    videosWatched: (prev.videosWatched ?? 0) + 1,
+    videoBonusDates: [dk, ...(prev.videoBonusDates ?? [])].slice(0, 60),
+  };
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/", "layout");
+  return { awarded: true, featherPop: next.featherPop };
+}
+
+/** Same shape as claimVideoBonusAction but for music stations. */
+export async function claimMusicBonusAction(): Promise<{
+  awarded: boolean;
+  reason?: string;
+  featherPop: number;
+}> {
+  const childId = await getActiveChildId();
+  if (!childId) return { awarded: false, reason: "No active child.", featherPop: 0 };
+  const user = await currentUser();
+  if (!user) return { awarded: false, reason: "Not signed in.", featherPop: 0 };
+
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const dk = dayKey();
+  const claimed = (prev.musicBonusDates ?? []).includes(dk);
+  if (claimed) {
+    return {
+      awarded: false,
+      reason: "Already claimed today",
+      featherPop: prev.featherPop,
+    };
+  }
+  const next: ChildProgress = {
+    ...prev,
+    featherPop: prev.featherPop + 5,
+    songsUnlocked: (prev.songsUnlocked ?? 0) + 1,
+    musicBonusDates: [dk, ...(prev.musicBonusDates ?? [])].slice(0, 60),
+  };
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/", "layout");
+  return { awarded: true, featherPop: next.featherPop };
+}
+
+/**
+ * Used by the certificate route: which months has this child earned a
+ * Golden Feather in? Returns YYYY-MM strings, newest first.
+ */
+export async function getGoldenFeatherMonthsAction(): Promise<string[]> {
+  const childId = await getActiveChildId();
+  if (!childId) return [];
+  const user = await currentUser();
+  if (!user) return [];
+  const map = readMap(user.privateMetadata);
+  return map[childId]?.goldenFeatherMonths ?? [];
 }
 
 export async function deleteChildProgressAction(childId: string): Promise<void> {

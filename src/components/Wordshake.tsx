@@ -294,6 +294,10 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
         try {
           const recRes = await recordWordsFoundAction(1);
           if (recRes?.hatched) setHatched(recRes.hatched);
+          if (recRes?.goldenFeatherJustEarned) {
+            // Open the certificate in a new tab so the parent can print it.
+            window.open("/print/golden-feather", "_blank");
+          }
           if (bonus > 0) await awardFeatherPopAction(bonus);
         } catch (err) {
           console.warn("[wordshake] award failed:", err);

@@ -8,8 +8,10 @@ import {
   buzz,
   childCheer,
   ding,
+  eagleCheers,
   fanfare,
   pop,
+  spiderVoice,
   tick,
   urgentTick,
   wordReveal,
@@ -40,6 +42,7 @@ export function StationGrid({
   const [nextTarget, setNextTarget] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const tickedRef = useRef(false);
+  const spiderWarnedRef = useRef(false);
 
   // Shuffle the 20 words for display so it's not the same grid order
   // every time the kid scans the same QR.
@@ -64,6 +67,11 @@ export function StationGrid({
       setTimeLeft((s) => s - 1);
       if (timeLeft <= 11) urgentTick();
       else if (timeLeft % 10 === 0) tick();
+      // Spider warning at 15s remaining (once).
+      if (timeLeft === 15 && !spiderWarnedRef.current) {
+        spiderWarnedRef.current = true;
+        spiderVoice(); // 'Oh no, let's hurry up before the spider comes!'
+      }
     }, 1000);
     return () => window.clearTimeout(t);
   }, [phase, timeLeft]);
@@ -91,7 +99,9 @@ export function StationGrid({
           setNextTarget(res.next.word);
           wordReveal();
           window.setTimeout(() => fanfare(), 500);
-          window.setTimeout(() => childCheer(), 1100);
+          // Chanel: 'Yes! Feathers up and let's find the word!'
+          window.setTimeout(() => eagleCheers(), 1100);
+          window.setTimeout(() => childCheer(), 6600);
         } else {
           // Server rejected (most likely target rotated already) — bail.
           setPhase("lost");

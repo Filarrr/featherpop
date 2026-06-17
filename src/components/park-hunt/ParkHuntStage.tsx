@@ -10,6 +10,7 @@ import {
 } from "@/lib/park-hunt-actions";
 import {
   childCheer,
+  eagleHandsWord,
   eagleVoice,
   fanfare,
   pop,
@@ -59,8 +60,11 @@ export function ParkHuntStage() {
     pop();
     window.setTimeout(() => wordReveal(), 200);
     window.setTimeout(() => fanfare(), 700);
-    window.setTimeout(() => eagleVoice(), 1300); // "Strudelay! Strudelay!"
-    window.setTimeout(() => childCheer(), 2200);
+    // Eagle's recorded voice: 'Can you help me find this word in the park?'
+    // (≈4.4s clip). Fall-through to the Strudelay call after.
+    window.setTimeout(() => eagleHandsWord(), 1300);
+    window.setTimeout(() => eagleVoice(), 6200);
+    window.setTimeout(() => childCheer(), 7400);
   }, [target]);
 
   async function rotate() {

@@ -366,16 +366,49 @@ export function birdWhoosh() {
   chirp(440, 1400, 600, "triangle", 0.12, 0.15);
 }
 
-/** Strudelay! Strudelay! — the eagle's voice via speechSynthesis. */
-export function eagleVoice() {
+/* -------------------- Voice clips (real recordings) --------------------
+ * Real recordings of Chanel saying brand lines, dropped at
+ * /public/audio/voicenotes/<slug>.mp3. Each helper plays the clip and
+ * fanfares behind it. If the clip 404s or the user has sound off, we
+ * fall back to the synthesized speechSynthesis line so the moment still
+ * lands. The clip cache reuses HTMLAudioElements so rapid replay doesn't
+ * cause a fresh network fetch each time. */
+
+const clipCache = new Map<string, HTMLAudioElement>();
+
+function playClip(src: string, fallback: () => void): void {
+  if (typeof window === "undefined") return;
+  if (!isSoundEnabled()) return;
+  let el = clipCache.get(src);
+  if (!el) {
+    el = new Audio(src);
+    el.preload = "auto";
+    el.crossOrigin = "anonymous";
+    clipCache.set(src, el);
+  }
+  try {
+    el.currentTime = 0;
+  } catch {
+    /* iOS sometimes throws if not yet loaded */
+  }
+  const p = el.play();
+  if (p && typeof p.then === "function") {
+    p.catch(() => {
+      // Autoplay blocked / file missing — synthesize instead.
+      fallback();
+    });
+  }
+}
+
+function speakFallback(message: string, pitch = 1, rate = 1): void {
   if (typeof window === "undefined") return;
   if (!isSoundEnabled()) return;
   if (!("speechSynthesis" in window)) return;
   try {
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance("Strudelay! Strudelay!");
-    u.rate = 1.0;
-    u.pitch = 0.7; // deeper for the eagle
+    const u = new SpeechSynthesisUtterance(message);
+    u.rate = rate;
+    u.pitch = pitch;
     u.volume = 1;
     const voices = window.speechSynthesis.getVoices();
     const v =
@@ -386,31 +419,41 @@ export function eagleVoice() {
   } catch {
     /* ignore */
   }
-  // Add a triumphant fanfare under the call
+}
+
+/** Strudelay! Strudelay! — Chanel's recorded eagle call. */
+export function eagleVoice() {
+  playClip(
+    "/audio/voicenotes/strudelay.mp3",
+    () => speakFallback("Strudelay! Strudelay!", 0.7),
+  );
+  // Triumphant fanfare under the call.
   chirp(660, 880, 220, "triangle", 0.18, 0.05);
   chirp(880, 1320, 260, "sine", 0.16, 0.18);
 }
 
-/** "Try again!" — the spider's voice. Soft, slightly playful, kid-safe. */
+/** Eagle hands the child their target word — Park Hunt intro. */
+export function eagleHandsWord() {
+  playClip(
+    "/audio/voicenotes/can-you-help-me-find-this-word-in-the-park.mp3",
+    () => speakFallback("Can you help me find this word in the park?", 0.8),
+  );
+}
+
+/** Child found the word — Park Hunt celebration. */
+export function eagleCheers() {
+  playClip(
+    "/audio/voicenotes/yes-feathertag-up-and-lets-find-the-word.mp3",
+    () => speakFallback("Yes! Feathers up and let's find the word!", 0.8),
+  );
+}
+
+/** Spider arrives — used in Feather Match loss + Park Hunt low-timer. */
 export function spiderVoice() {
-  if (typeof window === "undefined") return;
-  if (!isSoundEnabled()) return;
-  if (!("speechSynthesis" in window)) return;
-  try {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance("Try again! All mine!");
-    u.rate = 0.95;
-    u.pitch = 0.85;
-    u.volume = 1;
-    const voices = window.speechSynthesis.getVoices();
-    const v =
-      voices.find((x) => /male|david/i.test(x.name)) ??
-      voices.find((x) => x.lang?.startsWith("en"));
-    if (v) u.voice = v;
-    window.speechSynthesis.speak(u);
-  } catch {
-    /* ignore */
-  }
+  playClip(
+    "/audio/voicenotes/oh-no-lets-hurry-up-before-the-spider-comes.mp3",
+    () => speakFallback("Oh no, let's hurry up before the spider comes!", 0.95, 0.95),
+  );
 }
 
 /** Magical sparkle cascade when the parchment word reveals. */

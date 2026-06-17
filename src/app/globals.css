@@ -6418,3 +6418,199 @@ a { color: inherit; }
   border-radius: 1.5rem;
   box-shadow: 0 18px 36px rgba(106, 45, 255, 0.18);
 }
+
+/* ============================================================
+   Golden Feather printable certificate
+   ============================================================ */
+.golden-cert {
+  width: min(820px, 100%);
+  margin: 2rem auto;
+  aspect-ratio: 8.5 / 11;
+  background:
+    radial-gradient(60% 50% at 50% 20%, #fff8e0 0%, transparent 65%),
+    linear-gradient(180deg, #fffaf0 0%, #ffe9b8 100%);
+  border-radius: 1rem;
+  box-shadow: 0 30px 60px rgba(106, 45, 255, 0.18);
+  padding: 2.5rem 2rem;
+  position: relative;
+  isolation: isolate;
+}
+.golden-cert-frame {
+  position: relative;
+  height: 100%;
+  border: 4px double #a86800;
+  border-radius: 0.75rem;
+  padding: 2rem 1.5rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255, 244, 220, 0.6));
+}
+.golden-cert-corner {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background: radial-gradient(circle at center, #ffd14a, #a86800 70%);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.golden-cert-corner.top-left { top: -8px; left: -8px; }
+.golden-cert-corner.top-right { top: -8px; right: -8px; transform: rotate(90deg); }
+.golden-cert-corner.bottom-left { bottom: -8px; left: -8px; transform: rotate(-90deg); }
+.golden-cert-corner.bottom-right { bottom: -8px; right: -8px; transform: rotate(180deg); }
+.golden-cert-medal { margin-bottom: 0.5rem; }
+.golden-cert-kicker {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 700;
+  color: #a86800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  margin: 0;
+}
+.golden-cert-title {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  color: #6a2dff;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  margin: 0.4rem 0 0.5rem;
+  letter-spacing: 0.02em;
+}
+.golden-cert-presented {
+  font-style: italic;
+  color: var(--ink-soft);
+  margin: 0.5rem 0 0.25rem;
+}
+.golden-cert-name {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.2rem, 6vw, 3.6rem);
+  margin: 0.25rem 0;
+  background: linear-gradient(180deg, #ffd14a, #a86800);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 0.06em;
+}
+.golden-cert-body {
+  color: var(--ink);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  margin: 0.6rem 0;
+}
+.golden-cert-tag {
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  margin: 0.5rem 0 1.5rem;
+  line-height: 1.5;
+}
+.golden-cert-sig {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  align-items: end;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+.golden-cert-sig .line {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 0.2rem;
+  margin: 0 0.5rem;
+}
+.golden-cert-sig .sublabel {
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  margin: 0.2rem 0 0;
+}
+
+@media print {
+  body { background: white !important; }
+  .no-print,
+  .brandbar,
+  .bottom-nav { display: none !important; }
+  .golden-cert {
+    margin: 0;
+    box-shadow: none;
+    border-radius: 0;
+    page-break-inside: avoid;
+    aspect-ratio: auto;
+    height: 100vh;
+  }
+}
+
+/* ---------- Daily +5 bonus card ---------- */
+.daily-bonus {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: center;
+  padding: 1rem 1.1rem;
+  border-radius: 1.25rem;
+  margin-bottom: 1rem;
+  color: var(--ink);
+  background: linear-gradient(135deg, #fff8e0 0%, #ffd14a 100%);
+  box-shadow: 0 14px 30px rgba(255, 154, 58, 0.4);
+  position: relative;
+}
+.daily-bonus-music {
+  background: linear-gradient(135deg, #e8f6ff 0%, #7cd1ff 100%);
+  box-shadow: 0 14px 30px rgba(76, 196, 255, 0.4);
+}
+.daily-bonus.is-claimed {
+  background: linear-gradient(135deg, #d9f8e0 0%, #34e3a4 100%);
+  box-shadow: 0 14px 30px rgba(52, 227, 164, 0.4);
+}
+.daily-bonus-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: white;
+  color: var(--magenta);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+  flex-shrink: 0;
+}
+.daily-bonus.is-claimed .daily-bonus-icon { color: #1ea672; }
+.daily-bonus-body { display: grid; gap: 0.2rem; min-width: 0; }
+.daily-bonus-body h3 {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  margin: 0.1rem 0;
+  line-height: 1.15;
+}
+.daily-bonus-body p { font-size: 0.85rem; color: var(--ink-soft); margin: 0; line-height: 1.35; }
+.daily-bonus-reason { color: var(--pink) !important; font-weight: 700; }
+.daily-bonus-btn {
+  grid-column: 1 / -1;
+  justify-self: stretch;
+  margin-top: 0.4rem;
+}
+@media (min-width: 540px) {
+  .daily-bonus { grid-template-columns: auto 1fr auto; }
+  .daily-bonus-btn { grid-column: auto; justify-self: end; margin-top: 0; }
+}
+
+/* ---------- Music station card ---------- */
+.music-card {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 0.4rem;
+}
+.music-stage {
+  display: grid;
+  place-items: center;
+  margin: 0.5rem 0;
+}
+.music-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
