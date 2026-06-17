@@ -84,18 +84,39 @@ function feathersPerColor(round: number): number {
   return 4;
 }
 
+// The mascot lives in the bottom-LEFT corner with a speech bubble that
+// extends ~30% across the scatter area. Feathers placed in there get hidden
+// behind it, frustrating kids who can't see what they need to drag. Keep
+// the scatter out of that wedge.
+function inMascotZone(x: number, y: number): boolean {
+  // The mascot bubble + figure occupy roughly the bottom-left 38% × 28%
+  // of the play area. Reject any scatter point that lands in there.
+  return x < 38 && y > 72;
+}
+
 function makeRound(types: FeatherType[], perColor: number): FeatherInstance[] {
   // `perColor` of each → density grows with the round. Scattered on the LEFT
-  // portion of the play area so child drags rightward to the nest column.
+  // portion of the play area so child drags rightward to the nest column,
+  // with the mascot's bottom-left zone excluded.
   const all: FeatherInstance[] = [];
   let i = 0;
   for (const t of types) {
     for (let k = 0; k < perColor; k++) {
+      // Reject-and-resample until the point isn't behind the mascot.
+      let x = 0;
+      let y = 0;
+      for (let attempt = 0; attempt < 12; attempt++) {
+        x = 4 + Math.random() * 64;
+        y = 4 + Math.random() * 88;
+        if (!inMascotZone(x, y)) break;
+      }
+      // If 12 attempts all landed in the mascot zone (unlucky), force above it.
+      if (inMascotZone(x, y)) y = 4 + Math.random() * 60;
       all.push({
         id: `${t}-${k}-${i++}`,
         type: t,
-        x: 4 + Math.random() * 64, // 4%–68% across (left scatter area)
-        y: 4 + Math.random() * 88, // 4%–92% down
+        x,
+        y,
         rot: -28 + Math.random() * 56,
         placed: null,
       });
@@ -277,7 +298,10 @@ export function FeatherSortGame() {
       if (activeChildId)
         await awardFeatherPopAction(Math.max(1, Math.floor(roundTypes.length / 2)));
     } catch {}
-    router.push(`/scan?word=${encodeURIComponent(keyWord.word)}`);
+    // Park Hunt is now its own flow: the daily station model picks a fresh
+    // target word for the child. We drop into /park-hunt and let it tell the
+    // child which word to find at which station.
+    router.push("/park-hunt");
   }
 
   const timeUrgent = phase === "playing" && timeLeft <= 10;

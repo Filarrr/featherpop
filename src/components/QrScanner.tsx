@@ -28,6 +28,7 @@ import { CountUp } from "@/components/CountUp";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { useActiveChild } from "@/lib/use-active-child";
 import { awardFeatherPopAction } from "@/lib/child-progress-actions";
+import { parseStationCode } from "@/lib/park-hunt";
 
 // Each QR placed in the park contains one of:
 //   - A bare letter ("S")
@@ -159,7 +160,19 @@ export function QrScanner() {
           videoRef.current,
           (result) => {
             if (!result) return;
-            const letter = extractLetter(result.getText());
+            const raw = result.getText();
+            // Park Hunt station QRs take priority: parkhunt-station-N,
+            // station3, ?station=3, /station/3, etc. → route into the
+            // station word grid.
+            const stationId = parseStationCode(raw);
+            if (stationId !== null) {
+              ding(1320, 110);
+              controlsRef.current?.stop();
+              router.push(`/park-hunt/station/${stationId + 1}`);
+              return;
+            }
+            // Legacy letter-portal QRs.
+            const letter = extractLetter(raw);
             if (!letter) {
               setStatus("Couldn't read that QR — try another one.");
               return;

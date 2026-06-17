@@ -12,7 +12,7 @@ const links = [
   { href: "/", label: "Home", icon: Home },
   { href: "/sort", label: "Play Feather Match", icon: Wand2 },
   { href: "/play", label: "Play Letter Pop", icon: Gamepad2 },
-  { href: "/word-hero", label: "Play Park Hunt", icon: Camera },
+  { href: "/park-hunt", label: "Play Park Hunt", icon: Camera },
   { href: "/feathers", label: "Feathers", icon: Feather },
   { href: "/rewards", label: "Prizes", icon: Gift },
 ];

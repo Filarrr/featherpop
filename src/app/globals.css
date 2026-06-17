@@ -6137,3 +6137,284 @@ a { color: inherit; }
 }
 
 
+
+/* ============================================================
+   Park Hunt — real version (6 stations × 20 words = 120/day)
+   ============================================================ */
+.parkhunt-page { padding-top: 0; }
+.parkhunt-stage {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem 0.75rem 6rem;
+  min-height: calc(100dvh - 130px);
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgba(255,255,255,0.65), transparent 70%),
+    linear-gradient(180deg, #b9e8ff 0%, #f3e3ff 50%, #ffd6f0 100%);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+.parkhunt-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("/media/sort/bg-sort.png") center top / cover no-repeat;
+  opacity: 0.32;
+  z-index: 0;
+  pointer-events: none;
+}
+.parkhunt-stage > * { position: relative; z-index: 1; }
+
+.parkhunt-loading {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--ink-soft);
+}
+.parkhunt-empty {
+  display: grid;
+  place-items: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.parkhunt-stage-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: clamp(140px, 30vw, 220px);
+}
+.parkhunt-eagle {
+  width: clamp(180px, 40vw, 280px);
+  animation: parkhunt-eagle-bob 2.4s ease-in-out infinite;
+  filter: drop-shadow(0 16px 30px rgba(106, 45, 255, 0.45));
+}
+.parkhunt-eagle img { width: 100%; height: auto; display: block; }
+@keyframes parkhunt-eagle-bob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-10px) rotate(2deg); }
+}
+.parkhunt-mascot {
+  position: absolute;
+  right: 4%;
+  bottom: 0;
+  width: 110px;
+}
+
+.parkhunt-stage-card {
+  background: rgba(255,255,255,0.96);
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+  box-shadow: 0 22px 44px rgba(106, 45, 255, 0.22);
+  display: grid;
+  gap: 0.6rem;
+  text-align: center;
+}
+.parkhunt-stage-card .kicker { justify-self: center; }
+.parkhunt-target-label {
+  color: var(--ink-soft);
+  margin: 0;
+  font-size: 0.95rem;
+}
+.parkhunt-target-word {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.4rem, 9vw, 4rem);
+  margin: 0.2rem 0;
+  letter-spacing: 0.06em;
+  background: linear-gradient(180deg, var(--magenta), var(--purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 3px 0 rgba(0,0,0,0.08);
+}
+.parkhunt-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem auto;
+  max-width: 32rem;
+  text-align: left;
+  display: grid;
+  gap: 0.45rem;
+}
+.parkhunt-steps li {
+  background: rgba(106, 45, 255, 0.06);
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.parkhunt-steps strong:first-child {
+  display: inline-block;
+  margin-right: 0.4rem;
+  color: var(--magenta);
+}
+.parkhunt-stage-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 360px;
+  margin: 0.5rem auto 0;
+}
+.parkhunt-stage-actions .btn { justify-content: center; }
+@media (min-width: 640px) {
+  .parkhunt-stage-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-width: 560px;
+  }
+}
+.parkhunt-stage-count {
+  margin: 0.5rem 0 0;
+  font-weight: 700;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+/* --- Station word grid --- */
+.parkhunt-station {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem 0.75rem 5rem;
+}
+.parkhunt-station-hud {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 10px 24px rgba(106, 45, 255, 0.18);
+}
+.parkhunt-station-hud .kicker { white-space: nowrap; padding: 0.25rem 0.55rem; }
+.parkhunt-station-find {
+  text-align: center;
+  margin: 0;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(0.95rem, 4vw, 1.2rem);
+  line-height: 1.1;
+}
+.parkhunt-station-find strong {
+  color: var(--magenta);
+  letter-spacing: 0.04em;
+}
+.parkhunt-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: white;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.parkhunt-timer.is-urgent {
+  background: linear-gradient(135deg, var(--pink), var(--magenta));
+  animation: parkhunt-timer-flash 0.6s ease-in-out infinite;
+}
+@keyframes parkhunt-timer-flash {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+
+.parkhunt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+@media (min-width: 480px) {
+  .parkhunt-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 720px) {
+  .parkhunt-grid { grid-template-columns: repeat(4, 1fr); gap: 0.65rem; }
+}
+.parkhunt-word {
+  padding: 0.85rem 0.5rem;
+  border-radius: 14px;
+  background: white;
+  border: 2px solid rgba(106, 45, 255, 0.25);
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease, background 200ms ease;
+  letter-spacing: 0.04em;
+  touch-action: manipulation;
+}
+.parkhunt-word:hover:not(:disabled) {
+  transform: translateY(-3px);
+  border-color: var(--magenta);
+  box-shadow: 0 10px 20px rgba(177, 59, 255, 0.25);
+}
+.parkhunt-word:disabled { cursor: default; opacity: 0.6; }
+.parkhunt-word.is-wrong {
+  animation: parkhunt-word-shake 0.5s ease;
+  border-color: var(--pink);
+  background: color-mix(in srgb, var(--pink) 12%, white);
+}
+@keyframes parkhunt-word-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+.parkhunt-word.is-found {
+  background: linear-gradient(135deg, var(--gold), #ff9a3a);
+  color: var(--ink);
+  border-color: var(--gold);
+  box-shadow: 0 14px 30px rgba(255, 154, 58, 0.55);
+  transform: scale(1.08);
+}
+
+.parkhunt-station-result {
+  display: grid;
+  place-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 1.25rem 1rem;
+  border-radius: 1.5rem;
+  background: white;
+  box-shadow: 0 22px 44px rgba(106, 45, 255, 0.22);
+  animation: parkhunt-result-in 0.6s cubic-bezier(.2, .9, .3, 1.4) both;
+}
+@keyframes parkhunt-result-in {
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.parkhunt-station-result.is-win svg { color: var(--gold); }
+.parkhunt-station-result.is-lose { background: color-mix(in srgb, var(--pink) 6%, white); }
+.parkhunt-station-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 360px;
+}
+.parkhunt-station-actions .btn { justify-content: center; }
+@media (min-width: 640px) {
+  .parkhunt-station-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-width: 560px;
+  }
+}
+.parkhunt-station-empty {
+  display: grid;
+  place-items: center;
+  gap: 0.6rem;
+  padding: 2rem 1rem;
+  text-align: center;
+  background: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 18px 36px rgba(106, 45, 255, 0.18);
+}

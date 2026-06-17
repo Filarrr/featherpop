@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Camera, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
+import { BarChart3, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
 
 type LinkDef = {
   href: string;
@@ -14,11 +14,14 @@ type LinkDef = {
   featured?: boolean;
 };
 
+// Park Hunt is intentionally NOT a bottom-nav destination — it's a contextual
+// flow that opens after the eagle hands the child a target word. Bottom nav
+// is the always-on shortcut to the things the child reaches between sessions.
 const links: LinkDef[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/sort", label: "Feather Match", icon: Wand2, prefix: "Play" },
   { href: "/play", label: "Letter Pop", icon: Gamepad2, prefix: "Play", featured: true },
-  { href: "/word-hero", label: "Park Hunt", icon: Camera, prefix: "Play" },
+  { href: "/progress", label: "My Progress", icon: BarChart3 },
   { href: "/rewards", label: "Prizes", icon: Gift },
 ];
 
