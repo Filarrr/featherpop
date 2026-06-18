@@ -16,6 +16,7 @@ import {
   startMusic,
   stopMusic,
   tick,
+  unlockVoiceClips,
   urgentTick,
 } from "@/lib/audio";
 import { isDictWord } from "@/lib/wordshake-dict";
@@ -384,6 +385,9 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
     setShowIntro(false);
     setRunning(true);
     pop();
+    // This tap is the user gesture — prime voice clips so eagle/spider
+    // lines play later from non-gesture handlers (iOS Safari rule).
+    unlockVoiceClips();
     // Music will start via the existing musicOn effect; the tap unlocks it.
   }
 
@@ -547,6 +551,42 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
           </Link>
         </div>
       </section>
+
+      {/* Mobile-only floating action dock — keeps the current word + the
+          Cancel/Enter buttons within thumb reach of the grid so the kid
+          doesn't have to scroll past the mascot card to submit. */}
+      <div
+        className={`shake-dock ${path.length > 0 ? "is-active" : ""}`}
+        aria-hidden={path.length === 0}
+      >
+        <div className="shake-dock-word">
+          {builtWord.length === 0 ? (
+            <em>Tap connected letters…</em>
+          ) : (
+            builtWord
+          )}
+        </div>
+        <div className="shake-dock-actions">
+          <button
+            type="button"
+            onClick={cancel}
+            disabled={path.length === 0}
+            className="shake-dock-btn shake-dock-btn-cancel"
+            aria-label="Cancel word"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={enter}
+            disabled={path.length < 2 || !running}
+            className="shake-dock-btn shake-dock-btn-enter"
+            aria-label="Enter word"
+          >
+            Enter
+          </button>
+        </div>
+      </div>
 
       <aside className="shake-side">
         <Mascot mood={mood} message={mascotMessage} nudge={mascotNudge} />

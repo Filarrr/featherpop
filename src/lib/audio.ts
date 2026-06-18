@@ -376,6 +376,57 @@ export function birdWhoosh() {
 
 const clipCache = new Map<string, HTMLAudioElement>();
 
+// All voice-clip URLs we ship. The unlock pass primes each so iOS Safari
+// will let later programmatic .play() calls through outside a user
+// gesture. Keep this in sync with any new playClip(...) call.
+const ALL_VOICE_CLIPS = [
+  "/audio/voicenotes/strudelay.mp3",
+  "/audio/voicenotes/can-you-help-me-find-this-word-in-the-park.mp3",
+  "/audio/voicenotes/yes-feathertag-up-and-lets-find-the-word.mp3",
+  "/audio/voicenotes/oh-no-lets-hurry-up-before-the-spider-comes.mp3",
+];
+
+let voiceUnlocked = false;
+
+/**
+ * MUST be called inside a user-gesture handler (e.g. the home PLAY tap).
+ * iOS Safari blocks HTMLAudioElement.play() outside a gesture; this
+ * primes each clip by calling play() then immediately pause() so future
+ * programmatic play() calls succeed.
+ */
+export function unlockVoiceClips(): void {
+  if (typeof window === "undefined") return;
+  if (voiceUnlocked) return;
+  voiceUnlocked = true;
+  for (const src of ALL_VOICE_CLIPS) {
+    let el = clipCache.get(src);
+    if (!el) {
+      el = new Audio(src);
+      el.preload = "auto";
+      el.crossOrigin = "anonymous";
+      el.volume = 0;
+      clipCache.set(src, el);
+    }
+    const p = el.play();
+    if (p && typeof p.then === "function") {
+      p
+        .then(() => {
+          el!.pause();
+          try {
+            el!.currentTime = 0;
+          } catch {
+            /* ignore */
+          }
+          el!.volume = 1;
+        })
+        .catch(() => {
+          // Silent: just means the gesture didn't propagate here. The
+          // first real play() call will retry.
+        });
+    }
+  }
+}
+
 function playClip(src: string, fallback: () => void): void {
   if (typeof window === "undefined") return;
   if (!isSoundEnabled()) return;
@@ -386,6 +437,7 @@ function playClip(src: string, fallback: () => void): void {
     el.crossOrigin = "anonymous";
     clipCache.set(src, el);
   }
+  el.volume = 1;
   try {
     el.currentTime = 0;
   } catch {
@@ -393,8 +445,12 @@ function playClip(src: string, fallback: () => void): void {
   }
   const p = el.play();
   if (p && typeof p.then === "function") {
-    p.catch(() => {
-      // Autoplay blocked / file missing — synthesize instead.
+    p.catch((err) => {
+      // Surface the error in dev so we can see whether iOS blocked it
+      // or the file 404'd.
+      if (typeof console !== "undefined") {
+        console.warn(`[audio] playClip(${src}) failed:`, err?.message ?? err);
+      }
       fallback();
     });
   }

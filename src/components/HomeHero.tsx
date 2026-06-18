@@ -11,6 +11,7 @@ import {
   pop,
   setMusicEnabled,
   startMusic,
+  unlockVoiceClips,
 } from "@/lib/audio";
 
 function greetingForTime(): { greeting: string; pose: "wave" | "cheer" | "idle" } {
@@ -34,9 +35,13 @@ export function HomeHero() {
 
   function handlePlay() {
     pop();
-    // Browsers block auto-play; the tap is the gesture that unlocks the
-    // AudioContext and lets the music engine start.
+    // This tap is the user gesture that:
+    //   1. Unlocks the WebAudio context (used for synthesized SFX).
+    //   2. Primes the HTMLAudio voice clips so iOS Safari will allow
+    //      them to play later from non-gesture handlers.
+    //   3. Starts the procedural music loop.
     if (!isMusicEnabled()) setMusicEnabled(true);
+    unlockVoiceClips();
     startMusic();
     router.push("/sort");
   }

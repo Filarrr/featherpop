@@ -36,6 +36,7 @@ import {
   spiderApproach,
   spiderVoice,
   startMusic,
+  unlockVoiceClips,
   urgentTick,
   wordReveal,
   wrongDrop,
@@ -214,6 +215,9 @@ export function FeatherSortGame() {
   const onDragStart = useCallback((e: DragStartEvent) => {
     setActiveId(String(e.active.id));
     featherPickup();
+    // First drag is a user gesture — use it to unlock the voice clips so
+    // the eagle/spider lines play later. unlockVoiceClips is idempotent.
+    unlockVoiceClips();
   }, []);
 
   const onDragEnd = useCallback(
