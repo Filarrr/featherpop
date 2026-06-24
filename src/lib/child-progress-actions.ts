@@ -429,6 +429,119 @@ export async function getGoldenFeatherMonthsAction(): Promise<string[]> {
   return map[childId]?.goldenFeatherMonths ?? [];
 }
 
+/* -------------------- Spin wheel -------------------- */
+
+export type SpinPrize =
+  | "feathers-5"
+  | "feathers-10"
+  | "feathers-20"
+  | "coloring-page"
+  | "puzzle"
+  | "character-card"
+  | "mystery";
+
+interface SpinPrizeMeta {
+  id: SpinPrize;
+  label: string;
+  emoji: string;
+  weight: number; // higher = more common
+}
+
+const SPIN_PRIZES: SpinPrizeMeta[] = [
+  { id: "feathers-5",      label: "+5 FeatherPop",       emoji: "🪶", weight: 30 },
+  { id: "feathers-10",     label: "+10 FeatherPop",      emoji: "✨", weight: 20 },
+  { id: "feathers-20",     label: "+20 FeatherPop",      emoji: "💎", weight: 8  },
+  { id: "coloring-page",   label: "Coloring page",       emoji: "🎨", weight: 15 },
+  { id: "puzzle",          label: "Puzzle",              emoji: "🧩", weight: 12 },
+  { id: "character-card",  label: "Character card",      emoji: "🃏", weight: 10 },
+  { id: "mystery",         label: "Mystery reward",      emoji: "🎁", weight: 5  },
+];
+
+/** Publicly-readable list of prizes the wheel can land on. */
+export async function listSpinPrizesAction(): Promise<
+  Array<{ id: SpinPrize; label: string; emoji: string }>
+> {
+  return SPIN_PRIZES.map(({ id, label, emoji }) => ({ id, label, emoji }));
+}
+
+/**
+ * Consume one free spin and award a random prize. Returns the prize
+ * landed on, plus the updated FeatherPop balance (for the immediate
+ * 'feathers-N' rewards) and the new spin balance.
+ */
+export async function spinWheelAction(): Promise<
+  | {
+      ok: true;
+      prize: { id: SpinPrize; label: string; emoji: string };
+      featherPop: number;
+      freeSpinsRemaining: number;
+    }
+  | { ok: false; reason: string }
+> {
+  const childId = await getActiveChildId();
+  if (!childId) return { ok: false, reason: "No active child." };
+  const user = await currentUser();
+  if (!user) return { ok: false, reason: "Not signed in." };
+
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const freeSpins = prev.freeSpins ?? 0;
+  if (freeSpins <= 0) {
+    return {
+      ok: false,
+      reason: "No spins left — hatch an egg to earn one.",
+    };
+  }
+
+  // Weighted random pick.
+  const totalWeight = SPIN_PRIZES.reduce((s, p) => s + p.weight, 0);
+  let r = Math.random() * totalWeight;
+  let landed = SPIN_PRIZES[0];
+  for (const p of SPIN_PRIZES) {
+    r -= p.weight;
+    if (r <= 0) {
+      landed = p;
+      break;
+    }
+  }
+
+  // Resolve the prize's effect.
+  let featherDelta = 0;
+  if (landed.id === "feathers-5") featherDelta = 5;
+  else if (landed.id === "feathers-10") featherDelta = 10;
+  else if (landed.id === "feathers-20") featherDelta = 20;
+  // Non-feather prizes get queued as a claimedRewards entry so they
+  // show in the wallet history (parent fulfils the physical/print
+  // prize later).
+  const claimedRewards =
+    featherDelta === 0
+      ? [
+          {
+            id: `spin-${landed.id}-${Date.now()}`,
+            at: Date.now(),
+            cost: 0,
+          },
+          ...(prev.claimedRewards ?? []),
+        ].slice(0, 50)
+      : prev.claimedRewards;
+
+  const next: ChildProgress = {
+    ...prev,
+    freeSpins: freeSpins - 1,
+    featherPop: prev.featherPop + featherDelta,
+    claimedRewards,
+  };
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/", "layout");
+
+  return {
+    ok: true,
+    prize: { id: landed.id, label: landed.label, emoji: landed.emoji },
+    featherPop: next.featherPop,
+    freeSpinsRemaining: next.freeSpins ?? 0,
+  };
+}
+
 export async function deleteChildProgressAction(childId: string): Promise<void> {
   const user = await currentUser();
   if (!user) return;

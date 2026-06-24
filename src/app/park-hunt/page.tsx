@@ -1,20 +1,82 @@
-import { resolveActiveChild } from "@/lib/active-child-server";
-import { getCurrentTargetAction } from "@/lib/park-hunt-actions";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
+import { resolveActiveChild, getActiveChildId } from "@/lib/active-child-server";
+import {
+  pickTargetForChild,
+  todayKey,
+} from "@/lib/park-hunt";
 import { ParkHuntStage } from "@/components/park-hunt/ParkHuntStage";
 
 export const metadata = { title: "Park Hunt" };
 export const dynamic = "force-dynamic";
 
+interface StoredTarget {
+  date: string;
+  word: string;
+  stationId: number;
+  foundToday?: number;
+}
+
+/**
+ * Inline the data resolution here (instead of calling
+ * getCurrentTargetAction which is marked 'use server' + calls
+ * revalidatePath). Calling a server action from a server component
+ * render path with revalidatePath inside it has been causing the
+ * Park Hunt page to crash on production — symptom: 'Find it at the
+ * park' button navigates but the page never renders.
+ */
+async function resolveInitialTarget(): Promise<StoredTarget | null> {
+  try {
+    const childId = await getActiveChildId();
+    if (!childId) return null;
+    const { userId } = await auth();
+    if (!userId) return null;
+    const user = await currentUser();
+    if (!user) return null;
+
+    const meta = (user.privateMetadata ?? {}) as Record<string, unknown>;
+    const map = (meta.parkHunt ?? {}) as Record<string, StoredTarget>;
+    const date = todayKey();
+    const existing = map[childId];
+
+    if (existing && existing.date === date) {
+      return existing;
+    }
+
+    // Lazy-assign a fresh target for today. (Write back so subsequent
+    // page hits read the same target.)
+    const next = pickTargetForChild(childId, date);
+    const stored: StoredTarget = {
+      date,
+      word: next.word,
+      stationId: next.stationId,
+      foundToday: 0,
+    };
+    try {
+      const client = await clerkClient();
+      const u = await client.users.getUser(userId);
+      await client.users.updateUserMetadata(userId, {
+        privateMetadata: {
+          ...u.privateMetadata,
+          parkHunt: { ...map, [childId]: stored },
+        },
+      });
+    } catch {
+      // Don't fail the page on a metadata write blip — the client
+      // fallback retry will store on next interaction.
+    }
+    return stored;
+  } catch {
+    return null;
+  }
+}
+
 export default async function ParkHuntPage() {
-  // Resolve the active child + the daily target ON THE SERVER so Clerk
-  // auth + cookies are guaranteed available. The client component used
-  // to call getCurrentTargetAction() from useEffect, which sometimes
-  // raced against client-side cookie hydration and showed 'Pick a
-  // profile first' even when the active-child chip was populated.
-  const { activeChildId, active } = await resolveActiveChild();
-  const initial = activeChildId
-    ? await getCurrentTargetAction().catch(() => null)
-    : null;
+  const { activeChildId, active } = await resolveActiveChild().catch(() => ({
+    activeChildId: null,
+    active: null,
+    children: [],
+  }));
+  const initial = await resolveInitialTarget();
 
   return (
     <main className="page parkhunt-page">

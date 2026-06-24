@@ -28,11 +28,15 @@ export function StationGrid({
   words,
   targetWord,
   matchesStation,
+  triesRemaining,
+  outOfTries,
 }: {
   stationId: number; // 0-indexed (display +1)
   words: string[];
   targetWord: string | null;
   matchesStation: boolean;
+  triesRemaining: number;
+  outOfTries: boolean;
 }) {
   const router = useRouter();
   const [phase, setPhase] = useState<"playing" | "won" | "lost" | "wrong-station">(
@@ -128,6 +132,29 @@ export function StationGrid({
   const urgent = phase === "playing" && timeLeft <= 10;
 
   if (phase === "wrong-station") {
+    // Out of tries → server already rotated to a new target. Tell the
+    // kid the eagle gave up + show the new word they're hunting now.
+    if (outOfTries) {
+      return (
+        <div className="parkhunt-station parkhunt-station-empty">
+          <h2 className="h-display text-3xl">
+            <span className="h-gradient">Out of tries this round!</span>
+          </h2>
+          <p>
+            The eagle has a new word ready for you:{" "}
+            <strong>{targetWord ?? "…"}</strong>
+          </p>
+          <Link href="/park-hunt" className="btn btn-gold btn-lg">
+            <RefreshCw aria-hidden className="h-5 w-5" />
+            Back to the Eagle
+          </Link>
+        </div>
+      );
+    }
+    const triesText =
+      triesRemaining === 1
+        ? "1 try left"
+        : `${triesRemaining} tries left`;
     return (
       <div className="parkhunt-station parkhunt-station-empty">
         <h2 className="h-display text-3xl">
@@ -135,7 +162,10 @@ export function StationGrid({
         </h2>
         <p>
           The eagle&apos;s word isn&apos;t at <strong>Station {stationId + 1}</strong>{" "}
-          right now. Walk around the park and try a different QR.
+          — walk around and scan a different QR.
+        </p>
+        <p className="parkhunt-tries">
+          <strong>{triesText}</strong> before the eagle rotates the word.
         </p>
         <Link href="/park-hunt" className="btn btn-gold btn-lg">
           <RefreshCw aria-hidden className="h-5 w-5" />

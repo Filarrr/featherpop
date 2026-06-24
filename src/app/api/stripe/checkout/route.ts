@@ -1,11 +1,14 @@
 // POST /api/stripe/checkout
 // Creates a Stripe Checkout Session for the Ms. Feather Pop membership
-// ($23.99/mo with a 3-day free trial) and returns its URL. The user must
-// be authenticated with Clerk (enforced in src/proxy.ts).
+// and returns its URL. The user must be authenticated with Clerk
+// (enforced in src/proxy.ts).
+//
+// Per client (2026-06): the 3-day free trial was removed. Subscription
+// starts billing immediately on checkout completion.
 
 import { NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { MEMBERSHIP_PRICE_ID, TRIAL_DAYS, stripe } from "@/lib/stripe";
+import { MEMBERSHIP_PRICE_ID, stripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
@@ -32,7 +35,7 @@ export async function POST() {
     mode: "subscription",
     line_items: [{ price: MEMBERSHIP_PRICE_ID, quantity: 1 }],
     subscription_data: {
-      trial_period_days: TRIAL_DAYS,
+      // No trial — billing starts immediately.
       metadata: { clerkUserId: userId },
     },
     customer: existingCustomerId,

@@ -6942,3 +6942,85 @@ a { color: inherit; }
   color: var(--ink);
 }
 .admin-child-card li span { color: var(--ink-soft); }
+
+/* ============================================================
+   Spin wheel
+   ============================================================ */
+.spin-page { padding-bottom: 6rem; }
+.spin-shell {
+  display: grid;
+  gap: 1.25rem;
+  place-items: center;
+  padding-top: 0.5rem;
+}
+.spin-header { text-align: center; max-width: 36rem; }
+.spin-header h1 { margin: 0.35rem 0 0.2rem; }
+.spin-stage {
+  position: relative;
+  width: min(360px, 90vw);
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+}
+.spin-pointer {
+  position: absolute;
+  top: -10px;
+  z-index: 2;
+  font-size: 2.4rem;
+  color: var(--magenta);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.25));
+}
+.spin-wheel {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 22px 40px rgba(106, 45, 255, 0.35));
+  transform-origin: 50% 50%;
+  transition: transform 3.4s cubic-bezier(0.18, 0.83, 0.27, 1);
+  border-radius: 50%;
+  background: white;
+}
+.spin-wheel.is-spinning {
+  transition: transform 3.4s cubic-bezier(0.18, 0.83, 0.27, 1);
+}
+
+.spin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.spin-error {
+  background: color-mix(in srgb, var(--pink) 10%, white);
+  border: 2px solid color-mix(in srgb, var(--pink) 40%, white);
+  border-radius: 12px;
+  padding: 0.5rem 0.85rem;
+  font-weight: 700;
+  color: var(--pink);
+}
+
+.spin-result {
+  background: white;
+  border-radius: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 18px 36px rgba(106, 45, 255, 0.2);
+  animation: spin-result-pop 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+.spin-result .kicker { justify-self: center; color: var(--magenta); }
+.spin-result h2 { margin: 0.25rem 0; }
+@keyframes spin-result-pop {
+  0%   { transform: scale(0.6) rotate(-6deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* Park Hunt: 'X tries left' label on wrong-station screen */
+.parkhunt-tries {
+  background: color-mix(in srgb, var(--gold) 18%, white);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--gold-deep, #a86800) 80%, var(--ink));
+  width: max-content;
+  margin: 0.25rem auto;
+}

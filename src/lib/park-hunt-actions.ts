@@ -16,6 +16,8 @@ import {
 } from "@/lib/park-hunt";
 import { recordWordsFoundAction } from "@/lib/child-progress-actions";
 
+const MAX_WRONG_STATIONS = 3;
+
 interface StoredTarget {
   date: string;
   word: string;
@@ -24,6 +26,10 @@ interface StoredTarget {
   // the once-per-day video/music bonus and to track daily progress
   // without polluting featherPop).
   foundToday?: number;
+  // Number of wrong stations scanned for the CURRENT target. Resets
+  // whenever a new target is picked. At MAX_WRONG_STATIONS, the next
+  // wrong scan auto-rotates the target ('out of tries').
+  wrongScans?: number;
 }
 
 type ParkHuntMap = Record<string, StoredTarget>;
@@ -197,32 +203,119 @@ export async function getStationWordsAction(stationId: number): Promise<string[]
   return dailyStations().stations[stationId];
 }
 
-/** Verify a scanned station matches the active target. Doesn't mutate state. */
+/**
+ * Verify a scanned station matches the active target.
+ *
+ * Tracks wrong-scan attempts (per spec: 3 tries before the eagle gives
+ * up and rotates to a new word). Returns:
+ *   matches            — did this station have the target word?
+ *   triesUsed          — wrong-scan counter for the CURRENT target
+ *   triesRemaining     — MAX_WRONG_STATIONS - triesUsed
+ *   outOfTries         — true if the kid has exhausted their attempts
+ *                        (target was auto-rotated by this call)
+ *   targetWord/targetStation reflect the CURRENT (possibly rotated)
+ *   target so the UI shows what to hunt next.
+ */
 export async function isCorrectStationAction(stationId: number): Promise<{
   matches: boolean;
   targetStation: number | null;
   targetWord: string | null;
+  triesUsed: number;
+  triesRemaining: number;
+  outOfTries: boolean;
 }> {
   const childId = await getActiveChildId();
-  if (!childId) return { matches: false, targetStation: null, targetWord: null };
+  if (!childId)
+    return {
+      matches: false,
+      targetStation: null,
+      targetWord: null,
+      triesUsed: 0,
+      triesRemaining: MAX_WRONG_STATIONS,
+      outOfTries: false,
+    };
   const user = await currentUser();
-  if (!user) return { matches: false, targetStation: null, targetWord: null };
+  if (!user)
+    return {
+      matches: false,
+      targetStation: null,
+      targetWord: null,
+      triesUsed: 0,
+      triesRemaining: MAX_WRONG_STATIONS,
+      outOfTries: false,
+    };
   const date = todayKey();
   const map = readMap(user.privateMetadata);
   const target = map[childId];
+
   if (!target || target.date !== date) {
-    // No active target yet — assign one.
+    // No active target yet — assign one. First scan can't count as a
+    // 'wrong' attempt since there was nothing to hunt yet.
     const fresh = pickTargetForChild(childId, date);
+    const stored: StoredTarget = {
+      date,
+      word: fresh.word,
+      stationId: fresh.stationId,
+      foundToday: 0,
+      wrongScans: 0,
+    };
+    await writeMap({ ...map, [childId]: stored }).catch(() => {});
     return {
       matches: fresh.stationId === stationId,
       targetStation: fresh.stationId,
       targetWord: fresh.word,
+      triesUsed: 0,
+      triesRemaining: MAX_WRONG_STATIONS,
+      outOfTries: false,
     };
   }
+
+  const matches = target.stationId === stationId;
+  if (matches) {
+    return {
+      matches: true,
+      targetStation: target.stationId,
+      targetWord: target.word,
+      triesUsed: target.wrongScans ?? 0,
+      triesRemaining: MAX_WRONG_STATIONS - (target.wrongScans ?? 0),
+      outOfTries: false,
+    };
+  }
+
+  // Wrong station — increment counter.
+  const used = (target.wrongScans ?? 0) + 1;
+  if (used >= MAX_WRONG_STATIONS) {
+    // Out of tries — rotate to a fresh target and reset the counter.
+    const next = nextTargetForChild(childId, date, target.word);
+    const stored: StoredTarget = {
+      date,
+      word: next.word,
+      stationId: next.stationId,
+      foundToday: target.foundToday ?? 0,
+      wrongScans: 0,
+    };
+    await writeMap({ ...map, [childId]: stored }).catch(() => {});
+    return {
+      matches: false,
+      targetStation: next.stationId,
+      targetWord: next.word,
+      triesUsed: MAX_WRONG_STATIONS,
+      triesRemaining: 0,
+      outOfTries: true,
+    };
+  }
+
+  // Wrong but still has tries left — bump the counter, keep the target.
+  const stored: StoredTarget = { ...target, wrongScans: used };
+  await writeMap({ ...map, [childId]: stored }).catch(() => {});
+
   return {
-    matches: target.stationId === stationId,
+    matches: false,
     targetStation: target.stationId,
     targetWord: target.word,
+    triesUsed: used,
+    triesRemaining: MAX_WRONG_STATIONS - used,
+    outOfTries: false,
   };
 }
 

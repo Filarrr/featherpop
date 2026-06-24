@@ -30,6 +30,8 @@ export default async function StationPage({
         words={words}
         targetWord={check.targetWord}
         matchesStation={check.matches}
+        triesRemaining={check.triesRemaining}
+        outOfTries={check.outOfTries}
       />
     </main>
   );
