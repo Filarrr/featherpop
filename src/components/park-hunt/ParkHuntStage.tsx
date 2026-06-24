@@ -25,32 +25,40 @@ interface TargetState {
   foundToday: number;
 }
 
-export function ParkHuntStage() {
+export function ParkHuntStage({
+  initialTarget,
+  hasActiveChild,
+  activeNickname,
+}: {
+  initialTarget: TargetState | null;
+  hasActiveChild: boolean;
+  activeNickname: string | null;
+}) {
   const router = useRouter();
-  const [target, setTarget] = useState<TargetState | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Start with the server-resolved target — no client fetch race.
+  const [target, setTarget] = useState<TargetState | null>(initialTarget);
+  const [loading, setLoading] = useState(false);
   const [confettiKey, setConfettiKey] = useState(0);
   const playedIntroRef = useRef(false);
 
-  // Pull the current daily target on mount.
+  // If somehow we have an active child but no target (e.g. the server
+  // call errored), retry from the client as a fallback.
   useEffect(() => {
+    if (target || !hasActiveChild) return;
     let cancelled = false;
     (async () => {
-      const res = await getCurrentTargetAction();
-      if (cancelled) return;
-      if (res) {
-        setTarget({
-          word: res.word,
-          stationId: res.stationId,
-          foundToday: res.foundToday ?? 0,
-        });
-      }
-      setLoading(false);
+      const res = await getCurrentTargetAction().catch(() => null);
+      if (cancelled || !res) return;
+      setTarget({
+        word: res.word,
+        stationId: res.stationId,
+        foundToday: res.foundToday ?? 0,
+      });
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [target, hasActiveChild]);
 
   // Play the eagle audio once after the target loads.
   useEffect(() => {
@@ -95,18 +103,31 @@ export function ParkHuntStage() {
     );
   }
 
-  if (!target) {
+  // Only show the 'pick a profile' empty-state when we definitely don't
+  // have one — server already checked the cookie + Clerk auth.
+  if (!target && !hasActiveChild) {
     return (
       <div className="parkhunt-stage">
         <div className="parkhunt-empty">
           <h2 className="h-display text-3xl">
             <span className="h-gradient">Pick a child profile first</span>
           </h2>
-          <p>Park Hunt remembers each child&apos;s daily target word.</p>
+          <p>Park Hunt remembers each child&apos;s weekly target word.</p>
           <Link href="/account/profiles" className="btn btn-gold btn-lg">
             Choose a profile
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  if (!target) {
+    // We have an active child but the server didn't return a target yet
+    // (network blip during the page render). Show a soft loading state
+    // and let the client-side fallback effect retry.
+    return (
+      <div className="parkhunt-stage parkhunt-loading">
+        <p>Calling the eagle for {activeNickname ?? "your hunter"}…</p>
       </div>
     );
   }

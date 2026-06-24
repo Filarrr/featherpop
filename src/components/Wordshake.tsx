@@ -259,10 +259,23 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
     setFlyScore({ value: pts, key: Date.now() });
     window.setTimeout(() => setFlyScore(null), 950);
     pop();
-    if (pts >= 4) childCheer();
-    else childOoh();
 
-    if (w.length >= 5 || pts >= 6) {
+    // ONE cheer per word. Magic-word bonus replaces the points cheer
+    // instead of firing on top of it — was playing childCheer twice
+    // back-to-back which the client heard as 'same sound twice'.
+    const isMagic = !!(keyWord && w === keyWord.toUpperCase());
+    if (isMagic) {
+      childCheer();
+    } else if (pts >= 4) {
+      childCheer();
+    } else {
+      childOoh();
+    }
+
+    if (isMagic) {
+      setMood("wow");
+      setMascotMessage(`MAGIC WORD! "${w}" — bonus FeatherPop!`);
+    } else if (w.length >= 5 || pts >= 6) {
       setMood("wow");
       setMascotMessage(`Big word! "${w}" — +${pts} points!`);
     } else {
@@ -274,12 +287,8 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
     // Award 1 FeatherPop per 4 points (rounded down, min 0) to the active child.
     // Big bonus (+5) when they nail the seeded key word from Feather Sort.
     let award = Math.floor(pts / 4);
-    if (keyWord && w === keyWord.toUpperCase()) {
+    if (isMagic) {
       award += 5;
-      setMood("wow");
-      setMascotMessage(`MAGIC WORD! "${w}" — bonus FeatherPop!`);
-      setMascotNudge((n) => n + 1);
-      childCheer();
     }
     if (award > 0) {
       // Show it RIGHT NOW so the kid sees the reward (optimistic).

@@ -34,6 +34,19 @@ export default function SignInPage() {
               borderRadius: "14px",
               fontFamily: "var(--font-fredoka)",
             },
+            elements: {
+              // Force the Clerk widget to fit the parent — its built-in
+              // min-width was overflowing narrow phone viewports and
+              // dragging the card off the right edge of the screen.
+              rootBox: { width: "100%", maxWidth: "100%" },
+              card: {
+                width: "100%",
+                maxWidth: "100%",
+                margin: 0,
+                boxSizing: "border-box",
+              },
+              form: { width: "100%" },
+            },
           }}
           signUpUrl="/sign-up"
         />

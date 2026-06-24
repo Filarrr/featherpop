@@ -133,7 +133,7 @@ export async function submitFoundWordAction(args: {
       ok: true;
       next: { word: string; stationId: number };
       foundToday: number;
-      hatched?: { name: string; rarity: string; id: string } | null;
+      hatched?: import("@/lib/child-profile").HatchedEntry | null;
     }
   | { ok: false; reason: string }
 > {
@@ -161,19 +161,13 @@ export async function submitFoundWordAction(args: {
   // Reward via the existing recordWordsFoundAction (handles +1 feather
   // base + word count + egg progress + level-up notifications). Any
   // hatched egg is returned so the UI can show the reveal.
-  let hatchedPayload: { name: string; rarity: string; id: string } | null = null;
+  // Pass through the full HatchedEntry so the client can render the
+  // shared EggHatchReveal overlay (character + color + wordsRead all
+  // come from the recordWordsFound result).
+  let hatched: import("@/lib/child-profile").HatchedEntry | null = null;
   try {
     const result = await recordWordsFoundAction(1);
-    if (result?.hatched) {
-      // HatchedEntry.character is a string id (e.g. 'baby-eagle'); the rich
-      // metadata (display name + rarity) lives in the egg catalog. For now
-      // surface the raw character id so the client can look it up.
-      hatchedPayload = {
-        name: result.hatched.character,
-        rarity: result.hatched.color,
-        id: result.hatched.character,
-      };
-    }
+    if (result?.hatched) hatched = result.hatched;
   } catch (err) {
     console.warn("[park-hunt] recordWordsFound failed", err);
   }
@@ -193,7 +187,7 @@ export async function submitFoundWordAction(args: {
     ok: true,
     next: { word: next.word, stationId: next.stationId },
     foundToday,
-    hatched: hatchedPayload,
+    hatched,
   };
 }
 

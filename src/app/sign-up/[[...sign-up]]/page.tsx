@@ -35,6 +35,16 @@ export default function SignUpPage() {
               borderRadius: "14px",
               fontFamily: "var(--font-fredoka)",
             },
+            elements: {
+              rootBox: { width: "100%", maxWidth: "100%" },
+              card: {
+                width: "100%",
+                maxWidth: "100%",
+                margin: 0,
+                boxSizing: "border-box",
+              },
+              form: { width: "100%" },
+            },
           }}
           signInUrl="/sign-in"
           forceRedirectUrl="/welcome"

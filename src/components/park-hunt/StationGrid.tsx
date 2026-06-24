@@ -18,6 +18,8 @@ import {
 } from "@/lib/audio";
 import { Confetti } from "@/components/Confetti";
 import { submitFoundWordAction } from "@/lib/park-hunt-actions";
+import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
+import type { HatchedEntry } from "@/lib/child-profile";
 
 const TIMER_SECONDS = 60;
 
@@ -41,6 +43,7 @@ export function StationGrid({
   const [confettiKey, setConfettiKey] = useState(0);
   const [nextTarget, setNextTarget] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [hatched, setHatched] = useState<HatchedEntry | null>(null);
   const tickedRef = useRef(false);
   const spiderWarnedRef = useRef(false);
 
@@ -97,6 +100,9 @@ export function StationGrid({
         if (res.ok) {
           setPhase("won");
           setNextTarget(res.next.word);
+          // Hatched payload — show the egg reveal overlay on top of the
+          // win screen so the kid sees the new character + free spin.
+          if (res.hatched) setHatched(res.hatched);
           wordReveal();
           window.setTimeout(() => fanfare(), 500);
           // Chanel: 'Yes! Feathers up and let's find the word!'
@@ -142,6 +148,10 @@ export function StationGrid({
   return (
     <div className="parkhunt-station">
       <Confetti trigger={confettiKey} pieces={50} />
+
+      {hatched ? (
+        <EggHatchReveal hatched={hatched} onClose={() => setHatched(null)} />
+      ) : null}
 
       <header className="parkhunt-station-hud">
         <span className="kicker">Station {stationId + 1}</span>

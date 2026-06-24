@@ -2942,6 +2942,13 @@ a { color: inherit; }
   display: grid;
   place-items: center;
   width: 100%;
+  /* Grid items default to min-content min-width — that lets a wide
+     Clerk widget push past the viewport. Force shrinking here, and
+     repeat the constraint on the wrapper so the Clerk card can't
+     overflow on narrow phones. */
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* === V1: welcome wizard === */
