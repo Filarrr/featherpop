@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { BrandBar } from "@/components/BrandBar";
 import { BottomNav } from "@/components/BottomNav";
+import { AudioNavCleanup } from "@/components/AudioNavCleanup";
 import { ActiveChildProvider } from "@/lib/use-active-child";
 import { resolveActiveChild } from "@/lib/active-child-server";
 import { getChildProgressAction } from "@/lib/child-progress-actions";
@@ -81,6 +82,7 @@ export default async function RootLayout({
               <BrandBar />
               {children}
               <BottomNav />
+              <AudioNavCleanup />
             </div>
           </ActiveChildProvider>
         </body>

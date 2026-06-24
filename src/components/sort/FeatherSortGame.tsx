@@ -36,6 +36,7 @@ import {
   spiderApproach,
   spiderVoice,
   startMusic,
+  stopMusic,
   unlockVoiceClips,
   urgentTick,
   wordReveal,
@@ -158,8 +159,11 @@ export function FeatherSortGame() {
 
   // Boot music when the game mounts (the PLAY-button tap on home already
   // unlocked the AudioContext, so this just keeps the music going).
+  // Cleanup on unmount — without it, the loop persisted into the next
+  // page if the kid navigated mid-game.
   useEffect(() => {
     startMusic();
+    return () => stopMusic();
   }, []);
 
   // Re-scatter and reset timer on every round change.

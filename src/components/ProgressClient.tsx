@@ -12,20 +12,22 @@ import {
 } from "lucide-react";
 import { useActiveChild } from "@/lib/use-active-child";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
+import { Medal } from "@/components/progress/Medal";
+
+type MedalTier = "explorer" | "reader" | "finder" | "champion" | "golden";
 
 interface BadgeMeta {
   threshold: number;
   name: string;
-  color: string;
-  bg: string;
+  tier: MedalTier;
 }
 
 const BADGES: BadgeMeta[] = [
-  { threshold: 100,  name: "Word Explorer",  color: "#34e3a4", bg: "rgba(52, 227, 164, 0.15)" },
-  { threshold: 250,  name: "Rising Reader",  color: "#4cc4ff", bg: "rgba(76, 196, 255, 0.15)" },
-  { threshold: 500,  name: "Super Finder",   color: "#a76bff", bg: "rgba(167, 107, 255, 0.15)" },
-  { threshold: 750,  name: "Word Champion",  color: "#ff7ab8", bg: "rgba(255, 122, 184, 0.15)" },
-  { threshold: 1000, name: "Golden Feather", color: "#ffd14a", bg: "rgba(255, 209, 74, 0.18)" },
+  { threshold: 100,  name: "Word Explorer",  tier: "explorer" },
+  { threshold: 250,  name: "Rising Reader",  tier: "reader" },
+  { threshold: 500,  name: "Super Finder",   tier: "finder" },
+  { threshold: 750,  name: "Word Champion",  tier: "champion" },
+  { threshold: 1000, name: "Golden Feather", tier: "golden" },
 ];
 
 const GOLDEN_FEATHER_GOAL = 1000;
@@ -44,10 +46,6 @@ export function ProgressClient() {
   const videosWatched = progress.videosWatched ?? 0;
   const songsUnlocked = progress.songsUnlocked ?? 0;
 
-  // The Golden Feather progress bar tracks THIS MONTH (per the client
-  // spec: '1000 Words in a Month'). If the stored monthKey doesn't match
-  // today's calendar month, we show 0 — the server-side recorder will
-  // reset on the next word.
   const mk = currentMonthKey();
   const inSameMonth = progress.monthKey === mk;
   const monthlyWords = inSameMonth ? progress.wordsThisMonth ?? 0 : 0;
@@ -57,42 +55,54 @@ export function ProgressClient() {
   const wordsToGo = Math.max(0, GOLDEN_FEATHER_GOAL - monthlyWords);
 
   return (
-    <div className="progress-page">
-      <header className="progress-header">
-        <Link href="/" aria-label="Back" className="prizes-back">
+    <div className="progress-page-v2">
+      <header className="progress-header-v2">
+        <Link href="/" aria-label="Back" className="prizes-back-v2">
           <span aria-hidden>←</span>
         </Link>
-        <div className="progress-header-mid">
-          <h1 className="progress-title">My Progress</h1>
-          <p className="progress-subtitle">
-            {active ? `Keep learning the Fly Way, ${active.nickname}!` : "Keep learning the Fly Way!"}
+        <div className="progress-header-mid-v2">
+          <span className="prizes-eyebrow">
+            <Sparkles aria-hidden className="h-4 w-4" />
+            My Progress
+          </span>
+          <h1 className="progress-title-v2">
+            {active ? `Keep flying, ${active.nickname}!` : "Keep flying!"}
+          </h1>
+          <p className="progress-subtitle-v2">
+            Learn the <strong>Fly Way</strong> one feather at a time.
           </p>
         </div>
-        <div className="progress-header-avatar" aria-hidden>
-          <MsFeatherPopAvatar pose="cheer" size={92} />
+        <div className="progress-header-avatar-v2" aria-hidden>
+          <MsFeatherPopAvatar pose="cheer" size={108} />
         </div>
       </header>
 
-      {/* Golden Feather progress bar — the hero card */}
-      <section className="progress-golden">
-        <span className="progress-golden-feather" aria-hidden>🪶</span>
-        <div className="progress-golden-body">
-          <p className="progress-golden-title">~ Golden Feather Progress ~</p>
-          <div className="progress-golden-bar" aria-hidden>
-            <span style={{ width: `${goldenPct}%` }} />
-          </div>
-          <p className="progress-golden-count">
-            <strong>{monthlyWords}</strong> <small>/ {GOLDEN_FEATHER_GOAL}</small>
+      {/* Golden Feather hero stage */}
+      <section className="progress-golden-v2">
+        <div className="progress-golden-glow" aria-hidden />
+        <div className="progress-golden-stage" aria-hidden>
+          <GoldenFeatherIcon size={140} />
+        </div>
+        <div className="progress-golden-body-v2">
+          <span className="progress-golden-eyebrow">
+            <Sparkles aria-hidden className="h-3 w-3" />
+            Golden Feather Progress
+          </span>
+          <p className="progress-golden-count-v2">
+            <strong>{monthlyWords.toLocaleString()}</strong>
+            <small>/ {GOLDEN_FEATHER_GOAL.toLocaleString()}</small>
           </p>
-          <p className="progress-golden-label">Words Found This Month</p>
-          <p className="progress-golden-msg">
+          <p className="progress-golden-label-v2">Words this month</p>
+          <div className="progress-golden-bar-v2" role="progressbar" aria-valuemin={0} aria-valuemax={GOLDEN_FEATHER_GOAL} aria-valuenow={monthlyWords}>
+            <span style={{ width: `${goldenPct}%` }}>
+              <span className="progress-golden-bar-shine" aria-hidden />
+            </span>
+          </div>
+          <p className="progress-golden-msg-v2">
             {earnedThisMonth ? (
               <>
                 🎉 You earned the Golden Feather this month!{" "}
-                <Link
-                  href="/print/golden-feather"
-                  style={{ color: "var(--magenta)", fontWeight: 800 }}
-                >
+                <Link href="/print/golden-feather" className="progress-golden-link">
                   Print certificate →
                 </Link>
               </>
@@ -100,98 +110,90 @@ export function ProgressClient() {
               "🎉 You earned the Golden Feather!"
             ) : (
               <>
-                You're getting closer to earning the{" "}
-                <strong>Golden Feather!</strong> Keep going!
+                <strong>{wordsToGo.toLocaleString()}</strong> words to the{" "}
+                <strong className="progress-golden-msg-strong">Golden Feather!</strong>
               </>
             )}
           </p>
         </div>
-        <div className="progress-golden-side">
-          <span className="progress-golden-badge" aria-hidden>🪶</span>
-          <p>
-            {earnedThisMonth
-              ? "Earned!"
-              : wordsToGo === 0
-                ? "Unlocked!"
-                : `${wordsToGo} words to go!`}
-          </p>
-        </div>
       </section>
 
-      {/* Stats grid — 6 cards in a 3×2 grid (per her ref) */}
-      <section className="progress-stats">
+      {/* Stats grid */}
+      <section className="progress-stats-v2">
         <StatCard
           icon={<BookOpen aria-hidden className="h-6 w-6" />}
           label="Words Found"
           value={wordsFound}
           tag={wordsFound > 0 ? "Keep it up!" : "Find your first!"}
-          color="#a76bff"
-          bg="rgba(167, 107, 255, 0.15)"
+          tone="purple"
         />
         <StatCard
           icon={<Feather aria-hidden className="h-6 w-6" />}
-          label="Feathers Earned"
+          label="Feathers"
           value={featherPop}
           tag={featherPop > 100 ? "You're soaring!" : "Keep collecting!"}
-          color="#4cc4ff"
-          bg="rgba(76, 196, 255, 0.15)"
+          tone="blue"
         />
         <StatCard
           icon={<Egg aria-hidden className="h-6 w-6" />}
           label="Eggs Hatched"
           value={eggsHatched}
-          tag={eggsHatched > 0 ? "Amazing!" : "Hatch your first!"}
-          color="#34e3a4"
-          bg="rgba(52, 227, 164, 0.15)"
+          tag={eggsHatched > 0 ? "Amazing!" : "Read 50 words!"}
+          tone="green"
         />
         <StatCard
           icon={<Star aria-hidden className="h-6 w-6" />}
-          label="Spins Earned"
+          label="Free Spins"
           value={freeSpins}
-          tag={freeSpins > 0 ? "Spin and win!" : "Coming soon!"}
-          color="#ff7ab8"
-          bg="rgba(255, 122, 184, 0.15)"
+          tag={freeSpins > 0 ? "Spin & win!" : "Hatch to earn!"}
+          tone="pink"
         />
         <StatCard
           icon={<Video aria-hidden className="h-6 w-6" />}
           label="Videos Watched"
           value={videosWatched}
           tag="Keep watching!"
-          color="#ff9a3a"
-          bg="rgba(255, 154, 58, 0.15)"
+          tone="orange"
         />
         <StatCard
           icon={<Music aria-hidden className="h-6 w-6" />}
           label="Songs Unlocked"
           value={songsUnlocked}
-          tag="You love music!"
-          color="#5ee0c8"
-          bg="rgba(94, 224, 200, 0.18)"
+          tag="Sing along!"
+          tone="teal"
         />
       </section>
 
-      {/* Badges Earned — 5 tiles in a row */}
-      <section className="progress-badges">
-        <h2 className="progress-badges-title">
-          <span aria-hidden>~</span> BADGES EARNED <span aria-hidden>~</span>
-        </h2>
-        <div className="progress-badges-row">
+      {/* Badges row — medal-style */}
+      <section className="progress-badges-v2">
+        <header className="progress-badges-head">
+          <span className="progress-badges-eyebrow">
+            <Sparkles aria-hidden className="h-4 w-4" />
+            Badges Earned
+          </span>
+          <h2>Your Trophy Wall</h2>
+          <p>
+            Find more words to unlock the next medal. The Golden Feather is the
+            ultimate prize.
+          </p>
+        </header>
+        <div className="progress-badges-row-v2">
           {BADGES.map((b) => {
             const earned = wordsFound >= b.threshold;
             return (
               <article
                 key={b.threshold}
-                className={`progress-badge ${earned ? "is-earned" : "is-locked"}`}
-                style={{
-                  ["--badge-color" as string]: b.color,
-                  ["--badge-bg" as string]: b.bg,
-                }}
+                className={`progress-badge-v2 tier-${b.tier} ${
+                  earned ? "is-earned" : "is-locked"
+                }`}
               >
-                <div className="progress-badge-medal" aria-hidden>
-                  <Sparkles aria-hidden className="h-6 w-6" />
+                <Medal tier={b.tier} earned={earned} />
+                <div className="progress-badge-meta">
+                  <span className="progress-badge-count-v2">
+                    {b.threshold.toLocaleString()} <small>words</small>
+                  </span>
+                  <span className="progress-badge-name-v2">{b.name}</span>
                 </div>
-                <span className="progress-badge-count">{b.threshold}</span>
-                <span className="progress-badge-name">{b.name}</span>
               </article>
             );
           })}
@@ -201,33 +203,77 @@ export function ProgressClient() {
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-  tag,
-  color,
-  bg,
-}: {
+interface StatCardProps {
   icon: React.ReactNode;
   label: string;
   value: number;
   tag: string;
-  color: string;
-  bg: string;
-}) {
+  tone: "purple" | "blue" | "green" | "pink" | "orange" | "teal";
+}
+
+function StatCard({ icon, label, value, tag, tone }: StatCardProps) {
   return (
-    <article
-      className="progress-stat-card"
-      style={{
-        ["--stat-color" as string]: color,
-        ["--stat-bg" as string]: bg,
-      }}
-    >
-      <div className="progress-stat-icon">{icon}</div>
-      <span className="progress-stat-label">{label}</span>
-      <span className="progress-stat-value">{value}</span>
-      <span className="progress-stat-tag">{tag}</span>
+    <article className={`progress-stat-card-v2 tone-${tone}`}>
+      <div className="progress-stat-icon-v2">
+        <span className="progress-stat-icon-halo" aria-hidden />
+        {icon}
+      </div>
+      <span className="progress-stat-value-v2">{value.toLocaleString()}</span>
+      <span className="progress-stat-label-v2">{label}</span>
+      <span className="progress-stat-tag-v2">{tag}</span>
     </article>
+  );
+}
+
+function GoldenFeatherIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 200 220" width={size} height={(size * 220) / 200} aria-hidden>
+      <defs>
+        <linearGradient id="pgf-feather" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#fff8b0" />
+          <stop offset="0.5" stopColor="#ffd14a" />
+          <stop offset="1" stopColor="#f0a900" />
+        </linearGradient>
+        <linearGradient id="pgf-shine" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity={0.7} />
+          <stop offset="0.5" stopColor="#fff" stopOpacity={0} />
+          <stop offset="1" stopColor="#fff" stopOpacity={0.35} />
+        </linearGradient>
+      </defs>
+      <g transform="translate(100 28)">
+        <path
+          d="M 0 0 C 38 28, 48 64, 36 124 C 32 144, 18 158, 0 168 C -18 158, -32 144, -36 124 C -48 64, -38 28, 0 0 Z"
+          fill="url(#pgf-feather)"
+          stroke="#a86800"
+          strokeWidth="2"
+        />
+        <path
+          d="M 0 0 C 38 28, 48 64, 36 124 C 32 144, 18 158, 0 168 C -18 158, -32 144, -36 124 C -48 64, -38 28, 0 0 Z"
+          fill="url(#pgf-shine)"
+        />
+        <path d="M 0 4 L 0 162" stroke="#a86800" strokeWidth="2" />
+        {Array.from({ length: 9 }).map((_, i) => {
+          const y = 18 + i * 16;
+          return (
+            <g key={i}>
+              <path
+                d={`M 0 ${y} Q -16 ${y + 6} -28 ${y + 16}`}
+                stroke="#a86800"
+                strokeWidth="1.2"
+                fill="none"
+                opacity={0.55}
+              />
+              <path
+                d={`M 0 ${y} Q 16 ${y + 6} 28 ${y + 16}`}
+                stroke="#a86800"
+                strokeWidth="1.2"
+                fill="none"
+                opacity={0.55}
+              />
+            </g>
+          );
+        })}
+      </g>
+    </svg>
   );
 }

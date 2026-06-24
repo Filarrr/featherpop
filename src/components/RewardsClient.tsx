@@ -1,65 +1,61 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import {
-  Gift,
-  HelpCircle,
-  Palette,
-  Puzzle,
-  Sparkles,
-  User as UserIcon,
-} from "lucide-react";
+import { ChevronRight, Gift, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActiveChild } from "@/lib/use-active-child";
 import { claimRewardAction } from "@/lib/child-progress-actions";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
+import { RewardArt } from "@/components/rewards/RewardArt";
 import { childCheer, fanfare, pop, wordReveal } from "@/lib/audio";
+
+type Tier = "pink" | "blue" | "purple" | "orange";
 
 interface ShopReward {
   id: string;
   title: string;
+  tagline: string;
   cost: number;
-  icon: typeof Palette;
-  iconBg: string;
-  buttonBg: string;
+  tier: Tier;
 }
 
-// Matches her spec exactly. Get-Reward action is wired in a follow-up
-// pass (today it logs a placeholder; the deduction lives server-side).
 const REWARDS: ShopReward[] = [
   {
     id: "coloring",
     title: "Surprise Coloring Page",
+    tagline: "Print + color today",
     cost: 100,
-    icon: Palette,
-    iconBg: "linear-gradient(135deg, #ffe7a0, #ffd14a)",
-    buttonBg: "linear-gradient(135deg, var(--pink), var(--magenta))",
+    tier: "pink",
   },
   {
     id: "puzzle",
     title: "Surprise Puzzle",
+    tagline: "A brand-new brain teaser",
     cost: 100,
-    icon: Puzzle,
-    iconBg: "linear-gradient(135deg, #cfe8ff, #7cd1ff)",
-    buttonBg: "linear-gradient(135deg, var(--sky-4), #4cb6e0)",
+    tier: "blue",
   },
   {
     id: "character",
     title: "Surprise Character Card",
+    tagline: "Collect them all",
     cost: 150,
-    icon: UserIcon,
-    iconBg: "linear-gradient(135deg, #e2d2ff, #b13bff)",
-    buttonBg: "linear-gradient(135deg, var(--purple), var(--magenta))",
+    tier: "purple",
   },
   {
     id: "mystery",
     title: "Mystery Reward",
+    tagline: "What's inside…?",
     cost: 250,
-    icon: HelpCircle,
-    iconBg: "linear-gradient(135deg, #ffd6f0, #ff7ab8)",
-    buttonBg: "linear-gradient(135deg, #ff9a3a, #ff6b3a)",
+    tier: "orange",
   },
+];
+
+const ULTIMATE_PRIZES = [
+  { emoji: "🏆", label: "Golden Feather Badge" },
+  { emoji: "🥚", label: "Golden Egg" },
+  { emoji: "🦅", label: "Eagle Coloring Pack" },
+  { emoji: "📜", label: "Achievement Certificate" },
 ];
 
 export function RewardsClient() {
@@ -97,107 +93,125 @@ export function RewardsClient() {
 
   return (
     <div className="prizes-page">
-      {/* Header — My Feathers count + Ms. Feather Pop avatar */}
-      <header className="prizes-header">
-        <Link href="/" aria-label="Back" className="prizes-back">
+      <header className="prizes-header-v2">
+        <Link href="/" aria-label="Back" className="prizes-back-v2">
           <span aria-hidden>←</span>
         </Link>
-        <div className="prizes-header-mid">
-          <h1>My Feathers</h1>
-          <div className="prizes-balance">
-            <span className="prizes-balance-feather" aria-hidden>🪶</span>
-            <strong>{featherPop}</strong>
+        <div className="prizes-header-mid-v2">
+          <span className="prizes-eyebrow">
+            <Sparkles aria-hidden className="h-4 w-4" />
+            My Feathers
+          </span>
+          <div className="prizes-balance-v2">
+            <span className="prizes-feather-emoji" aria-hidden>
+              🪶
+            </span>
+            <strong>{featherPop.toLocaleString()}</strong>
             <small>Feathers</small>
           </div>
         </div>
-        <div className="prizes-header-avatar" aria-hidden>
-          <MsFeatherPopAvatar
-            pose={active ? "cheer" : "wave"}
-            size={92}
-          />
+        <div className="prizes-header-avatar-v2" aria-hidden>
+          <MsFeatherPopAvatar pose={active ? "cheer" : "wave"} size={108} />
         </div>
       </header>
 
-      {/* Choose a Reward */}
-      <section className="prizes-choose">
-        <h2 className="prizes-choose-title">
-          <span className="prizes-choose-icon" aria-hidden>🎁</span>
-          Choose a Reward!
-        </h2>
-        <p className="prizes-choose-sub">
-          Spend your <strong>feathers</strong> to get awesome surprises!
+      <section className="prizes-choose-v2">
+        <h1>
+          <span className="prizes-gift-emoji" aria-hidden>
+            🎁
+          </span>
+          Choose a Reward
+        </h1>
+        <p>
+          Spend your <strong>feathers</strong> to unlock awesome surprises!
         </p>
       </section>
 
-      {/* 4 reward cards */}
-      <section className="prizes-grid">
+      <section className="prizes-grid-v2">
         {REWARDS.map((r) => {
-          const Icon = r.icon;
           const canAfford = featherPop >= r.cost;
           const remaining = Math.max(0, r.cost - featherPop);
           return (
             <article
               key={r.id}
-              className={`prize-card ${canAfford ? "is-available" : "is-locked"}`}
+              className={`prize-card-v2 tier-${r.tier} ${
+                canAfford ? "is-available" : "is-locked"
+              }`}
             >
-              <div className="prize-card-art" style={{ background: r.iconBg }}>
-                <Icon aria-hidden className="prize-card-icon" />
-                <span className="prize-card-stars" aria-hidden>✨</span>
+              <span className="prize-card-shine" aria-hidden />
+              <div className="prize-card-art-v2">
+                <RewardArt id={r.id} size={140} />
               </div>
-              <h3>{r.title}</h3>
-              <p className="prize-card-cost">
-                <span aria-hidden>🪶</span> <strong>{r.cost}</strong> Feathers
-              </p>
-              <button
-                type="button"
-                onClick={() => claim(r)}
-                disabled={!canAfford || pending === r.id}
-                className="prize-card-button"
-                style={{ background: canAfford ? r.buttonBg : undefined }}
-              >
-                {pending === r.id
-                  ? "Unlocking…"
-                  : canAfford
-                    ? "GET REWARD"
-                    : `Need ${remaining} more`}
-              </button>
+              <div className="prize-card-body">
+                <h3>{r.title}</h3>
+                <p className="prize-card-tagline">{r.tagline}</p>
+                <div className="prize-card-cost-v2">
+                  <span aria-hidden>🪶</span>
+                  <strong>{r.cost}</strong>
+                  <small>Feathers</small>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => claim(r)}
+                  disabled={!canAfford || pending === r.id}
+                  className="prize-card-cta"
+                >
+                  {pending === r.id ? (
+                    "Unlocking…"
+                  ) : canAfford ? (
+                    <>
+                      <span>Get Reward</span>
+                      <ChevronRight aria-hidden className="h-4 w-4" />
+                    </>
+                  ) : (
+                    `Need ${remaining} more`
+                  )}
+                </button>
+              </div>
             </article>
           );
         })}
       </section>
 
-      {/* Ultimate Achievement — Golden Feather */}
-      <section className="prizes-ultimate">
-        <span className="prizes-ultimate-band">★ THE ULTIMATE ACHIEVEMENT ★</span>
-        <div className="prizes-ultimate-grid">
-          <div className="prizes-ultimate-trophy" aria-hidden>
-            <span>🪶</span>
-          </div>
-          <div className="prizes-ultimate-body">
-            <h3 className="prizes-ultimate-title">GOLDEN FEATHER</h3>
-            <p className="prizes-ultimate-tag">The Rarest Reward of All!</p>
-            <p className="prizes-ultimate-req">
-              Complete <strong>1,000 words</strong> in a Month
-            </p>
-            <ul className="prizes-ultimate-items">
-              <li>🏆<span>Golden Feather Badge</span></li>
-              <li>🥚<span>Golden Egg</span></li>
-              <li>🦅<span>Golden Eagle Coloring Pack</span></li>
-              <li>📜<span>Achievement Certificate</span></li>
-            </ul>
-          </div>
-          <div className="prizes-ultimate-side">
-            <p>
-              Only the most dedicated readers earn the Golden Feather!
-            </p>
-            <span className="prizes-ultimate-crown" aria-hidden>👑</span>
-            <p className="prizes-ultimate-encourage">You can do it!</p>
-          </div>
+      <section className="prizes-ultimate-v2">
+        <span className="prizes-ultimate-band-v2">
+          <Sparkles aria-hidden className="h-3 w-3" />
+          THE ULTIMATE ACHIEVEMENT
+          <Sparkles aria-hidden className="h-3 w-3" />
+        </span>
+
+        <div className="prizes-ultimate-hero">
+          <div className="prizes-ultimate-spotlight" aria-hidden />
+          <FeatherTrophy />
         </div>
+
+        <h2 className="prizes-ultimate-title-v2">GOLDEN FEATHER</h2>
+        <p className="prizes-ultimate-tag-v2">The Rarest Reward of All</p>
+        <p className="prizes-ultimate-req-v2">
+          Read <strong>1,000 words</strong> in one month
+        </p>
+
+        <div className="prizes-ultimate-grid-v2">
+          {ULTIMATE_PRIZES.map((p) => (
+            <div key={p.label} className="prizes-ultimate-tile">
+              <span className="prizes-ultimate-tile-glyph" aria-hidden>
+                {p.emoji}
+              </span>
+              <span>{p.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="prizes-ultimate-footer">
+          Only the most dedicated readers earn the Golden Feather.{" "}
+          <strong>You can do it!</strong>
+        </p>
       </section>
 
       {error ? (
-        <p className="prize-claim-error" role="alert">{error}</p>
+        <p className="prize-claim-error" role="alert">
+          {error}
+        </p>
       ) : null}
 
       {unlocked ? (
@@ -223,5 +237,83 @@ export function RewardsClient() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function FeatherTrophy() {
+  return (
+    <svg viewBox="0 0 200 220" width={180} height={200} aria-hidden>
+      <defs>
+        <linearGradient id="ft-feather" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#fff8b0" />
+          <stop offset="0.5" stopColor="#ffd14a" />
+          <stop offset="1" stopColor="#f0a900" />
+        </linearGradient>
+        <linearGradient id="ft-shine" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity={0.65} />
+          <stop offset="0.5" stopColor="#fff" stopOpacity={0} />
+          <stop offset="1" stopColor="#fff" stopOpacity={0.35} />
+        </linearGradient>
+        <radialGradient id="ft-glow" cx="50%" cy="50%" r="60%">
+          <stop offset="0" stopColor="#fff" stopOpacity={0.9} />
+          <stop offset="0.5" stopColor="#ffd14a" stopOpacity={0.65} />
+          <stop offset="1" stopColor="#ffd14a" stopOpacity={0} />
+        </radialGradient>
+      </defs>
+      {/* Halo glow */}
+      <circle cx="100" cy="110" r="95" fill="url(#ft-glow)" />
+      {/* Feather body */}
+      <g transform="translate(100 30)">
+        <path
+          d="M 0 0 C 38 28, 48 64, 36 124 C 32 144, 18 158, 0 168 C -18 158, -32 144, -36 124 C -48 64, -38 28, 0 0 Z"
+          fill="url(#ft-feather)"
+          stroke="#a86800"
+          strokeWidth="2"
+        />
+        {/* Shine overlay */}
+        <path
+          d="M 0 0 C 38 28, 48 64, 36 124 C 32 144, 18 158, 0 168 C -18 158, -32 144, -36 124 C -48 64, -38 28, 0 0 Z"
+          fill="url(#ft-shine)"
+        />
+        {/* Spine */}
+        <path d="M 0 4 L 0 162" stroke="#a86800" strokeWidth="2" />
+        {/* Barbs */}
+        {Array.from({ length: 9 }).map((_, i) => {
+          const y = 18 + i * 16;
+          return (
+            <g key={i}>
+              <path
+                d={`M 0 ${y} Q -16 ${y + 6} -28 ${y + 16}`}
+                stroke="#a86800"
+                strokeWidth="1.2"
+                fill="none"
+                opacity={0.6}
+              />
+              <path
+                d={`M 0 ${y} Q 16 ${y + 6} 28 ${y + 16}`}
+                stroke="#a86800"
+                strokeWidth="1.2"
+                fill="none"
+                opacity={0.6}
+              />
+            </g>
+          );
+        })}
+      </g>
+      {/* Sparkles */}
+      {[
+        [40, 50, 4],
+        [160, 60, 5],
+        [30, 140, 4],
+        [170, 140, 5],
+      ].map(([x, y, r], i) => (
+        <g key={i} transform={`translate(${x} ${y})`}>
+          <path
+            d={`M 0 ${-r} L ${r * 0.4} ${-r * 0.4} L ${r} 0 L ${r * 0.4} ${r * 0.4} L 0 ${r} L ${-r * 0.4} ${r * 0.4} L ${-r} 0 L ${-r * 0.4} ${-r * 0.4} Z`}
+            fill="#fff"
+          />
+        </g>
+      ))}
+    </svg>
   );
 }

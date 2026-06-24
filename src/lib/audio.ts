@@ -709,3 +709,15 @@ export function stopMusic() {
     musicHandle = null;
   }
 }
+
+/**
+ * One-shot teardown of every audio source we own. Wired to route changes
+ * (see AudioNavCleanup) so navigating away from a game kills the music,
+ * any in-flight voice clip, and any speechSynthesis utterance instead of
+ * letting them carry over into the next page.
+ */
+export function stopAllAudio() {
+  stopMusic();
+  stopVoice();
+  stopSpeaking();
+}
