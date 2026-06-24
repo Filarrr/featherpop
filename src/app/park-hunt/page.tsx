@@ -1,5 +1,5 @@
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
-import { resolveActiveChild, getActiveChildId } from "@/lib/active-child-server";
+import { resolveActiveChild } from "@/lib/active-child-server";
 import {
   pickTargetForChild,
   todayKey,
@@ -23,10 +23,16 @@ interface StoredTarget {
  * render path with revalidatePath inside it has been causing the
  * Park Hunt page to crash on production — symptom: 'Find it at the
  * park' button navigates but the page never renders.
+ *
+ * NB: pass childId in explicitly. resolveActiveChild() auto-selects
+ * the only-child even when no cookie is set; if we relied on
+ * getActiveChildId() here we'd see the chip show the kid but the
+ * target picker silently bail.
  */
-async function resolveInitialTarget(): Promise<StoredTarget | null> {
+async function resolveInitialTarget(
+  childId: string | null,
+): Promise<StoredTarget | null> {
   try {
-    const childId = await getActiveChildId();
     if (!childId) return null;
     const { userId } = await auth();
     if (!userId) return null;
@@ -76,7 +82,7 @@ export default async function ParkHuntPage() {
     active: null,
     children: [],
   }));
-  const initial = await resolveInitialTarget();
+  const initial = await resolveInitialTarget(activeChildId);
 
   return (
     <main className="page parkhunt-page">

@@ -12,7 +12,36 @@ import type { ChildProfile } from "@/lib/child-profile";
 
 export const ACTIVE_CHILD_COOKIE = "mfp-active-child";
 
+/**
+ * Reads the active-child cookie. If no valid cookie is set, falls back
+ * to the same auto-select behavior as resolveActiveChild() — if the
+ * Clerk account has exactly one child, that child is treated as active.
+ *
+ * This fallback matters because the parent's browser may have lost the
+ * cookie (cleared cookies, new device, expiry), yet the chip / layout
+ * still shows the kid because resolveActiveChild() auto-selects. Every
+ * action that called this function used to silently return null in
+ * that case and the UI would 'stuck' with no usable child id.
+ */
 export async function getActiveChildId(): Promise<string | null> {
+  const store = await cookies();
+  const v = store.get(ACTIVE_CHILD_COOKIE)?.value;
+  // Hot path: cookie is set. Caller has already done auth so we can
+  // optimistically return the value — every server action that uses
+  // this id wraps the actual write in its own try/catch which would
+  // reject an unknown child anyway.
+  if (v && v.length > 0) return v;
+  // Cold path: no cookie. Fall back to auto-selecting the only-child
+  // so the chip / actions see the same kid (resolveActiveChild does
+  // this for the UI; we mirror it here for actions).
+  const children = await listChildrenServer();
+  if (children.length === 1) return children[0].id;
+  return null;
+}
+
+/** Raw cookie read, no fallback. Used when we explicitly need 'was the
+ *  cookie set' (e.g. the setActiveChildAction). */
+export async function getActiveChildCookie(): Promise<string | null> {
   const store = await cookies();
   const v = store.get(ACTIVE_CHILD_COOKIE)?.value;
   return v && v.length > 0 ? v : null;
