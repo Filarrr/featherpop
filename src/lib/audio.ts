@@ -388,11 +388,29 @@ const ALL_VOICE_CLIPS = [
 
 let voiceUnlocked = false;
 
+// One voice clip plays at a time — when a new clip starts, the previous
+// is stopped. Prevents the awkward overlap when two callers trigger
+// close together (Park Hunt entry stacks eagleHandsWord + eagleVoice).
+let activeClip: HTMLAudioElement | null = null;
+
+function stopActiveClip(): void {
+  if (!activeClip) return;
+  try {
+    activeClip.pause();
+    activeClip.currentTime = 0;
+  } catch {
+    /* ignore */
+  }
+  activeClip = null;
+}
+
 /**
  * MUST be called inside a user-gesture handler (e.g. the home PLAY tap).
- * iOS Safari blocks HTMLAudioElement.play() outside a gesture; this
- * primes each clip by calling play() then immediately pause() so future
- * programmatic play() calls succeed.
+ *
+ * iOS Safari blocks HTMLAudioElement.play() outside a gesture AND ignores
+ * el.volume = 0 (volume is effectively read-only on iOS). So priming with
+ * volume=0 makes all clips play out loud during the unlock. el.muted IS
+ * respected on iOS — we use that instead so the unlock is truly silent.
  */
 export function unlockVoiceClips(): void {
   if (typeof window === "undefined") return;
@@ -404,25 +422,32 @@ export function unlockVoiceClips(): void {
       el = new Audio(src);
       el.preload = "auto";
       el.crossOrigin = "anonymous";
-      el.volume = 0;
       clipCache.set(src, el);
     }
+    // muted is honored on iOS (volume isn't). Mute → play → immediately
+    // pause → unmute leaves the element primed for later programmatic
+    // play() calls without making any audible noise.
+    el.muted = true;
     const p = el.play();
     if (p && typeof p.then === "function") {
+      const elRef = el;
       p
         .then(() => {
-          el!.pause();
           try {
-            el!.currentTime = 0;
+            elRef.pause();
+            elRef.currentTime = 0;
           } catch {
             /* ignore */
           }
-          el!.volume = 1;
+          elRef.muted = false;
         })
         .catch(() => {
-          // Silent: just means the gesture didn't propagate here. The
-          // first real play() call will retry.
+          // Couldn't even silently play — leave it for the first real
+          // play() to retry inside its own gesture chain.
+          elRef.muted = false;
         });
+    } else {
+      el.muted = false;
     }
   }
 }
@@ -430,6 +455,12 @@ export function unlockVoiceClips(): void {
 function playClip(src: string, fallback: () => void): void {
   if (typeof window === "undefined") return;
   if (!isSoundEnabled()) return;
+
+  // Serialize: any clip already playing gets cut off so the new one isn't
+  // layered on top. (Park Hunt entry queues eagleHandsWord at 1.3s and
+  // eagleVoice at 6.2s — if the first runs long, the second was overlapping.)
+  stopActiveClip();
+
   let el = clipCache.get(src);
   if (!el) {
     el = new Audio(src);
@@ -437,23 +468,51 @@ function playClip(src: string, fallback: () => void): void {
     el.crossOrigin = "anonymous";
     clipCache.set(src, el);
   }
-  el.volume = 1;
+
+  // iOS Safari's currentTime = 0 doesn't always reset a played-through
+  // element; load() forces a clean re-fetch from the buffered cache and
+  // makes replay reliable. ended-state elements also need this.
   try {
-    el.currentTime = 0;
+    if (el.ended || el.currentTime > 0) {
+      el.load();
+    } else {
+      el.currentTime = 0;
+    }
   } catch {
-    /* iOS sometimes throws if not yet loaded */
+    /* ignore */
   }
-  const p = el.play();
+  el.muted = false;
+  // volume property is ignored on iOS — leave at default 1. We don't try
+  // to set it.
+
+  const elRef = el;
+  activeClip = elRef;
+  const onEnd = () => {
+    if (activeClip === elRef) activeClip = null;
+    elRef.removeEventListener("ended", onEnd);
+  };
+  elRef.addEventListener("ended", onEnd);
+
+  const p = elRef.play();
   if (p && typeof p.then === "function") {
     p.catch((err) => {
-      // Surface the error in dev so we can see whether iOS blocked it
-      // or the file 404'd.
+      // The play() rejection from a stopActiveClip() pause is benign —
+      // an AbortError fired because we cancelled to start something new.
+      // Only fall back / log for unexpected errors.
+      const name = (err && (err as Error).name) || "";
+      if (name === "AbortError") return;
       if (typeof console !== "undefined") {
-        console.warn(`[audio] playClip(${src}) failed:`, err?.message ?? err);
+        console.warn(`[audio] playClip(${src}) failed:`, (err as Error)?.message ?? err);
       }
+      if (activeClip === elRef) activeClip = null;
       fallback();
     });
   }
+}
+
+/** Public: stop the currently-playing voice clip (used by Wordshake on cancel). */
+export function stopVoice(): void {
+  stopActiveClip();
 }
 
 function speakFallback(message: string, pitch = 1, rate = 1): void {
