@@ -54,3 +54,8 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# WhatsApp dumps from the client
+WhatsApp Video*
+WhatsApp Image*
+WhatsApp Audio*

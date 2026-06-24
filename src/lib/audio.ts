@@ -374,11 +374,102 @@ export function birdWhoosh() {
  * lands. The clip cache reuses HTMLAudioElements so rapid replay doesn't
  * cause a fresh network fetch each time. */
 
-const clipCache = new Map<string, HTMLAudioElement>();
+/* -------------------- Voice-clip pipeline (Web Audio) --------------------
+ *
+ * Earlier passes used HTMLAudioElement + an unlock trick. Two problems on
+ * iOS Safari that the unlock pattern can't fix:
+ *
+ *   (a) Each HTMLAudioElement needs its OWN user-gesture-triggered
+ *       play() before it can be played later. So we had to loop through
+ *       all 4 voice clips on the PLAY tap and silently play each one to
+ *       unlock them. Setting volume=0 was ignored (iOS treats volume as
+ *       read-only), and setting muted=true raced the play() so the
+ *       brief "all clips at once" leak still happened.
+ *
+ *   (b) After a clip finished, replaying it from currentTime=0 was
+ *       unreliable; load() helped sometimes but not always.
+ *
+ * Switching to Web Audio sidesteps both: the AudioContext is unlocked
+ * ONCE by the pop() on PLAY tap, and every subsequent voice clip
+ * decodes to an AudioBuffer and plays through a fresh BufferSource.
+ * No per-element gesture, no replay weirdness, and zero unlock noise.
+ */
 
-// All voice-clip URLs we ship. The unlock pass primes each so iOS Safari
-// will let later programmatic .play() calls through outside a user
-// gesture. Keep this in sync with any new playClip(...) call.
+// Cache: src → AudioBuffer (decoded once, replayed forever).
+const voiceBufferCache = new Map<string, AudioBuffer>();
+// Cache: src → an in-flight fetch+decode promise so concurrent callers
+// don't double-fetch the same clip.
+const voiceLoading = new Map<string, Promise<AudioBuffer>>();
+
+// Track the single currently-playing voice clip so a new one can cut
+// the previous off (no two voice lines on top of each other).
+let activeVoice: AudioBufferSourceNode | null = null;
+let activeVoiceGain: GainNode | null = null;
+
+function stopActiveVoice(): void {
+  if (!activeVoice) return;
+  try {
+    activeVoice.stop();
+  } catch {
+    /* may already have stopped */
+  }
+  try {
+    activeVoice.disconnect();
+    activeVoiceGain?.disconnect();
+  } catch {
+    /* ignore */
+  }
+  activeVoice = null;
+  activeVoiceGain = null;
+}
+
+async function loadVoiceBuffer(src: string): Promise<AudioBuffer> {
+  const cached = voiceBufferCache.get(src);
+  if (cached) return cached;
+  const inflight = voiceLoading.get(src);
+  if (inflight) return inflight;
+
+  const ctx = getCtx();
+  if (!ctx) throw new Error("AudioContext unavailable");
+
+  const p = (async () => {
+    const res = await fetch(src);
+    if (!res.ok) throw new Error(`fetch ${src} → ${res.status}`);
+    const ab = await res.arrayBuffer();
+    // decodeAudioData has both Promise + callback signatures; the
+    // Promise form is supported on every browser we target.
+    const buf = await ctx.decodeAudioData(ab);
+    voiceBufferCache.set(src, buf);
+    return buf;
+  })();
+
+  voiceLoading.set(src, p);
+  try {
+    return await p;
+  } finally {
+    voiceLoading.delete(src);
+  }
+}
+
+/**
+ * No-op kept for backward compatibility with old callers. The new pipeline
+ * doesn't need a separate unlock — the AudioContext is resumed by the
+ * existing pop() / fanfare() chain on the PLAY tap, and once it's running
+ * every voice clip plays through it with no per-element gesture.
+ *
+ * We DO pre-warm the buffers here so the first eagle line doesn't stall
+ * on a network fetch mid-celebration.
+ */
+export function unlockVoiceClips(): void {
+  if (typeof window === "undefined") return;
+  for (const src of ALL_VOICE_CLIPS) {
+    if (!voiceBufferCache.has(src) && !voiceLoading.has(src)) {
+      // Fire-and-forget; failures are surfaced by playClip later.
+      void loadVoiceBuffer(src).catch(() => {});
+    }
+  }
+}
+
 const ALL_VOICE_CLIPS = [
   "/audio/voicenotes/strudelay.mp3",
   "/audio/voicenotes/can-you-help-me-find-this-word-in-the-park.mp3",
@@ -386,133 +477,69 @@ const ALL_VOICE_CLIPS = [
   "/audio/voicenotes/oh-no-lets-hurry-up-before-the-spider-comes.mp3",
 ];
 
-let voiceUnlocked = false;
-
-// One voice clip plays at a time — when a new clip starts, the previous
-// is stopped. Prevents the awkward overlap when two callers trigger
-// close together (Park Hunt entry stacks eagleHandsWord + eagleVoice).
-let activeClip: HTMLAudioElement | null = null;
-
-function stopActiveClip(): void {
-  if (!activeClip) return;
-  try {
-    activeClip.pause();
-    activeClip.currentTime = 0;
-  } catch {
-    /* ignore */
-  }
-  activeClip = null;
-}
-
-/**
- * MUST be called inside a user-gesture handler (e.g. the home PLAY tap).
- *
- * iOS Safari blocks HTMLAudioElement.play() outside a gesture AND ignores
- * el.volume = 0 (volume is effectively read-only on iOS). So priming with
- * volume=0 makes all clips play out loud during the unlock. el.muted IS
- * respected on iOS — we use that instead so the unlock is truly silent.
- */
-export function unlockVoiceClips(): void {
-  if (typeof window === "undefined") return;
-  if (voiceUnlocked) return;
-  voiceUnlocked = true;
-  for (const src of ALL_VOICE_CLIPS) {
-    let el = clipCache.get(src);
-    if (!el) {
-      el = new Audio(src);
-      el.preload = "auto";
-      el.crossOrigin = "anonymous";
-      clipCache.set(src, el);
-    }
-    // muted is honored on iOS (volume isn't). Mute → play → immediately
-    // pause → unmute leaves the element primed for later programmatic
-    // play() calls without making any audible noise.
-    el.muted = true;
-    const p = el.play();
-    if (p && typeof p.then === "function") {
-      const elRef = el;
-      p
-        .then(() => {
-          try {
-            elRef.pause();
-            elRef.currentTime = 0;
-          } catch {
-            /* ignore */
-          }
-          elRef.muted = false;
-        })
-        .catch(() => {
-          // Couldn't even silently play — leave it for the first real
-          // play() to retry inside its own gesture chain.
-          elRef.muted = false;
-        });
-    } else {
-      el.muted = false;
-    }
-  }
-}
-
 function playClip(src: string, fallback: () => void): void {
   if (typeof window === "undefined") return;
   if (!isSoundEnabled()) return;
-
-  // Serialize: any clip already playing gets cut off so the new one isn't
-  // layered on top. (Park Hunt entry queues eagleHandsWord at 1.3s and
-  // eagleVoice at 6.2s — if the first runs long, the second was overlapping.)
-  stopActiveClip();
-
-  let el = clipCache.get(src);
-  if (!el) {
-    el = new Audio(src);
-    el.preload = "auto";
-    el.crossOrigin = "anonymous";
-    clipCache.set(src, el);
+  const ctx = getCtx();
+  if (!ctx) {
+    fallback();
+    return;
   }
 
-  // iOS Safari's currentTime = 0 doesn't always reset a played-through
-  // element; load() forces a clean re-fetch from the buffered cache and
-  // makes replay reliable. ended-state elements also need this.
-  try {
-    if (el.ended || el.currentTime > 0) {
-      el.load();
-    } else {
-      el.currentTime = 0;
+  // Serialize: any voice line already playing gets cut so the new one
+  // isn't layered on top.
+  stopActiveVoice();
+
+  const buf = voiceBufferCache.get(src);
+
+  const start = (b: AudioBuffer) => {
+    const c = getCtx();
+    if (!c) {
+      fallback();
+      return;
     }
-  } catch {
-    /* ignore */
-  }
-  el.muted = false;
-  // volume property is ignored on iOS — leave at default 1. We don't try
-  // to set it.
-
-  const elRef = el;
-  activeClip = elRef;
-  const onEnd = () => {
-    if (activeClip === elRef) activeClip = null;
-    elRef.removeEventListener("ended", onEnd);
-  };
-  elRef.addEventListener("ended", onEnd);
-
-  const p = elRef.play();
-  if (p && typeof p.then === "function") {
-    p.catch((err) => {
-      // The play() rejection from a stopActiveClip() pause is benign —
-      // an AbortError fired because we cancelled to start something new.
-      // Only fall back / log for unexpected errors.
-      const name = (err && (err as Error).name) || "";
-      if (name === "AbortError") return;
+    const src2 = c.createBufferSource();
+    src2.buffer = b;
+    const gain = c.createGain();
+    gain.gain.value = 1;
+    src2.connect(gain).connect(c.destination);
+    activeVoice = src2;
+    activeVoiceGain = gain;
+    src2.onended = () => {
+      if (activeVoice === src2) activeVoice = null;
+      if (activeVoiceGain === gain) activeVoiceGain = null;
+    };
+    try {
+      src2.start(0);
+    } catch (err) {
       if (typeof console !== "undefined") {
-        console.warn(`[audio] playClip(${src}) failed:`, (err as Error)?.message ?? err);
+        console.warn(`[audio] start() failed for ${src}:`, err);
       }
-      if (activeClip === elRef) activeClip = null;
+      fallback();
+    }
+  };
+
+  if (buf) {
+    start(buf);
+    return;
+  }
+
+  // First-time call for this clip — fetch + decode, then play. The
+  // celebration timing usually gives us a 200–700ms head start before
+  // the voice line is needed, which is plenty for a 70–150KB MP3.
+  void loadVoiceBuffer(src)
+    .then(start)
+    .catch((err) => {
+      if (typeof console !== "undefined") {
+        console.warn(`[audio] loadVoiceBuffer(${src}) failed:`, err?.message ?? err);
+      }
       fallback();
     });
-  }
 }
 
 /** Public: stop the currently-playing voice clip (used by Wordshake on cancel). */
 export function stopVoice(): void {
-  stopActiveClip();
+  stopActiveVoice();
 }
 
 function speakFallback(message: string, pitch = 1, rate = 1): void {
