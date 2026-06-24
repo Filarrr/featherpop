@@ -6680,3 +6680,265 @@ a { color: inherit; }
   /* On desktop the side-panel Cancel/Enter is visible — hide the dock. */
   .shake-dock { display: none; }
 }
+
+/* ============================================================
+   Printable Park Hunt QR pack (members)
+   ============================================================ */
+.qr-card {
+  width: min(820px, 100%);
+  margin: 2rem auto;
+  aspect-ratio: 8.5 / 11;
+  background: white;
+  border: 2px solid #1a0f3a;
+  border-radius: 1rem;
+  box-shadow: 0 30px 60px rgba(106, 45, 255, 0.18);
+  padding: 2rem 2rem 1.5rem;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  gap: 0.75rem;
+  text-align: center;
+  color: var(--ink);
+}
+.qr-card-head {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: var(--magenta);
+  border-bottom: 2px dashed rgba(106, 45, 255, 0.35);
+  padding-bottom: 0.4rem;
+}
+.qr-card-week { color: var(--ink-soft); }
+.qr-card-title {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(2rem, 7vw, 3.6rem);
+  margin: 0.2rem 0;
+  background: linear-gradient(180deg, var(--magenta), var(--purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 0.04em;
+}
+.qr-card-qr {
+  display: grid;
+  place-items: center;
+  gap: 0.5rem;
+}
+.qr-card-qr svg {
+  border: 4px solid #1a0f3a;
+  border-radius: 14px;
+  padding: 8px;
+  background: white;
+}
+.qr-card-payload {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+.qr-card-words {
+  background: rgba(106, 45, 255, 0.06);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+.qr-card-words h3 {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--magenta);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+}
+.qr-card-words ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  padding-left: 1.25rem;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+.qr-card-words li {
+  list-style: decimal;
+  break-inside: avoid;
+}
+.qr-card-foot {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  border-top: 2px dashed rgba(106, 45, 255, 0.35);
+  padding-top: 0.4rem;
+  font-style: italic;
+}
+
+@media print {
+  body { background: white !important; }
+  .no-print,
+  .brandbar,
+  .bottom-nav { display: none !important; }
+  .qr-card {
+    margin: 0;
+    box-shadow: none;
+    border-radius: 0;
+    page-break-after: always;
+    page-break-inside: avoid;
+    break-after: page;
+    aspect-ratio: auto;
+    height: 100vh;
+    width: 100%;
+  }
+  .qr-card:last-of-type { page-break-after: auto; break-after: auto; }
+}
+
+/* ============================================================
+   Admin dashboard
+   ============================================================ */
+.admin-page { padding-bottom: 5rem; }
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.admin-stat-card {
+  position: relative;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  background: white;
+  box-shadow: 0 10px 24px rgba(106, 45, 255, 0.12);
+  border-top: 4px solid var(--stat-color);
+  display: grid;
+  gap: 0.2rem;
+}
+.admin-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--stat-color) 18%, white);
+  color: var(--stat-color);
+}
+.admin-stat-label {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.admin-stat-value {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  color: var(--ink);
+  line-height: 1;
+}
+.admin-stat-tag { font-size: 0.8rem; color: var(--ink-soft); }
+
+.admin-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.75rem;
+}
+.admin-action-card {
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.admin-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px rgba(106, 45, 255, 0.22);
+}
+.admin-action-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: white;
+}
+
+.admin-section { margin: 2rem 0; }
+.admin-section-head {
+  margin-bottom: 0.65rem;
+  display: grid;
+  gap: 0.15rem;
+}
+.admin-section-head h2 { margin: 0; }
+
+.admin-stations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+.admin-station-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+  box-shadow: 0 8px 20px rgba(106, 45, 255, 0.12);
+}
+.admin-station-card h3 {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--magenta);
+}
+.admin-station-card ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.1rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.admin-station-card li { list-style: decimal; }
+
+.admin-children-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+}
+.admin-child-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 10px 24px rgba(106, 45, 255, 0.14);
+}
+.admin-child-card h3 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--magenta);
+}
+.admin-child-card ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.3rem;
+}
+.admin-child-card li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.admin-child-card li strong {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  color: var(--ink);
+}
+.admin-child-card li span { color: var(--ink-soft); }
