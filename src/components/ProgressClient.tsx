@@ -13,6 +13,7 @@ import {
 import { useActiveChild } from "@/lib/use-active-child";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { Medal } from "@/components/progress/Medal";
+import { EggWidget } from "@/components/eggs/EggWidget";
 
 type MedalTier = "explorer" | "reader" | "finder" | "champion" | "golden";
 
@@ -76,6 +77,10 @@ export function ProgressClient() {
           <MsFeatherPopAvatar pose="cheer" size={108} />
         </div>
       </header>
+
+      {/* Egg widget — the kid's current egg + crack progress + link
+          to the collection book of hatched friends. */}
+      <EggWidget />
 
       {/* Golden Feather hero stage */}
       <section className="progress-golden-v2">

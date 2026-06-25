@@ -6,6 +6,9 @@
 import { revalidatePath } from "next/cache";
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import {
+  CRACK_LABELS,
+  CRACK_MESSAGES,
+  CRACK_THRESHOLDS,
   ChildProgress,
   ClaimVariantType,
   CompletedMissionEntry,
@@ -162,7 +165,16 @@ const HATCH_WEIGHTS: Array<[HatchedCharacter, number]> = [
   ["golden-eagle", 3], // ULTRA-rare. Per client: kids keep coming back for this.
 ];
 
-function pickEggColor(): EggColor {
+/**
+ * Per the client spec: the first egg is Purple, the second is Gold, the
+ * third is Rainbow, then random afterwards. The sequence guarantees a
+ * predictable on-ramp for new kids (the rare-feeling colors hit early)
+ * before opening up to the full set.
+ */
+function pickEggColorForSequence(eggIndex: number): EggColor {
+  if (eggIndex === 0) return "purple";
+  if (eggIndex === 1) return "gold";
+  if (eggIndex === 2) return "rainbow";
   return EGG_COLORS[Math.floor(Math.random() * EGG_COLORS.length)];
 }
 
@@ -191,6 +203,17 @@ export interface WordRecordResult {
   progress: ChildProgress;
   hatched: HatchedEntry | null; // non-null when this submission triggered a hatch
   goldenFeatherJustEarned: boolean; // true if this record crossed 1000 this month
+  // Highest crack milestone CROSSED on this call (0..4). The 5th index
+  // (50 words = hatch) is also represented by `hatched` being non-null.
+  // When crackJustCrossed is null, the call advanced the egg but didn't
+  // hit a new milestone — the cracking overlay should stay quiet.
+  crackJustCrossed: {
+    level: number; // 0..4 (4 = hatch)
+    label: string;
+    message: string;
+    color: EggColor;
+    wordsInEgg: number; // (nextWords - egg.wordsAtStart)
+  } | null;
 }
 
 /**
@@ -212,15 +235,48 @@ export async function recordWordsFoundAction(count: number): Promise<WordRecordR
   const prevWords = prev.wordsFound ?? 0;
   const nextWords = prevWords + Math.floor(count);
 
-  // Ensure there's a current egg in flight.
-  let egg: EggState = prev.egg ?? { color: pickEggColor(), wordsAtStart: prevWords };
+  // Ensure there's a current egg in flight. eggIndex = how many eggs
+  // have been started so far; drives the purple → gold → rainbow → random
+  // sequence at the top of the file.
+  const eggsHatchedSoFar = (prev.hatched ?? []).length;
+  let egg: EggState = prev.egg ?? {
+    color: pickEggColorForSequence(eggsHatchedSoFar),
+    wordsAtStart: prevWords,
+    cracksShown: 0,
+  };
 
   let hatched: HatchedEntry | null = null;
   let nextHatched = (prev.hatched ?? []).slice();
   let freeSpins = prev.freeSpins ?? 0;
+  let crackJustCrossed: WordRecordResult["crackJustCrossed"] = null;
 
-  // Has this egg crossed the hatch threshold?
-  if (nextWords - egg.wordsAtStart >= WORDS_PER_HATCH) {
+  // Compute crack level the egg is AT after this call. 0..4 — 4 means
+  // the 50-word hatch threshold was crossed.
+  const wordsInEgg = nextWords - egg.wordsAtStart;
+  const cracksShown = egg.cracksShown ?? 0;
+  let newCrackLevel = cracksShown;
+  for (let i = 0; i < CRACK_THRESHOLDS.length; i++) {
+    if (wordsInEgg >= CRACK_THRESHOLDS[i]) newCrackLevel = i + 1;
+  }
+
+  // Did we cross a new milestone? Surface the highest one we crossed
+  // so the overlay can animate it once.
+  if (newCrackLevel > cracksShown) {
+    const idx = newCrackLevel - 1; // 0..4
+    crackJustCrossed = {
+      level: idx,
+      label: CRACK_LABELS[idx],
+      message: CRACK_MESSAGES[idx],
+      color: egg.color,
+      wordsInEgg: Math.min(wordsInEgg, WORDS_PER_HATCH),
+    };
+  }
+
+  // Hatch if we hit 50 words. The hatch reveal takes precedence over
+  // the crack overlay — the client surfaces it via the existing
+  // EggHatchReveal path while the crack overlay is suppressed when
+  // hatched is non-null.
+  if (wordsInEgg >= WORDS_PER_HATCH) {
     const character = pickHatchedCharacter();
     hatched = {
       character,
@@ -230,7 +286,13 @@ export async function recordWordsFoundAction(count: number): Promise<WordRecordR
     };
     nextHatched = [hatched, ...nextHatched].slice(0, 100);
     freeSpins += 1; // per spec: every 50 words = +1 free spin
-    egg = { color: pickEggColor(), wordsAtStart: nextWords };
+    egg = {
+      color: pickEggColorForSequence(eggsHatchedSoFar + 1),
+      wordsAtStart: nextWords,
+      cracksShown: 0,
+    };
+  } else {
+    egg = { ...egg, cracksShown: newCrackLevel };
   }
 
   // Monthly Golden Feather tracker — reset to count on month rollover,
@@ -262,7 +324,7 @@ export async function recordWordsFoundAction(count: number): Promise<WordRecordR
 
   await writeMap({ ...map, [childId]: next });
   revalidatePath("/", "layout");
-  return { progress: next, hatched, goldenFeatherJustEarned };
+  return { progress: next, hatched, goldenFeatherJustEarned, crackJustCrossed };
 }
 
 /**

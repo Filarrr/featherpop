@@ -19,7 +19,8 @@ import {
 import { Confetti } from "@/components/Confetti";
 import { submitFoundWordAction } from "@/lib/park-hunt-actions";
 import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
-import type { HatchedEntry } from "@/lib/child-profile";
+import { EggCrackReveal } from "@/components/eggs/EggCrackReveal";
+import type { EggColor, HatchedEntry } from "@/lib/child-profile";
 
 const TIMER_SECONDS = 60;
 
@@ -48,6 +49,13 @@ export function StationGrid({
   const [nextTarget, setNextTarget] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [hatched, setHatched] = useState<HatchedEntry | null>(null);
+  const [crackMilestone, setCrackMilestone] = useState<{
+    level: number;
+    label: string;
+    message: string;
+    color: EggColor;
+    wordsInEgg: number;
+  } | null>(null);
   const tickedRef = useRef(false);
   const spiderWarnedRef = useRef(false);
 
@@ -107,6 +115,7 @@ export function StationGrid({
           // Hatched payload — show the egg reveal overlay on top of the
           // win screen so the kid sees the new character + free spin.
           if (res.hatched) setHatched(res.hatched);
+          else if (res.crackJustCrossed) setCrackMilestone(res.crackJustCrossed);
           wordReveal();
           window.setTimeout(() => fanfare(), 500);
           // Chanel: 'Yes! Feathers up and let's find the word!'
@@ -181,6 +190,11 @@ export function StationGrid({
 
       {hatched ? (
         <EggHatchReveal hatched={hatched} onClose={() => setHatched(null)} />
+      ) : crackMilestone ? (
+        <EggCrackReveal
+          {...crackMilestone}
+          onClose={() => setCrackMilestone(null)}
+        />
       ) : null}
 
       <header className="parkhunt-station-hud">

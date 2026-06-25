@@ -24,8 +24,9 @@ import {
   awardFeatherPopAction,
   recordWordsFoundAction,
 } from "@/lib/child-progress-actions";
-import type { HatchedEntry } from "@/lib/child-profile";
+import type { EggColor, HatchedEntry } from "@/lib/child-profile";
 import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
+import { EggCrackReveal } from "@/components/eggs/EggCrackReveal";
 import { Mascot, MascotMood } from "@/components/Mascot";
 
 const GRID_SIZE = 4;
@@ -140,6 +141,17 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
   // confirm the server got it.
   const [sessionPop, setSessionPop] = useState(0);
   const [hatched, setHatched] = useState<HatchedEntry | null>(null);
+  // Crack milestone the kid just crossed (10/20/30/40 words). Surfaces
+  // the EggCrackReveal celebration overlay. Cleared when the kid
+  // dismisses it. Hatch (50) takes precedence and renders the
+  // EggHatchReveal instead.
+  const [crackMilestone, setCrackMilestone] = useState<{
+    level: number;
+    label: string;
+    message: string;
+    color: EggColor;
+    wordsInEgg: number;
+  } | null>(null);
   const pendingAwardsRef = useRef(0);
   const refreshTimerRef = useRef<number | null>(null);
   const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -304,6 +316,7 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
         try {
           const recRes = await recordWordsFoundAction(1);
           if (recRes?.hatched) setHatched(recRes.hatched);
+          else if (recRes?.crackJustCrossed) setCrackMilestone(recRes.crackJustCrossed);
           if (recRes?.goldenFeatherJustEarned) {
             // Open the certificate in a new tab so the parent can print it.
             window.open("/print/golden-feather", "_blank");
@@ -444,6 +457,11 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
     <div className="wordshake">
       {hatched ? (
         <EggHatchReveal hatched={hatched} onClose={() => setHatched(null)} />
+      ) : crackMilestone ? (
+        <EggCrackReveal
+          {...crackMilestone}
+          onClose={() => setCrackMilestone(null)}
+        />
       ) : null}
       <section>
         <div className="quest-toolbar mb-3">

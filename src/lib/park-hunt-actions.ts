@@ -142,6 +142,13 @@ export async function submitFoundWordAction(args: {
       next: { word: string; stationId: number };
       foundToday: number;
       hatched?: import("@/lib/child-profile").HatchedEntry | null;
+      crackJustCrossed?: {
+        level: number;
+        label: string;
+        message: string;
+        color: import("@/lib/child-profile").EggColor;
+        wordsInEgg: number;
+      } | null;
     }
   | { ok: false; reason: string }
 > {
@@ -173,9 +180,19 @@ export async function submitFoundWordAction(args: {
   // shared EggHatchReveal overlay (character + color + wordsRead all
   // come from the recordWordsFound result).
   let hatched: import("@/lib/child-profile").HatchedEntry | null = null;
+  let crackJustCrossed:
+    | {
+        level: number;
+        label: string;
+        message: string;
+        color: import("@/lib/child-profile").EggColor;
+        wordsInEgg: number;
+      }
+    | null = null;
   try {
     const result = await recordWordsFoundAction(1);
     if (result?.hatched) hatched = result.hatched;
+    if (result?.crackJustCrossed) crackJustCrossed = result.crackJustCrossed;
   } catch (err) {
     console.warn("[park-hunt] recordWordsFound failed", err);
   }
@@ -196,6 +213,7 @@ export async function submitFoundWordAction(args: {
     next: { word: next.word, stationId: next.stationId },
     foundToday,
     hatched,
+    crackJustCrossed,
   };
 }
 

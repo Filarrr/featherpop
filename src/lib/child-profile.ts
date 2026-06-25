@@ -36,7 +36,30 @@ export type HatchedCharacter =
 export interface EggState {
   color: EggColor;
   wordsAtStart: number; // wordsFound when this egg started
+  // Highest crack milestone already celebrated (0..4). Used so the
+  // cracking overlay only fires when the kid crosses a NEW threshold,
+  // not on every word past it.
+  cracksShown?: number;
 }
+
+/** The 5 crack milestones (in words past wordsAtStart). 50 = hatch. */
+export const CRACK_THRESHOLDS = [10, 20, 30, 40, 50] as const;
+/** Sequence-of-events labels shown at each milestone. */
+export const CRACK_LABELS = [
+  "Small Crack",
+  "Medium Crack",
+  "Large Crack",
+  "Almost Open!",
+  "Hatching!",
+] as const;
+/** Encouragement copy at each crack — from Ms. Feather Pop herself. */
+export const CRACK_MESSAGES = [
+  "Great job, Feather Friend! Your egg is beginning to crack!",
+  "Wonderful! The crack is growing bigger!",
+  "Keep going! Your egg is getting closer!",
+  "Almost there! One more push and it will hatch!",
+  "It's hatching! Look who's coming out!",
+] as const;
 
 export interface HatchedEntry {
   character: HatchedCharacter;

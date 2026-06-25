@@ -632,6 +632,23 @@ export function spiderVoice() {
   );
 }
 
+/**
+ * Cracking sound for the egg-progress milestones. Two sharp,
+ * brittle "tk-tk" hits followed by a soft sparkle tail so it
+ * lands as "something is opening" rather than "something broke."
+ */
+export function eggCrack() {
+  // Tk
+  tone(2200, 50, "square", 0.18);
+  tone(1700, 70, "square", 0.14, 0.06);
+  // Tk-tk
+  tone(2400, 50, "square", 0.18, 0.18);
+  tone(1900, 80, "square", 0.14, 0.24);
+  // Magic glimmer tail
+  chirp(2400, 3600, 200, "sine", 0.1, 0.35);
+  tone(2640, 120, "triangle", 0.12, 0.45);
+}
+
 /** Magical sparkle cascade when the parchment word reveals. */
 export function wordReveal() {
   // Pixie chord — Cmaj9 (C E G B D) arpeggio with triangle bell timbre
