@@ -3,8 +3,11 @@
 import Link from "next/link";
 import {
   BookOpen,
+  ChevronRight,
   Egg,
   Feather,
+  Gift,
+  MapPin,
   Music,
   Sparkles,
   Star,
@@ -14,6 +17,7 @@ import { useActiveChild } from "@/lib/use-active-child";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { Medal } from "@/components/progress/Medal";
 import { EggWidget } from "@/components/eggs/EggWidget";
+import { getCard } from "@/lib/prize-library";
 
 type MedalTier = "explorer" | "reader" | "finder" | "champion" | "golden";
 
@@ -123,53 +127,62 @@ export function ProgressClient() {
         </div>
       </section>
 
-      {/* Stats grid */}
+      {/* Stats grid — every tile is a tappable link to where the kid
+          can earn more of that stat. */}
       <section className="progress-stats-v2">
         <StatCard
           icon={<BookOpen aria-hidden className="h-6 w-6" />}
           label="Words Found"
           value={wordsFound}
-          tag={wordsFound > 0 ? "Keep it up!" : "Find your first!"}
+          tag={wordsFound > 0 ? "Play Letter Pop →" : "Find your first! →"}
           tone="purple"
+          href="/play"
         />
         <StatCard
           icon={<Feather aria-hidden className="h-6 w-6" />}
           label="Feathers"
           value={featherPop}
-          tag={featherPop > 100 ? "You're soaring!" : "Keep collecting!"}
+          tag={featherPop > 100 ? "Spend on prizes →" : "Earn more →"}
           tone="blue"
+          href="/rewards"
         />
         <StatCard
           icon={<Egg aria-hidden className="h-6 w-6" />}
           label="Eggs Hatched"
           value={eggsHatched}
-          tag={eggsHatched > 0 ? "Amazing!" : "Read 50 words!"}
+          tag={eggsHatched > 0 ? "See your friends →" : "Read 50 words! →"}
           tone="green"
+          href="/collection-book"
         />
         <StatCard
           icon={<Star aria-hidden className="h-6 w-6" />}
           label="Free Spins"
           value={freeSpins}
-          tag={freeSpins > 0 ? "Spin & win!" : "Hatch to earn!"}
+          tag={freeSpins > 0 ? "Spin the wheel →" : "Hatch to earn! →"}
           tone="pink"
+          href="/spin"
         />
         <StatCard
           icon={<Video aria-hidden className="h-6 w-6" />}
           label="Videos Watched"
           value={videosWatched}
-          tag="Keep watching!"
+          tag="Watch a story →"
           tone="orange"
+          href="/story"
         />
         <StatCard
           icon={<Music aria-hidden className="h-6 w-6" />}
           label="Songs Unlocked"
           value={songsUnlocked}
-          tag="Sing along!"
+          tag="Sing along →"
           tone="teal"
+          href="/music"
         />
       </section>
 
-      {/* Badges row — medal-style */}
+      {/* Badges row — medal-style. Earned badges link to /collection
+          (the trophy wall); locked badges link to /play (where they
+          can earn more words). */}
       <section className="progress-badges-v2">
         <header className="progress-badges-head">
           <span className="progress-badges-eyebrow">
@@ -185,12 +198,19 @@ export function ProgressClient() {
         <div className="progress-badges-row-v2">
           {BADGES.map((b) => {
             const earned = wordsFound >= b.threshold;
+            const wordsToBadge = Math.max(0, b.threshold - wordsFound);
             return (
-              <article
+              <Link
                 key={b.threshold}
+                href={earned ? "/collection" : "/play"}
                 className={`progress-badge-v2 tier-${b.tier} ${
                   earned ? "is-earned" : "is-locked"
                 }`}
+                aria-label={
+                  earned
+                    ? `${b.name} earned`
+                    : `${b.name} locked, ${wordsToBadge} words to go`
+                }
               >
                 <Medal tier={b.tier} earned={earned} />
                 <div className="progress-badge-meta">
@@ -198,14 +218,172 @@ export function ProgressClient() {
                     {b.threshold.toLocaleString()} <small>words</small>
                   </span>
                   <span className="progress-badge-name-v2">{b.name}</span>
+                  <span className="progress-badge-status">
+                    {earned ? "Earned" : `${wordsToBadge.toLocaleString()} to go`}
+                  </span>
                 </div>
-              </article>
+              </Link>
             );
           })}
         </div>
       </section>
+
+      {/* Recent activity — last hatches + last prize claims so the
+          page shows actual movement, not just static totals. */}
+      <RecentActivity />
+
+      {/* Quick links row — explicit next-action prompts since this
+          page used to be all numbers + no doors. */}
+      <section className="progress-quick">
+        <Link href="/play" className="progress-quick-link tone-purple">
+          <BookOpen aria-hidden className="h-5 w-5" />
+          <div>
+            <strong>Play Letter Pop</strong>
+            <small>Earn feathers + crack the egg</small>
+          </div>
+          <ChevronRight aria-hidden className="h-5 w-5" />
+        </Link>
+        <Link href="/park-hunt" className="progress-quick-link tone-orange">
+          <MapPin aria-hidden className="h-5 w-5" />
+          <div>
+            <strong>Park Hunt</strong>
+            <small>Scan stations to find the word</small>
+          </div>
+          <ChevronRight aria-hidden className="h-5 w-5" />
+        </Link>
+        <Link href="/rewards" className="progress-quick-link tone-pink">
+          <Gift aria-hidden className="h-5 w-5" />
+          <div>
+            <strong>Spend feathers</strong>
+            <small>Trade them for prizes</small>
+          </div>
+          <ChevronRight aria-hidden className="h-5 w-5" />
+        </Link>
+      </section>
     </div>
   );
+}
+
+function RecentActivity() {
+  const { progress } = useActiveChild();
+  const hatched = (progress.hatched ?? []).slice(0, 3);
+  const claims = (progress.claimedRewards ?? []).slice(0, 3);
+
+  if (hatched.length === 0 && claims.length === 0) return null;
+
+  return (
+    <section className="progress-recent">
+      <header className="progress-recent-head">
+        <span className="progress-badges-eyebrow">
+          <Sparkles aria-hidden className="h-4 w-4" />
+          Recent activity
+        </span>
+        <h2>What you&apos;ve been up to</h2>
+      </header>
+
+      <div className="progress-recent-grid">
+        {hatched.map((h) => (
+          <article key={`hatch-${h.hatchedAt}`} className="progress-recent-item">
+            <span className="progress-recent-emoji" aria-hidden>
+              {hatchedEmojiFor(h.character)}
+            </span>
+            <div className="progress-recent-body">
+              <strong>{prettyName(h.character)} hatched!</strong>
+              <small>
+                From a {h.color} egg · {h.wordsRead} words
+              </small>
+              <small className="progress-recent-time">
+                {formatTimeAgo(h.hatchedAt)}
+              </small>
+            </div>
+            <Link href="/collection-book" className="progress-recent-cta">
+              <ChevronRight aria-hidden className="h-4 w-4" />
+            </Link>
+          </article>
+        ))}
+        {claims.map((c) => (
+          <article key={`claim-${c.at}`} className="progress-recent-item">
+            <span className="progress-recent-emoji" aria-hidden>
+              {claimEmojiFor(c)}
+            </span>
+            <div className="progress-recent-body">
+              <strong>{claimTitleFor(c)}</strong>
+              <small>−{c.cost} feathers</small>
+              <small className="progress-recent-time">
+                {formatTimeAgo(c.at)}
+              </small>
+            </div>
+            <Link href={`/prize/${c.at}`} className="progress-recent-cta">
+              <ChevronRight aria-hidden className="h-4 w-4" />
+            </Link>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function hatchedEmojiFor(c: string): string {
+  const m: Record<string, string> = {
+    "baby-eagle": "🦅",
+    "baby-peacock": "🦚",
+    "baby-bunny": "🐰",
+    "baby-butterfly": "🦋",
+    "rainbow-peacock": "🌈",
+    "feather-dragon": "🐉",
+    "sparkle-unicorn": "🦄",
+    "golden-eagle": "👑",
+  };
+  return m[c] ?? "🥚";
+}
+
+function prettyName(c: string): string {
+  return c.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
+
+interface ClaimEntry {
+  id: string;
+  at: number;
+  cost: number;
+  variantId?: string;
+  variantType?: string;
+}
+
+function claimEmojiFor(c: ClaimEntry): string {
+  if (c.variantType === "card") {
+    const card = c.variantId ? getCard(c.variantId) : undefined;
+    return card?.emoji ?? "🃏";
+  }
+  if (c.variantType === "coloring") return "🎨";
+  if (c.variantType === "puzzle") return "🧩";
+  if (c.id === "mystery") return "🎁";
+  if (c.id === "character") return "🃏";
+  return "🎁";
+}
+
+function claimTitleFor(c: ClaimEntry): string {
+  if (c.variantType === "card" && c.variantId) {
+    const card = getCard(c.variantId);
+    if (card) return `Pulled ${card.name}`;
+  }
+  if (c.variantType === "coloring") return "Coloring page unlocked";
+  if (c.variantType === "puzzle") return "Puzzle unlocked";
+  if (c.id === "mystery") return "Opened a Mystery Box";
+  if (c.id === "character") return "Pulled a character card";
+  return "Claimed a prize";
+}
+
+function formatTimeAgo(ts: number): string {
+  const diffMs = Date.now() - ts;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  const d = new Date(ts);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 interface StatCardProps {
@@ -214,19 +392,22 @@ interface StatCardProps {
   value: number;
   tag: string;
   tone: "purple" | "blue" | "green" | "pink" | "orange" | "teal";
+  href: string;
 }
 
-function StatCard({ icon, label, value, tag, tone }: StatCardProps) {
+function StatCard({ icon, label, value, tag, tone, href }: StatCardProps) {
   return (
-    <article className={`progress-stat-card-v2 tone-${tone}`}>
+    <Link className={`progress-stat-card-v2 tone-${tone}`} href={href}>
       <div className="progress-stat-icon-v2">
         <span className="progress-stat-icon-halo" aria-hidden />
         {icon}
       </div>
       <span className="progress-stat-value-v2">{value.toLocaleString()}</span>
       <span className="progress-stat-label-v2">{label}</span>
-      <span className="progress-stat-tag-v2">{tag}</span>
-    </article>
+      <span className="progress-stat-tag-v2">
+        {tag}
+      </span>
+    </Link>
   );
 }
 

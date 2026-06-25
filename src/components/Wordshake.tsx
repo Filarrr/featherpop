@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Feather, Home, RefreshCw, Sparkles, Timer, Volume2, VolumeX } from "lucide-react";
@@ -166,35 +166,74 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
 
   useEffect(() => setMusicOn(isMusicEnabled()), []);
 
+  /**
+   * Flush any pending word/bonus batch RIGHT NOW. Returns a promise so
+   * callers can await the persist before navigating. Race-safe via
+   * awardChainRef — the chain queues this flush after any prior one.
+   */
+  const flushAwards = useCallback(async (): Promise<void> => {
+    if (flushTimerRef.current !== null) {
+      window.clearTimeout(flushTimerRef.current);
+      flushTimerRef.current = null;
+    }
+    const words = pendingWordsRef.current;
+    const bonus = pendingBonusRef.current;
+    pendingWordsRef.current = 0;
+    pendingBonusRef.current = 0;
+    if (words === 0 && bonus === 0) {
+      // Still await the prior chain so callers know nothing's in flight.
+      try {
+        await awardChainRef.current;
+      } catch {
+        /* prior chain swallowed */
+      }
+      return;
+    }
+    awardChainRef.current = awardChainRef.current.then(async () => {
+      try {
+        if (words > 0) {
+          const recRes = await recordWordsFoundAction(words);
+          if (recRes?.hatched) setHatched(recRes.hatched);
+          else if (recRes?.crackJustCrossed) setCrackMilestone(recRes.crackJustCrossed);
+          if (recRes?.goldenFeatherJustEarned) {
+            window.open("/print/golden-feather", "_blank");
+          }
+        }
+        if (bonus > 0) await awardFeatherPopAction(bonus);
+      } catch (err) {
+        console.warn("[wordshake] flush failed:", err);
+      }
+    });
+    try {
+      await awardChainRef.current;
+    } catch {
+      /* swallowed */
+    }
+  }, []);
+
+  // Round end: when the timer hits 0 and `running` flips to false, flush
+  // pending awards immediately (don't wait the 500ms debounce). The kid
+  // sees their final FeatherPop pill match what's actually persisted.
+  useEffect(() => {
+    if (running) return;
+    void (async () => {
+      await flushAwards();
+      router.refresh();
+    })();
+  }, [running, flushAwards, router]);
+
   // On unmount: flush any pending word/bonus batch BEFORE navigating
-  // away, otherwise the kid's last few feathers from the round wouldn't
-  // hit the server. fire-and-forget since we can't await in cleanup.
+  // away. Fire-and-forget since we can't await in cleanup, but it
+  // queues through the same chain so the persist is still atomic.
   useEffect(() => {
     return () => {
-      if (flushTimerRef.current !== null) {
-        window.clearTimeout(flushTimerRef.current);
-        flushTimerRef.current = null;
-      }
-      const words = pendingWordsRef.current;
-      const bonus = pendingBonusRef.current;
-      pendingWordsRef.current = 0;
-      pendingBonusRef.current = 0;
-      if (words > 0 || bonus > 0) {
-        awardChainRef.current = awardChainRef.current.then(async () => {
-          try {
-            if (words > 0) await recordWordsFoundAction(words);
-            if (bonus > 0) await awardFeatherPopAction(bonus);
-          } catch {
-            /* navigation in progress, swallow */
-          }
-        });
-      }
+      void flushAwards();
       if (refreshTimerRef.current !== null) {
         window.clearTimeout(refreshTimerRef.current);
         router.refresh();
       }
     };
-  }, [router]);
+  }, [router, flushAwards]);
 
   useEffect(() => {
     if (musicOn && running) startMusic();
