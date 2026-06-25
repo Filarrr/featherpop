@@ -147,6 +147,36 @@ export async function awardFeatherPopAction(
   return next;
 }
 
+/**
+ * Dev / testing seed — drops a chunk of FeatherPop straight onto the
+ * active child without simulating gameplay. Capped at 10,000 per call
+ * so a stuck-key on the admin button can't runaway the wallet.
+ *
+ * Returns the updated total so the admin UI can confirm the bump.
+ */
+export async function seedFeathersAction(
+  amount: number,
+): Promise<{ ok: true; featherPop: number } | { ok: false; reason: string }> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { ok: false, reason: "Invalid amount." };
+  }
+  const capped = Math.min(10000, Math.floor(amount));
+  const childId = await getActiveChildId();
+  if (!childId) return { ok: false, reason: "No active child." };
+  const user = await currentUser();
+  if (!user) return { ok: false, reason: "Not signed in." };
+
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const next: ChildProgress = {
+    ...prev,
+    featherPop: prev.featherPop + capped,
+  };
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/", "layout");
+  return { ok: true, featherPop: next.featherPop };
+}
+
 // ============================================================
 // Word-found + Egg system
 // ============================================================

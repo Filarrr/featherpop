@@ -15,6 +15,7 @@ import { getMembership, isMemberActive } from "@/lib/membership";
 import { weekKey, weeklyStations } from "@/lib/park-hunt";
 import { getChildProgressAction } from "@/lib/child-progress-actions";
 import { defaultChildProgress } from "@/lib/child-profile";
+import { TestSeedCard } from "@/components/admin/TestSeedCard";
 
 export const metadata = { title: "Admin" };
 export const dynamic = "force-dynamic";
@@ -195,6 +196,8 @@ export default async function AdminPage() {
           </div>
         )}
       </section>
+
+      <TestSeedCard />
 
       <section className="admin-section">
         <header className="admin-section-head">

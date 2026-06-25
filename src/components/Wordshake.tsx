@@ -154,6 +154,11 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
   } | null>(null);
   const pendingAwardsRef = useRef(0);
   const refreshTimerRef = useRef<number | null>(null);
+  // Batching state for the persist flow — see acceptWord() comment.
+  const pendingWordsRef = useRef(0);
+  const pendingBonusRef = useRef(0);
+  const flushTimerRef = useRef<number | null>(null);
+  const awardChainRef = useRef<Promise<void>>(Promise.resolve());
   const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const boardRef = useRef<HTMLDivElement | null>(null);
   const [boardSize, setBoardSize] = useState({ w: 0, h: 0 });
@@ -161,14 +166,31 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
 
   useEffect(() => setMusicOn(isMusicEnabled()), []);
 
-  // On unmount: if there's still a pending refresh queued, fire it now so
-  // the navigation target sees the updated FeatherPop total.
+  // On unmount: flush any pending word/bonus batch BEFORE navigating
+  // away, otherwise the kid's last few feathers from the round wouldn't
+  // hit the server. fire-and-forget since we can't await in cleanup.
   useEffect(() => {
     return () => {
+      if (flushTimerRef.current !== null) {
+        window.clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      const words = pendingWordsRef.current;
+      const bonus = pendingBonusRef.current;
+      pendingWordsRef.current = 0;
+      pendingBonusRef.current = 0;
+      if (words > 0 || bonus > 0) {
+        awardChainRef.current = awardChainRef.current.then(async () => {
+          try {
+            if (words > 0) await recordWordsFoundAction(words);
+            if (bonus > 0) await awardFeatherPopAction(bonus);
+          } catch {
+            /* navigation in progress, swallow */
+          }
+        });
+      }
       if (refreshTimerRef.current !== null) {
         window.clearTimeout(refreshTimerRef.current);
-        // The server already has the updated total; just trigger a refresh
-        // on the next paint after navigation by NOT clearing here.
         router.refresh();
       }
     };
@@ -306,28 +328,51 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
       // Show it RIGHT NOW so the kid sees the reward (optimistic).
       setSessionPop((n) => n + award);
       pendingAwardsRef.current += award;
-      // Persist on the server. Batch by debouncing router.refresh() so we
-      // don't hammer the layout with 20 refreshes during a 2-minute game.
-      // recordWordsFoundAction handles the +1 base feather + word count
-      // + egg progress; awardFeatherPopAction adds any length bonus on top.
+      // Persist on the server. We BATCH per-word calls in a short
+      // window because firing recordWordsFoundAction(1) once per word
+      // causes lost-update races on Clerk metadata — read-modify-write
+      // calls overlap and overwrite each other, so a kid who earns 7
+      // feathers in a round might only see +1 on the server.
+      //
+      // pendingWordsRef / pendingBonusRef accumulate the count of
+      // words + bonus feathers since the last flush. A 500ms debounce
+      // collapses bursts of taps into one atomic call.
       const baseFeather = 1;
       const bonus = Math.max(0, award - baseFeather);
-      void (async () => {
-        try {
-          const recRes = await recordWordsFoundAction(1);
-          if (recRes?.hatched) setHatched(recRes.hatched);
-          else if (recRes?.crackJustCrossed) setCrackMilestone(recRes.crackJustCrossed);
-          if (recRes?.goldenFeatherJustEarned) {
-            // Open the certificate in a new tab so the parent can print it.
-            window.open("/print/golden-feather", "_blank");
+      pendingWordsRef.current += 1;
+      pendingBonusRef.current += bonus;
+
+      if (flushTimerRef.current !== null) {
+        window.clearTimeout(flushTimerRef.current);
+      }
+      flushTimerRef.current = window.setTimeout(() => {
+        const words = pendingWordsRef.current;
+        const bonusTotal = pendingBonusRef.current;
+        pendingWordsRef.current = 0;
+        pendingBonusRef.current = 0;
+        flushTimerRef.current = null;
+
+        // Serialize via a single promise chain so this flush always
+        // sees the result of the previous one — guarantees no overlap
+        // between concurrent record/award calls.
+        awardChainRef.current = awardChainRef.current.then(async () => {
+          try {
+            if (words > 0) {
+              const recRes = await recordWordsFoundAction(words);
+              if (recRes?.hatched) setHatched(recRes.hatched);
+              else if (recRes?.crackJustCrossed) setCrackMilestone(recRes.crackJustCrossed);
+              if (recRes?.goldenFeatherJustEarned) {
+                window.open("/print/golden-feather", "_blank");
+              }
+            }
+            if (bonusTotal > 0) await awardFeatherPopAction(bonusTotal);
+          } catch (err) {
+            console.warn("[wordshake] award failed:", err);
           }
-          if (bonus > 0) await awardFeatherPopAction(bonus);
-        } catch (err) {
-          console.warn("[wordshake] award failed:", err);
-        }
-        // Debounced refresh: 1.2s after the last award call. The server
-        // total is already updated; this just nudges the React tree to
-        // re-read it for BrandBar / /rewards / HomeStats.
+        });
+
+        // Refresh the layout once after the chain settles so BrandBar /
+        // /rewards / HomeStats pick up the new total.
         if (refreshTimerRef.current !== null) {
           window.clearTimeout(refreshTimerRef.current);
         }
@@ -336,7 +381,7 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
           refreshTimerRef.current = null;
           pendingAwardsRef.current = 0;
         }, 1200);
-      })();
+      }, 500);
     }
   }
 
