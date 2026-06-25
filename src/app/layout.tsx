@@ -5,6 +5,7 @@ import "./globals.css";
 import { BrandBar } from "@/components/BrandBar";
 import { BottomNav } from "@/components/BottomNav";
 import { AudioNavCleanup } from "@/components/AudioNavCleanup";
+import { NavGuardProvider } from "@/components/NavGuardProvider";
 import { ActiveChildProvider } from "@/lib/use-active-child";
 import { resolveActiveChild } from "@/lib/active-child-server";
 import { getChildProgressAction } from "@/lib/child-progress-actions";
@@ -78,12 +79,14 @@ export default async function RootLayout({
               progress,
             }}
           >
-            <div className="app-shell">
-              <BrandBar />
-              {children}
-              <BottomNav />
-              <AudioNavCleanup />
-            </div>
+            <NavGuardProvider>
+              <div className="app-shell">
+                <BrandBar />
+                {children}
+                <BottomNav />
+                <AudioNavCleanup />
+              </div>
+            </NavGuardProvider>
           </ActiveChildProvider>
         </body>
       </html>

@@ -1,70 +1,23 @@
 "use client";
 
-// Block accidental navigation while a game is in progress.
+// Register an "in-progress" flag with the global NavGuardProvider.
+// While the flag is true, the provider intercepts any <Link> click in
+// the document and shows the on-brand "Leave the game?" modal instead
+// of letting the navigation through. Hard navigations (refresh / tab
+// close) still use the browser's native beforeunload dialog — there's
+// no way to customize that one.
 //
-// When the `active` flag is true:
-//   - Hard navigations (browser close / refresh) trigger the
-//     browser's native beforeunload dialog.
-//   - Client-side <Link> clicks anywhere in the document get a
-//     window.confirm() — answer No and the navigation is canceled.
-//
-// We listen with capture: true so the click handler runs BEFORE
-// Next.js's own router-link intercept. preventDefault + stopPropagation
-// is enough to keep the kid on the page.
+// Each call site gets its own key so multiple components can guard at
+// the same time without stomping on each other.
 
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
+import { useNavGuardContext } from "@/components/NavGuardProvider";
 
-const DEFAULT_MESSAGE =
-  "You're in the middle of a game. Leave anyway?";
-
-export function useNavGuard(active: boolean, message: string = DEFAULT_MESSAGE) {
+export function useNavGuard(active: boolean) {
+  const id = useId();
+  const ctx = useNavGuardContext();
   useEffect(() => {
-    if (!active) return;
-    if (typeof window === "undefined") return;
-
-    function onBeforeUnload(e: BeforeUnloadEvent) {
-      e.preventDefault();
-      // Modern browsers ignore the custom string but still show the
-      // generic "Leave site?" dialog when returnValue is non-empty.
-      e.returnValue = message;
-    }
-
-    function onClick(e: MouseEvent) {
-      // Only intercept primary clicks. Middle/cmd-click bypasses.
-      if (e.button !== 0) return;
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-      const anchor = target.closest("a[href]") as HTMLAnchorElement | null;
-      if (!anchor) return;
-      const href = anchor.getAttribute("href") ?? "";
-      // Same-page anchors / mailto / tel / external new-tab — let through.
-      if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
-      if (anchor.target === "_blank") return;
-
-      // Heuristic: if the link points to the current pathname (a
-      // refresh / same-page nav), don't prompt.
-      try {
-        const url = new URL(anchor.href, window.location.href);
-        if (url.pathname === window.location.pathname && url.search === window.location.search) {
-          return;
-        }
-      } catch {
-        /* fall through */
-      }
-
-      const ok = window.confirm(message);
-      if (!ok) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    }
-
-    window.addEventListener("beforeunload", onBeforeUnload);
-    document.addEventListener("click", onClick, true);
-    return () => {
-      window.removeEventListener("beforeunload", onBeforeUnload);
-      document.removeEventListener("click", onClick, true);
-    };
-  }, [active, message]);
+    ctx.setActive(id, active);
+    return () => ctx.setActive(id, false);
+  }, [ctx, id, active]);
 }

@@ -9015,3 +9015,113 @@ a.progress-badge-v2 {
 .progress-quick-link > svg:last-child {
   color: var(--ink-soft);
 }
+
+/* ============================================================
+   NavGuard — "Leave the game?" modal
+   ============================================================ */
+.nav-guard-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(20, 5, 50, 0.6);
+  animation: nav-guard-fade-in 0.18s ease both;
+}
+@keyframes nav-guard-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.nav-guard-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 0.55rem;
+  max-width: 380px;
+  width: 100%;
+  padding: 1.5rem 1.25rem 1.25rem;
+  border-radius: 28px;
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(255, 122, 184, 0.35), transparent 70%),
+    linear-gradient(160deg, #fff, #fff5e6 70%, #ffe9a8);
+  border: 3px solid rgba(255, 209, 74, 0.7);
+  box-shadow: 0 28px 56px rgba(106, 45, 255, 0.45);
+  animation: nav-guard-pop-in 0.5s cubic-bezier(.2, .9, .3, 1.4) both;
+}
+@keyframes nav-guard-pop-in {
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.nav-guard-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.95rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--pink), var(--magenta));
+  color: white;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 14px rgba(177, 59, 255, 0.35);
+}
+.nav-guard-emoji {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0.25rem 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), #f0a900);
+  color: var(--ink);
+  box-shadow: 0 10px 22px rgba(240, 169, 0, 0.45);
+  animation: nav-guard-warn-bob 1.6s ease-in-out infinite;
+}
+@keyframes nav-guard-warn-bob {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  50%      { transform: rotate(3deg) translateY(-3px); }
+}
+.nav-guard-title {
+  margin: 0;
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.25rem, 5vw, 1.6rem);
+  color: var(--purple-deep);
+  line-height: 1.2;
+}
+.nav-guard-sub {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  max-width: 300px;
+}
+.nav-guard-actions {
+  display: grid;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.nav-guard-stay {
+  justify-content: center;
+  width: 100%;
+}
+.nav-guard-leave {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  font-family: var(--font-fredoka), sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+.nav-guard-leave:hover { color: var(--pink); }
+@media (prefers-reduced-motion: reduce) {
+  .nav-guard-emoji { animation: none; }
+}
