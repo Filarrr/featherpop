@@ -21,6 +21,7 @@ import { submitFoundWordAction } from "@/lib/park-hunt-actions";
 import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
 import { EggCrackReveal } from "@/components/eggs/EggCrackReveal";
 import type { EggColor, HatchedEntry } from "@/lib/child-profile";
+import { useNavGuard } from "@/lib/use-nav-guard";
 
 const TIMER_SECONDS = 60;
 
@@ -70,9 +71,17 @@ export function StationGrid({
     return a;
   }, [words]);
 
+  // Reveals freeze the clock — kid shouldn't lose seconds while a
+  // hatch/crack overlay is up.
+  const paused = !!hatched || !!crackMilestone;
+
+  // Confirm before any navigation leaves the round in progress.
+  useNavGuard(phase === "playing" && !paused);
+
   // Countdown timer.
   useEffect(() => {
     if (phase !== "playing") return;
+    if (paused) return;
     if (timeLeft <= 0) {
       setPhase("lost");
       buzz();
@@ -89,7 +98,7 @@ export function StationGrid({
       }
     }, 1000);
     return () => window.clearTimeout(t);
-  }, [phase, timeLeft]);
+  }, [phase, timeLeft, paused]);
 
   // Cheerful entry chord once on mount.
   useEffect(() => {

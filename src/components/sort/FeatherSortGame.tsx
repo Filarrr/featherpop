@@ -21,6 +21,7 @@ import { pickKeyWord } from "@/lib/sort-words";
 import { useActiveChild } from "@/lib/use-active-child";
 import { awardFeatherPopAction } from "@/lib/child-progress-actions";
 import { setParkHuntTargetWordAction } from "@/lib/park-hunt-actions";
+import { useNavGuard } from "@/lib/use-nav-guard";
 import { FeatherSvg, NestSvg } from "./FeatherSvg";
 import { BirdFlight } from "./BirdFlight";
 import { Spider } from "./Spider";
@@ -180,6 +181,9 @@ export function FeatherSortGame() {
     startMusic();
     return () => stopMusic();
   }, []);
+
+  // Confirm before any navigation interrupts an active sort round.
+  useNavGuard(phase === "playing");
 
   // Re-scatter and reset timer on every round change.
   useEffect(() => {

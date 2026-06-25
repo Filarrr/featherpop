@@ -27,6 +27,7 @@ import {
 import type { EggColor, HatchedEntry } from "@/lib/child-profile";
 import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
 import { EggCrackReveal } from "@/components/eggs/EggCrackReveal";
+import { useNavGuard } from "@/lib/use-nav-guard";
 import { Mascot, MascotMood } from "@/components/Mascot";
 
 const GRID_SIZE = 4;
@@ -241,8 +242,19 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
     return () => stopMusic();
   }, [musicOn, running]);
 
+  // True while a celebration overlay is up (hatch or crack). The timer
+  // pauses for the duration so the kid isn't penalized for watching
+  // their reward animation.
+  const paused = !!hatched || !!crackMilestone;
+
+  // Guard browser back + every <Link> click while a round is in
+  // progress. Pause-overlay state DOESN'T count as in-progress for
+  // navigation — once they've hatched, they've earned their break.
+  useNavGuard(running && !paused);
+
   useEffect(() => {
     if (!running) return;
+    if (paused) return; // freeze the clock while the reveal modal is up
     const id = window.setInterval(() => {
       setSecondsLeft((s) => {
         const next = Math.max(0, s - 1);
@@ -259,7 +271,7 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
       });
     }, 1000);
     return () => window.clearInterval(id);
-  }, [running]);
+  }, [running, paused]);
 
   const builtWord = useMemo(() => path.map((i) => grid[i]).join(""), [path, grid]);
   const totalPoints = useMemo(
