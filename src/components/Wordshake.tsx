@@ -357,9 +357,15 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
     }
     setMascotNudge((n) => n + 1);
 
-    // Award 1 FeatherPop per 4 points (rounded down, min 0) to the active child.
-    // Big bonus (+5) when they nail the seeded key word from Feather Sort.
-    let award = Math.floor(pts / 4);
+    // Per the client spec: 1 word = 1 feather. Floor on top:
+    // every accepted word ALWAYS earns at least 1 feather, plus 1 more
+    // for every 4 points the word's worth (so longer words still feel
+    // more rewarding). Magic word from the eagle = +5 bonus.
+    //
+    // Earlier this used floor(pts/4) which returned 0 for 3-4 letter
+    // words — the kid found the word but nothing landed on the server,
+    // and the egg-cracking counter never moved.
+    let award = Math.max(1, Math.floor(pts / 4));
     if (isMagic) {
       award += 5;
     }
