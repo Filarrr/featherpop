@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -187,27 +187,46 @@ export function FeatherSortGame() {
     setTimeLeft(timerForRound(round));
   }, [roundTypes, round]);
 
+  // Spider-warning ref — guarantees the "Oh no, let's hurry up before
+  // the spider comes!" voice line plays AT MOST ONCE per round at the
+  // urgency threshold. The client explicitly asked that this line
+  // play EARLY (as a warning) rather than after the timer expires.
+  const spiderWarnedRef = useRef(false);
+
+  // Reset the warning flag whenever a new round / fresh playing phase
+  // starts, so the next round gets its own warning.
+  useEffect(() => {
+    if (phase === "playing") spiderWarnedRef.current = false;
+  }, [phase, round]);
+
   // Countdown timer.
   useEffect(() => {
     if (phase !== "playing") return;
     if (timeLeft <= 0) {
-      // Time up → spider.
+      // Time up → spider arrives. No voice clip here — the warning
+      // ("Oh no, let's hurry up before the spider comes!") already
+      // played at the urgency threshold below.
       window.setTimeout(() => {
         setPhase("spider");
         setMood("oops");
         setMascotMsg("Out of time! The spider snuck in…");
         setMascotNudge((n) => n + 1);
         spiderApproach();
-        window.setTimeout(() => spiderVoice(), 700);
       }, 200);
       return;
+    }
+    // Urgency warning — at 10s remaining play the spider voice line
+    // as a "hurry!" warning (once per round).
+    if (timeLeft <= 10 && !spiderWarnedRef.current) {
+      spiderWarnedRef.current = true;
+      spiderVoice();
     }
     const t = window.setTimeout(() => {
       setTimeLeft((s) => s - 1);
       if (timeLeft <= 11) urgentTick();
     }, 1000);
     return () => window.clearTimeout(t);
-  }, [phase, timeLeft]);
+  }, [phase, timeLeft, round]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
