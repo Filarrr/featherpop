@@ -20,6 +20,7 @@ import type { FeatherType } from "@/lib/missions";
 import { pickKeyWord } from "@/lib/sort-words";
 import { useActiveChild } from "@/lib/use-active-child";
 import { awardFeatherPopAction } from "@/lib/child-progress-actions";
+import { setParkHuntTargetWordAction } from "@/lib/park-hunt-actions";
 import { FeatherSvg, NestSvg } from "./FeatherSvg";
 import { BirdFlight } from "./BirdFlight";
 import { Spider } from "./Spider";
@@ -28,6 +29,7 @@ import { Confetti } from "@/components/Confetti";
 import {
   birdWhoosh,
   childCheer,
+  eagleCheers,
   eagleVoice,
   fanfare,
   featherDrop,
@@ -151,11 +153,24 @@ export function FeatherSortGame() {
   const [mascotMsg, setMascotMsg] = useState<string | undefined>();
   const [mascotNudge, setMascotNudge] = useState(0);
 
-  // Re-roll key word per round; matches the round size.
+  // Re-roll key word per round; matches the round size. pickKeyWord
+  // cross-references this week's Park Hunt bank so the eagle's word
+  // ALWAYS exists in one of the 6 stations — when the kid clicks
+  // 'Find it at the park' it lands on a real, hunt-able word.
   const keyWord = useMemo(
     () => pickKeyWord(Math.min(7, 3 + round)),
     [round],
   );
+
+  // Push the eagle's word to Park Hunt the moment we reveal it, so
+  // the /park-hunt page shows THIS word (not a fresh deterministic
+  // pick). Best-effort — if the user isn't signed in or has no active
+  // child, the action returns ok:false and we silently fall back to
+  // Park Hunt's own picker on the next page load.
+  useEffect(() => {
+    if (phase !== "reveal" || !keyWord?.word) return;
+    void setParkHuntTargetWordAction(keyWord.word).catch(() => {});
+  }, [phase, keyWord?.word]);
 
   // Boot music when the game mounts (the PLAY-button tap on home already
   // unlocked the AudioContext, so this just keeps the music going).
@@ -213,6 +228,10 @@ export function FeatherSortGame() {
       window.setTimeout(() => eagleVoice(), 900); // Strudelay! Strudelay!
       window.setTimeout(() => fanfare(), 2000);
       window.setTimeout(() => wordReveal(), 3000);
+      // "Yes! Feather tag up and let's find the word!" — the eagle's
+      // ask-to-go-find-it line. Plays after the parchment reveals so
+      // the kid knows the word's the next mission.
+      window.setTimeout(() => eagleCheers(), 4200);
     }
   }, [allPlaced, phase, feathers.length]);
 

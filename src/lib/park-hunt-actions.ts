@@ -12,7 +12,9 @@ import {
   dailyStations,
   nextTargetForChild,
   pickTargetForChild,
+  stationOfWord,
   todayKey,
+  weekKey,
 } from "@/lib/park-hunt";
 import { recordWordsFoundAction } from "@/lib/child-progress-actions";
 
@@ -195,6 +197,50 @@ export async function submitFoundWordAction(args: {
     foundToday,
     hatched,
   };
+}
+
+/**
+ * Set the Park Hunt target word from an external source (currently the
+ * Feather Sort eagle reveal). Resolves the station from this week's
+ * library and stores it for the active child so /park-hunt picks it up.
+ *
+ * Per the client spec: "If the eagle brings star, I will find that
+ * 'star' word among the 6 QR stations." This is the wire that links
+ * the two games.
+ *
+ * Returns ok:false (silently) if the word isn't in the bank. Sort
+ * already filters its picks against the bank so this should never
+ * happen in practice, but we don't want a typo to crash the flow.
+ */
+export async function setParkHuntTargetWordAction(
+  rawWord: string,
+): Promise<{ ok: true; word: string; stationId: number } | { ok: false; reason: string }> {
+  const childId = await getActiveChildId();
+  if (!childId) return { ok: false, reason: "No active child." };
+  const user = await currentUser();
+  if (!user) return { ok: false, reason: "Not signed in." };
+
+  const word = rawWord.toUpperCase().trim();
+  const week = weekKey();
+  const stationId = stationOfWord(word, week);
+  if (stationId < 0) {
+    return { ok: false, reason: "Word isn't in this week's stations." };
+  }
+
+  const date = todayKey();
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId];
+  const foundToday = prev?.date === date ? prev.foundToday ?? 0 : 0;
+  const stored: StoredTarget = {
+    date,
+    word,
+    stationId,
+    foundToday,
+    wrongScans: 0,
+  };
+  await writeMap({ ...map, [childId]: stored });
+  revalidatePath("/park-hunt", "page");
+  return { ok: true, word, stationId };
 }
 
 /** Server-side helper for the station route: get the 20-word list for a station. */

@@ -34,6 +34,23 @@ export function setMusicEnabled(enabled: boolean) {
 }
 
 let audioCtx: AudioContext | null = null;
+let pointerUnlockBound = false;
+
+function bindGlobalUnlock() {
+  if (pointerUnlockBound) return;
+  if (typeof window === "undefined") return;
+  pointerUnlockBound = true;
+  const resume = () => {
+    if (audioCtx && audioCtx.state !== "running") {
+      audioCtx.resume().catch(() => {});
+    }
+  };
+  // Any tap, click, or key press is a valid user gesture for resume.
+  // Passive listeners so we don't fight scrolling.
+  window.addEventListener("pointerdown", resume, { passive: true });
+  window.addEventListener("touchstart", resume, { passive: true });
+  window.addEventListener("keydown", resume, { passive: true });
+}
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -45,7 +62,10 @@ function getCtx(): AudioContext | null {
   const Ctor = window.AudioContext ?? w.webkitAudioContext;
   if (!Ctor) return null;
   if (!audioCtx) audioCtx = new Ctor();
+  // Try to resume — works inside a user-gesture call stack, no-op otherwise.
   if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+  // Set up the global unlock listeners exactly once.
+  bindGlobalUnlock();
   return audioCtx;
 }
 
@@ -498,25 +518,39 @@ function playClip(src: string, fallback: () => void): void {
       fallback();
       return;
     }
-    const src2 = c.createBufferSource();
-    src2.buffer = b;
-    const gain = c.createGain();
-    gain.gain.value = 1;
-    src2.connect(gain).connect(c.destination);
-    activeVoice = src2;
-    activeVoiceGain = gain;
-    src2.onended = () => {
-      if (activeVoice === src2) activeVoice = null;
-      if (activeVoiceGain === gain) activeVoiceGain = null;
-    };
-    try {
-      src2.start(0);
-    } catch (err) {
-      if (typeof console !== "undefined") {
-        console.warn(`[audio] start() failed for ${src}:`, err);
+    const doStart = () => {
+      const src2 = c.createBufferSource();
+      src2.buffer = b;
+      const gain = c.createGain();
+      gain.gain.value = 1;
+      src2.connect(gain).connect(c.destination);
+      activeVoice = src2;
+      activeVoiceGain = gain;
+      src2.onended = () => {
+        if (activeVoice === src2) activeVoice = null;
+        if (activeVoiceGain === gain) activeVoiceGain = null;
+      };
+      try {
+        src2.start(0);
+      } catch (err) {
+        if (typeof console !== "undefined") {
+          console.warn(`[audio] start() failed for ${src}:`, err);
+        }
+        fallback();
       }
-      fallback();
+    };
+
+    // Critical on iOS Safari: a suspended AudioContext will accept
+    // src.start() without throwing, then play NOTHING. Resume first.
+    // If resume rejects (no recent gesture), fall back to TTS so the
+    // moment still lands.
+    if (c.state !== "running") {
+      c.resume()
+        .then(() => doStart())
+        .catch(() => fallback());
+      return;
     }
+    doStart();
   };
 
   if (buf) {

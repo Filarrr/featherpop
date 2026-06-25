@@ -10,8 +10,8 @@ import {
 } from "@/lib/park-hunt-actions";
 import {
   childCheer,
+  eagleCheers,
   eagleHandsWord,
-  eagleVoice,
   fanfare,
   pop,
   wordReveal,
@@ -68,11 +68,15 @@ export function ParkHuntStage({
     pop();
     window.setTimeout(() => wordReveal(), 200);
     window.setTimeout(() => fanfare(), 700);
-    // Eagle's recorded voice: 'Can you help me find this word in the park?'
-    // (≈4.4s clip). Fall-through to the Strudelay call after.
+    // Park Hunt intro sequence — two voice clips back-to-back:
+    //   1) 'Can you help me find this word in the park?' (~4.4s)
+    //   2) 'Yes! Feather tag up and let's find the word!' (~3s)
+    // The eagle's 'Strudelay!' signature call already plays at the
+    // end of the Feather Sort handoff — here we want the kid to
+    // hear the mission line, not another Strudelay.
     window.setTimeout(() => eagleHandsWord(), 1300);
-    window.setTimeout(() => eagleVoice(), 6200);
-    window.setTimeout(() => childCheer(), 7400);
+    window.setTimeout(() => eagleCheers(), 6200);
+    window.setTimeout(() => childCheer(), 9600);
   }, [target]);
 
   async function rotate() {
