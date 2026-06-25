@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Gift, Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActiveChild } from "@/lib/use-active-child";
 import { claimRewardAction } from "@/lib/child-progress-actions";
@@ -64,7 +64,6 @@ export function RewardsClient() {
   const featherPop = progress.featherPop;
 
   const [pending, setPending] = useState<string | null>(null);
-  const [unlocked, setUnlocked] = useState<ShopReward | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function claim(reward: ShopReward) {
@@ -81,8 +80,12 @@ export function RewardsClient() {
       window.setTimeout(() => wordReveal(), 200);
       window.setTimeout(() => fanfare(), 700);
       window.setTimeout(() => childCheer(), 1200);
-      setUnlocked(reward);
-      router.refresh();
+      // Land on the prize celebration page so the kid sees what they
+      // actually won (character card, coloring page, puzzle, or the
+      // mystery box reveal). The claimAt timestamp keys into the
+      // child's claimedRewards array on the server.
+      router.push(`/prize/${result.claimAt}`);
+      return;
     } catch (err) {
       console.warn("[rewards] claim failed:", err);
       setError("Couldn't claim — try again.");
@@ -214,28 +217,6 @@ export function RewardsClient() {
         </p>
       ) : null}
 
-      {unlocked ? (
-        <div className="prize-unlock-modal" role="dialog">
-          <div className="prize-unlock-card">
-            <span className="kicker">
-              <Sparkles aria-hidden className="h-4 w-4" />
-              Reward unlocked!
-            </span>
-            <h2 className="h-display">
-              <span className="h-gradient">{unlocked.title}</span>
-            </h2>
-            <p>Your surprise is on the way!</p>
-            <button
-              type="button"
-              onClick={() => setUnlocked(null)}
-              className="btn btn-gold btn-lg"
-            >
-              <Gift aria-hidden className="h-5 w-5" />
-              Got it!
-            </button>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

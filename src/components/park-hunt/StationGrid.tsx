@@ -214,17 +214,33 @@ export function StationGrid({
       {phase === "won" ? (
         <div className="parkhunt-station-result is-win">
           <Trophy aria-hidden className="h-7 w-7" />
+          <span className="parkhunt-station-result-eyebrow">
+            <Sparkles aria-hidden className="h-4 w-4" />
+            QUEST COMPLETE
+          </span>
           <h2 className="h-display text-3xl">
-            Great job! You found <span className="h-gradient">{targetWord}</span>
+            You found{" "}
+            <span className="h-gradient">{targetWord}</span>!
           </h2>
-          <p>+1 feather earned!</p>
+          <p className="parkhunt-station-result-sub">
+            Now spell it out in <strong>Letter Pop</strong> and bank the bonus
+            feathers. +1 feather already earned!
+          </p>
           <div className="parkhunt-station-actions">
-            <Link href="/park-hunt" className="btn btn-gold btn-lg btn-pulse">
+            {/* Adefila's spec: after a correct scan the kid is prompted to
+                play Letter Pop with the word they found — that's the
+                victory lap. Park Hunt itself only fires a fresh target
+                when the kid asks for one. */}
+            <Link
+              href={`/play?word=${encodeURIComponent(targetWord ?? "")}`}
+              className="btn btn-gold btn-lg btn-pulse"
+            >
               <Sparkles aria-hidden className="h-5 w-5" />
-              Next word{nextTarget ? `: ${nextTarget}` : ""}
+              Play Letter Pop with {targetWord}
             </Link>
-            <Link href="/" className="btn btn-ghost">
-              Done for now
+            <Link href="/park-hunt" className="btn btn-ghost">
+              Find another word
+              {nextTarget ? ` (${nextTarget})` : ""}
             </Link>
           </div>
         </div>

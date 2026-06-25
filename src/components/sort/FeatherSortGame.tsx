@@ -328,14 +328,6 @@ export function FeatherSortGame() {
     setMascotNudge((n) => n + 1);
   }
 
-  async function goLetterPop() {
-    const bonus = Math.max(1, Math.floor(roundTypes.length / 2));
-    try {
-      if (activeChildId) await awardFeatherPopAction(bonus);
-    } catch {}
-    router.push(`/play?word=${encodeURIComponent(keyWord.word)}`);
-  }
-
   async function goParkHunt() {
     // After eagle drops word → child scans QR in the park to "find" the
     // letters. Pass the word through the URL so /scan can hand it to
@@ -465,15 +457,16 @@ export function FeatherSortGame() {
           </div>
 
           <div className="sort-reveal-actions">
+            {/* Per the partner spec (Adefila): the eagle's word ALWAYS
+                routes through Park Hunt. The kid finds it at the right
+                station first, then lands in Letter Pop after the scan.
+                No Letter Pop bypass here. */}
             <button
               type="button"
               onClick={goParkHunt}
               className="btn btn-gold btn-lg btn-pulse"
             >
               Find it at the park (Scan)
-            </button>
-            <button type="button" onClick={goLetterPop} className="btn btn-sky">
-              Or play Letter Pop now
             </button>
             <button type="button" onClick={nextRound} className="btn btn-ghost">
               <RefreshCw aria-hidden className="h-5 w-5" />

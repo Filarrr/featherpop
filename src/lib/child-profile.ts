@@ -45,6 +45,15 @@ export interface HatchedEntry {
   wordsRead: number;
 }
 
+/** What kind of underlying asset a reward claim resolved to. */
+export type ClaimVariantType =
+  | "card"      // collectible character card
+  | "coloring"  // printable coloring page
+  | "puzzle"    // printable / interactive puzzle
+  | "feathers"  // bonus feather drop (mystery box)
+  | "spin"      // bonus free spin (mystery box)
+  | "egg";      // golden egg (mystery box — rare)
+
 export interface ChildProgress {
   feathers: FeatherCounts;
   featherPop: number;
@@ -60,7 +69,26 @@ export interface ChildProgress {
   freeSpins?: number;
   videosWatched?: number;
   songsUnlocked?: number;
-  claimedRewards?: { id: string; at: number; cost: number }[];
+  // Claimed reward log. variantId + variantType are populated by the new
+  // prize roll (card, coloring page, puzzle, mystery payload). Older
+  // claims pre-dating the roll have only id/at/cost — handled gracefully
+  // by /prize/[at] (falls back to a generic 'thanks for claiming' page).
+  claimedRewards?: {
+    id: string;
+    at: number;
+    cost: number;
+    variantId?: string;
+    variantType?: ClaimVariantType;
+    // For mystery: what the box actually contained (card id, coloring id, etc.)
+    mysteryPayload?: { kind: ClaimVariantType; variantId: string; bonusFeathers?: number; bonusSpins?: number };
+  }[];
+
+  // Character-card deck — cardId → number of copies owned.
+  ownedCards?: Record<string, number>;
+  // Coloring page IDs the kid has unlocked (printable).
+  ownedColoring?: string[];
+  // Puzzle IDs the kid has unlocked (printable / interactive).
+  ownedPuzzles?: string[];
 
   // Monthly Golden Feather tracking. wordsThisMonth resets to 0 when the
   // current month rolls over (server-side). monthKey is the YYYY-MM the

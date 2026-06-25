@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import {
   ChildProgress,
+  ClaimVariantType,
   CompletedMissionEntry,
   EggColor,
   EggState,
@@ -16,6 +17,14 @@ import {
 } from "@/lib/child-profile";
 import { Mission, getMission } from "@/lib/missions";
 import { getActiveChildId } from "@/lib/active-child-server";
+import {
+  hashSeed,
+  rngFromSeed,
+  rollCard,
+  rollColoring,
+  rollMystery,
+  rollPuzzle,
+} from "@/lib/prize-library";
 
 type ProgressMap = Record<string, ChildProgress>;
 
@@ -265,7 +274,7 @@ export async function claimRewardAction(
   rewardId: string,
   cost: number,
 ): Promise<
-  | { ok: true; progress: ChildProgress }
+  | { ok: true; progress: ChildProgress; claimAt: number }
   | { ok: false; reason: string }
 > {
   if (!Number.isFinite(cost) || cost <= 0) {
@@ -287,18 +296,81 @@ export async function claimRewardAction(
     };
   }
 
+  // Roll the actual underlying prize and persist its variant id, so
+  // the /prize/[at] viewer can render exactly what the kid won.
+  const at = Date.now();
+  const seed = hashSeed(`${childId}-${rewardId}-${at}`);
+  const rand = rngFromSeed(seed);
+
+  let variantType: ClaimVariantType | undefined;
+  let variantId: string | undefined;
+  let mysteryPayload:
+    | { kind: ClaimVariantType; variantId: string; bonusFeathers?: number; bonusSpins?: number }
+    | undefined;
+
+  let ownedCards = { ...(prev.ownedCards ?? {}) };
+  let ownedColoring = [...(prev.ownedColoring ?? [])];
+  let ownedPuzzles = [...(prev.ownedPuzzles ?? [])];
+  let bonusFeathersFromMystery = 0;
+  let bonusSpinsFromMystery = 0;
+
+  if (rewardId === "character") {
+    const card = rollCard(rand);
+    variantType = "card";
+    variantId = card.id;
+    ownedCards[card.id] = (ownedCards[card.id] ?? 0) + 1;
+  } else if (rewardId === "coloring") {
+    const page = rollColoring(prev.ownedColoring, rand);
+    variantType = "coloring";
+    variantId = page.id;
+    if (!ownedColoring.includes(page.id)) ownedColoring.push(page.id);
+  } else if (rewardId === "puzzle") {
+    const puzzle = rollPuzzle(prev.ownedPuzzles, rand);
+    variantType = "puzzle";
+    variantId = puzzle.id;
+    if (!ownedPuzzles.includes(puzzle.id)) ownedPuzzles.push(puzzle.id);
+  } else if (rewardId === "mystery") {
+    const { outcome, resolvedVariantId } = rollMystery(prev.ownedColoring, prev.ownedPuzzles, rand);
+    variantType = outcome.kind;
+    variantId = resolvedVariantId;
+    mysteryPayload = {
+      kind: outcome.kind,
+      variantId: resolvedVariantId,
+      bonusFeathers: outcome.bonusFeathers,
+      bonusSpins: outcome.bonusSpins,
+    };
+    if (outcome.kind === "card") {
+      ownedCards[resolvedVariantId] = (ownedCards[resolvedVariantId] ?? 0) + 1;
+    } else if (outcome.kind === "coloring") {
+      if (!ownedColoring.includes(resolvedVariantId)) ownedColoring.push(resolvedVariantId);
+    } else if (outcome.kind === "puzzle") {
+      if (!ownedPuzzles.includes(resolvedVariantId)) ownedPuzzles.push(resolvedVariantId);
+    } else if (outcome.kind === "feathers" && outcome.bonusFeathers) {
+      bonusFeathersFromMystery = outcome.bonusFeathers;
+    } else if (outcome.kind === "spin" && outcome.bonusSpins) {
+      bonusSpinsFromMystery = outcome.bonusSpins;
+    }
+    // 'egg' is recorded but the egg-progression system handles the actual
+    // hatch state elsewhere — store the claim entry and let the kid see
+    // it on the prize page.
+  }
+
   const next: ChildProgress = {
     ...prev,
-    featherPop: prev.featherPop - cost,
+    featherPop: prev.featherPop - cost + bonusFeathersFromMystery,
+    freeSpins: (prev.freeSpins ?? 0) + bonusSpinsFromMystery,
+    ownedCards,
+    ownedColoring,
+    ownedPuzzles,
     claimedRewards: [
-      { id: rewardId, at: Date.now(), cost },
+      { id: rewardId, at, cost, variantType, variantId, mysteryPayload },
       ...(prev.claimedRewards ?? []),
-    ].slice(0, 50),
+    ].slice(0, 100),
   };
 
   await writeMap({ ...map, [childId]: next });
   revalidatePath("/", "layout");
-  return { ok: true, progress: next };
+  return { ok: true, progress: next, claimAt: at };
 }
 
 /* -------------------- Monthly Golden Feather + daily bonuses -------------------- */
