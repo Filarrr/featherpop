@@ -1655,6 +1655,30 @@ a { color: inherit; }
 .wordshake-intro-play {
   margin: 0.75rem 0 0.25rem;
 }
+.wordshake-best-line {
+  margin: 0.25rem 0 0;
+  font-weight: 800;
+  color: var(--ink);
+}
+.wordshake-best-line strong {
+  color: var(--magenta, #ff2d8e);
+}
+.wordshake-newbest {
+  display: inline-block;
+  margin-bottom: 0.4rem;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff3b0, var(--gold));
+  color: var(--ink);
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  animation: wordshake-pop 0.5s ease;
+}
+@keyframes wordshake-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); opacity: 1; }
+}
 
 /* ---------- Wordshake (side game) ---------- */
 .wordshake {
@@ -7420,6 +7444,75 @@ a { color: inherit; }
   color: var(--ink);
 }
 .admin-child-card li span { color: var(--ink-soft); }
+
+/* Owner families table */
+.admin-families-table {
+  display: grid;
+  gap: 0.5rem;
+}
+.admin-families-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) repeat(4, minmax(0, 0.8fr)) minmax(0, 1.1fr);
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.9rem;
+  background: white;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+.admin-families-head {
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+.admin-families-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.admin-families-name strong {
+  font-family: var(--font-baloo), sans-serif;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-families-name small {
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-style: normal;
+  text-transform: capitalize;
+  background: color-mix(in srgb, var(--ink-soft) 16%, white);
+  color: var(--ink-soft);
+}
+.admin-badge.is-member {
+  background: color-mix(in srgb, #34e3a4 26%, white);
+  color: #1ea672;
+}
+@media (max-width: 640px) {
+  .admin-families-row {
+    grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 0.7fr)) minmax(0, 1fr);
+  }
+  /* Hide Words + Eggs columns on narrow screens (cols 4 and 5). */
+  .admin-families-row > :nth-child(4),
+  .admin-families-row > :nth-child(5) {
+    display: none;
+  }
+}
 
 /* ============================================================
    Spin wheel

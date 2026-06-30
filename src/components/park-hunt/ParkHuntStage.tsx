@@ -96,7 +96,7 @@ export function ParkHuntStage({
 
   function goScan() {
     pop();
-    router.push("/scan?mode=parkhunt");
+    router.push("/scan");
   }
 
   if (loading && !target) {
@@ -160,14 +160,14 @@ export function ParkHuntStage({
 
         <ol className="parkhunt-steps">
           <li>
-            <strong>1.</strong> Walk around the park and find the right QR station.
+            <strong>1.</strong> Walk around the park to the numbered QR stations.
           </li>
           <li>
-            <strong>2.</strong> Scan its QR code with your phone.
+            <strong>2.</strong> Scan each station&apos;s QR code with your phone.
           </li>
           <li>
-            <strong>3.</strong> You&apos;ll have <strong>60 seconds</strong> to
-            tap <strong>{target.word}</strong> in the word list.
+            <strong>3.</strong> Find the station that lists{" "}
+            <strong>{target.word}</strong> — scan it and you pass!
           </li>
         </ol>
 

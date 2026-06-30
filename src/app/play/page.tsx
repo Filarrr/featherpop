@@ -1,4 +1,5 @@
 import { Wordshake } from "@/components/Wordshake";
+import { getActiveChildProgress } from "@/lib/child-progress-actions";
 
 export const metadata = {
   title: "Letter Pop · Side Game",
@@ -13,6 +14,8 @@ export default async function PlayPage({
 }) {
   const sp = await searchParams;
   const keyWord = (sp.word ?? "").toUpperCase().replace(/[^A-Z]/g, "") || undefined;
+  const progress = await getActiveChildProgress().catch(() => null);
+  const initialBest = progress?.letterPopBest ?? 0;
 
   return (
     <main className="page">
@@ -27,7 +30,7 @@ export default async function PlayPage({
             : "Tap connected letters to build words. 2 minutes — every word earns points, and points become FeatherPop."}
         </p>
       </header>
-      <Wordshake keyWord={keyWord} />
+      <Wordshake keyWord={keyWord} initialBest={initialBest} />
     </main>
   );
 }

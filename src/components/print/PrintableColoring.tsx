@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { ColoringScene } from "@/components/prizes/ColoringScene";
+import { COLORING_COLORED_EXAMPLE } from "@/lib/prize-library";
 
 export function PrintableColoring({
   id,
@@ -13,6 +14,8 @@ export function PrintableColoring({
   title: string;
   description: string;
 }) {
+  // The rainbow wings page ships with a fully-coloured example to inspire.
+  const coloredExample = id === "rainbow-wings" ? COLORING_COLORED_EXAMPLE : null;
   return (
     <>
       <section className="no-print mx-auto max-w-2xl p-4">
@@ -42,6 +45,17 @@ export function PrintableColoring({
           <div className="mt-5 mx-auto" style={{ maxWidth: 420 }}>
             <ColoringScene id={id} size={420} />
           </div>
+          {coloredExample ? (
+            <div className="mt-4 mx-auto text-center" style={{ maxWidth: 280 }}>
+              <span className="kicker">All colored in!</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={coloredExample}
+                alt="Example of the page colored in"
+                style={{ width: "100%", height: "auto", borderRadius: 16, marginTop: 8 }}
+              />
+            </div>
+          ) : null}
         </div>
       </section>
 

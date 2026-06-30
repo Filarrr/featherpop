@@ -1,19 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { Printer } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { listChallenges } from "@/lib/admin-store";
 import { Challenge, getQuestUrl } from "@/lib/game-data";
 
-export function PrintPacks() {
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-
-  useEffect(() => {
-    setChallenges(listChallenges().filter((c) => c.active));
-  }, []);
-
+export function PrintPacks({ challenges }: { challenges: Challenge[] }) {
   return (
     <div>
       <section className="no-print mb-6 grid gap-5 lg:grid-cols-[280px_1fr]">

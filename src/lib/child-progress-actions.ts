@@ -148,6 +148,35 @@ export async function awardFeatherPopAction(
 }
 
 /**
+ * Record a finished Letter Pop round's score for the active child and keep
+ * the per-child high score. Returns the (possibly new) best plus whether this
+ * round beat it, so the game can show a "NEW HIGH SCORE!" banner.
+ */
+export async function recordLetterPopScoreAction(
+  score: number,
+): Promise<{ best: number; isNewBest: boolean } | null> {
+  if (!Number.isFinite(score) || score < 0) return null;
+  const childId = await getActiveChildId();
+  if (!childId) return null;
+  const user = await currentUser();
+  if (!user) return null;
+
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const s = Math.floor(score);
+  const prevBest = prev.letterPopBest ?? 0;
+  const isNewBest = s > prevBest;
+  const next: ChildProgress = {
+    ...prev,
+    letterPopBest: isNewBest ? s : prevBest,
+    letterPopRounds: (prev.letterPopRounds ?? 0) + 1,
+  };
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/", "layout");
+  return { best: next.letterPopBest ?? s, isNewBest };
+}
+
+/**
  * Dev / testing seed — drops a chunk of FeatherPop straight onto the
  * active child without simulating gameplay. Capped at 10,000 per call
  * so a stuck-key on the admin button can't runaway the wallet.

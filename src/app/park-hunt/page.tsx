@@ -4,6 +4,7 @@ import {
   pickTargetForChild,
   todayKey,
 } from "@/lib/park-hunt";
+import { getGlobalWordBank } from "@/lib/global-content";
 import { ParkHuntStage } from "@/components/park-hunt/ParkHuntStage";
 
 export const metadata = { title: "Park Hunt" };
@@ -50,7 +51,8 @@ async function resolveInitialTarget(
 
     // Lazy-assign a fresh target for today. (Write back so subsequent
     // page hits read the same target.)
-    const next = pickTargetForChild(childId, date);
+    const bank = await getGlobalWordBank();
+    const next = pickTargetForChild(childId, date, bank);
     const stored: StoredTarget = {
       date,
       word: next.word,

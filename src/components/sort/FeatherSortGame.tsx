@@ -60,9 +60,9 @@ interface FeatherInstance {
 const LIVES = 5;
 
 // Timer scales with round so later rounds (more feathers, more nests) stay
-// achievable. Round 1 = 60s, +10s per round to a max of 100s.
+// achievable. Round 1 = 30s, +5s per round to a max of 50s.
 function timerForRound(round: number): number {
-  return Math.min(100, 60 + (round - 1) * 10);
+  return Math.min(50, 30 + (round - 1) * 5);
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -156,7 +156,7 @@ export function FeatherSortGame() {
 
   // Re-roll key word per round; matches the round size. pickKeyWord
   // cross-references this week's Park Hunt bank so the eagle's word
-  // ALWAYS exists in one of the 6 stations — when the kid clicks
+  // ALWAYS exists in one of the 5 stations — when the kid clicks
   // 'Find it at the park' it lands on a real, hunt-able word.
   const keyWord = useMemo(
     () => pickKeyWord(Math.min(7, 3 + round)),
@@ -333,9 +333,9 @@ export function FeatherSortGame() {
   }
 
   async function goParkHunt() {
-    // After eagle drops word → child scans QR in the park to "find" the
-    // letters. Pass the word through the URL so /scan can hand it to
-    // Letter Pop once a QR is detected.
+    // After the eagle drops the word → the child goes to /park-hunt, which
+    // shows which word to hunt, then scans the park's QR stations until they
+    // find the one that lists it.
     try {
       if (activeChildId)
         await awardFeatherPopAction(Math.max(1, Math.floor(roundTypes.length / 2)));

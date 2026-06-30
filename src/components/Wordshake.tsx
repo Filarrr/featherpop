@@ -22,6 +22,7 @@ import {
 import { isDictWord } from "@/lib/wordshake-dict";
 import {
   awardFeatherPopAction,
+  recordLetterPopScoreAction,
   recordWordsFoundAction,
 } from "@/lib/child-progress-actions";
 import type { EggColor, HatchedEntry } from "@/lib/child-profile";
@@ -114,7 +115,10 @@ function areAdjacent(a: number, b: number) {
   return Math.abs(ra - rb) <= 1 && Math.abs(ca - cb) <= 1 && a !== b;
 }
 
-export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
+export function Wordshake({
+  keyWord,
+  initialBest = 0,
+}: { keyWord?: string; initialBest?: number } = {}) {
   const router = useRouter();
   const initial = useMemo(() => rollGrid(keyWord), [keyWord]);
   const [grid, setGrid] = useState<string[]>(initial.grid);
@@ -141,6 +145,12 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
   // sees the reward land instead of having to navigate to /rewards to
   // confirm the server got it.
   const [sessionPop, setSessionPop] = useState(0);
+  // Per-child high score (points). `best` starts from the server value and
+  // bumps live when a round beats it. `isNewBest` drives the celebration.
+  const [best, setBest] = useState(initialBest);
+  const [isNewBest, setIsNewBest] = useState(false);
+  const hasPlayedRef = useRef(false);
+  const scoreHandledRef = useRef(false);
   const [hatched, setHatched] = useState<HatchedEntry | null>(null);
   // Crack milestone the kid just crossed (10/20/30/40 words). Surfaces
   // the EggCrackReveal celebration overlay. Cleared when the kid
@@ -278,6 +288,29 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
     () => found.reduce((s, w) => s + w.points, 0),
     [found],
   );
+
+  // When a round ends (timer hit 0 → running flips false) AND the kid
+  // actually played it, record the score and update the high score.
+  useEffect(() => {
+    if (running) {
+      scoreHandledRef.current = false;
+      return;
+    }
+    if (!hasPlayedRef.current || scoreHandledRef.current) return;
+    scoreHandledRef.current = true;
+    (async () => {
+      const res = await recordLetterPopScoreAction(totalPoints).catch(
+        () => null,
+      );
+      if (res) {
+        setBest(res.best);
+        setIsNewBest(res.isNewBest);
+        if (res.isNewBest && totalPoints > 0) {
+          childCheer();
+        }
+      }
+    })();
+  }, [running, totalPoints]);
 
   function tap(idx: number) {
     if (!running) return;
@@ -451,6 +484,8 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
     setFound([]);
     setSecondsLeft(ROUND_SECONDS);
     setRunning(true);
+    hasPlayedRef.current = true;
+    setIsNewBest(false);
     setMood("idle");
     setMascotMessage(undefined);
     setMascotNudge((n) => n + 1);
@@ -508,6 +543,8 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
   function startGame() {
     setShowIntro(false);
     setRunning(true);
+    hasPlayedRef.current = true;
+    setIsNewBest(false);
     pop();
     // This tap is the user gesture — prime voice clips so eagle/spider
     // lines play later from non-gesture handlers (iOS Safari rule).
@@ -536,6 +573,11 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
             Tap connected letters to spell words. You have 2 minutes — every
             word scores points, and points become FeatherPop.
           </p>
+          {best > 0 ? (
+            <p className="wordshake-best-line">
+              🏆 Best score: <strong>{best}</strong> — can you beat it?
+            </p>
+          ) : null}
           <button
             type="button"
             onClick={startGame}
@@ -596,6 +638,11 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
             <Sparkles aria-hidden className="h-4 w-4" />
             {totalPoints} pts
           </div>
+          {best > 0 ? (
+            <div className="found-pill" title="Your best score">
+              🏆 {best}
+            </div>
+          ) : null}
           {sessionPop > 0 ? (
             <div className="featherpop-pill" aria-live="polite">
               <Feather aria-hidden className="h-4 w-4" />
@@ -778,10 +825,18 @@ export function Wordshake({ keyWord }: { keyWord?: string } = {}) {
               fontWeight: 800,
             }}
           >
+            {isNewBest && totalPoints > 0 ? (
+              <div className="wordshake-newbest">🏆 NEW HIGH SCORE!</div>
+            ) : null}
             Time! You scored <strong>{totalPoints}</strong> points and{" "}
             {Math.floor(totalPoints / 4) > 0
               ? `earned ${Math.floor(totalPoints / 4)} FeatherPop.`
               : "no FeatherPop this time."}
+            {best > 0 ? (
+              <div className="mt-1 text-sm font-bold">
+                Best score: {best}
+              </div>
+            ) : null}
             <div className="mt-2">
               <button
                 type="button"

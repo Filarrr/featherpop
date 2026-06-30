@@ -1,13 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState, useTransition } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
-import {
-  listChallenges,
-  removeChallenge,
-  upsertChallenge,
-} from "@/lib/admin-store";
 import { Challenge } from "@/lib/game-data";
+import { saveGlobalChallengesAction } from "@/lib/global-content-actions";
 
 const blank = (): Challenge => ({
   id: `qr-${Date.now().toString(36)}`,
@@ -24,14 +20,19 @@ const blank = (): Challenge => ({
   active: true,
 });
 
-export function AdminChallengeManager() {
-  const [items, setItems] = useState<Challenge[]>([]);
+export function AdminChallengeManager({ initial }: { initial: Challenge[] }) {
+  const [items, setItems] = useState<Challenge[]>(initial);
   const [draft, setDraft] = useState<Challenge>(blank());
+  const [pending, startTransition] = useTransition();
+  const [status, setStatus] = useState<string | null>(null);
 
-  useEffect(() => setItems(listChallenges()), []);
-
-  function refresh() {
-    setItems(listChallenges());
+  function persist(next: Challenge[]) {
+    setItems(next);
+    setStatus("Saving…");
+    startTransition(async () => {
+      const res = await saveGlobalChallengesAction(next);
+      setStatus(res.ok ? "Saved for everyone ✓" : `Error: ${res.reason}`);
+    });
   }
 
   function edit(c: Challenge) {
@@ -48,9 +49,8 @@ export function AdminChallengeManager() {
   }
 
   function remove(id: string) {
-    if (!confirm("Delete this challenge?")) return;
-    removeChallenge(id);
-    refresh();
+    if (!confirm("Delete this challenge for ALL families?")) return;
+    persist(items.filter((c) => c.id !== id));
     reset();
   }
 
@@ -70,16 +70,25 @@ export function AdminChallengeManager() {
       bonusWords: draft.bonusWords.map((w) => w.toUpperCase()).filter(Boolean),
       introVideoUrl: (draft.introVideoUrl || "").trim() || undefined,
     };
-    upsertChallenge(next);
-    refresh();
+    const idx = items.findIndex((x) => x.id === next.id);
+    persist(
+      idx >= 0
+        ? items.map((x) => (x.id === next.id ? next : x))
+        : [...items, next],
+    );
     reset();
   }
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_400px]">
       <section className="card">
-        <span className="kicker">Challenges</span>
+        <span className="kicker">Challenges · global</span>
         <h2 className="h-display mt-2 text-3xl">All challenges</h2>
+        {status ? (
+          <p className="mt-2 text-sm font-bold" aria-live="polite">
+            {status}
+          </p>
+        ) : null}
 
         <div className="mt-4 overflow-x-auto">
           <table className="admin-table">

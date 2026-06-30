@@ -9,6 +9,7 @@ import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { getActiveChildId } from "@/lib/active-child-server";
 import {
+  STATION_COUNT,
   dailyStations,
   nextTargetForChild,
   pickTargetForChild,
@@ -17,6 +18,7 @@ import {
   weekKey,
 } from "@/lib/park-hunt";
 import { recordWordsFoundAction } from "@/lib/child-progress-actions";
+import { getGlobalWordBank } from "@/lib/global-content";
 
 const MAX_WRONG_STATIONS = 3;
 
@@ -87,7 +89,8 @@ export async function getCurrentTargetAction(): Promise<
   }
 
   // New day or new child — pick fresh.
-  const next = pickTargetForChild(childId, date);
+  const bank = await getGlobalWordBank();
+  const next = pickTargetForChild(childId, date, bank);
   const stored: StoredTarget = { date, word: next.word, stationId: next.stationId, foundToday: 0 };
   await writeMap({ ...map, [childId]: stored });
   return {
@@ -112,7 +115,8 @@ export async function rotateTargetAction(): Promise<
   const date = todayKey();
   const map = readMap(user.privateMetadata);
   const prev = map[childId]?.word;
-  const next = nextTargetForChild(childId, date, prev);
+  const bank = await getGlobalWordBank();
+  const next = nextTargetForChild(childId, date, prev, bank);
   const foundToday = map[childId]?.date === date ? map[childId].foundToday ?? 0 : 0;
   const stored: StoredTarget = { date, word: next.word, stationId: next.stationId, foundToday };
   await writeMap({ ...map, [childId]: stored });
@@ -198,7 +202,8 @@ export async function submitFoundWordAction(args: {
   }
 
   // Rotate target for the next round.
-  const next = nextTargetForChild(childId, date, target.word);
+  const bank = await getGlobalWordBank();
+  const next = nextTargetForChild(childId, date, target.word, bank);
   const foundToday = (target.foundToday ?? 0) + 1;
   const stored: StoredTarget = {
     date,
@@ -223,7 +228,7 @@ export async function submitFoundWordAction(args: {
  * library and stores it for the active child so /park-hunt picks it up.
  *
  * Per the client spec: "If the eagle brings star, I will find that
- * 'star' word among the 6 QR stations." This is the wire that links
+ * 'star' word among the 5 QR stations." This is the wire that links
  * the two games.
  *
  * Returns ok:false (silently) if the word isn't in the bank. Sort
@@ -240,7 +245,8 @@ export async function setParkHuntTargetWordAction(
 
   const word = rawWord.toUpperCase().trim();
   const week = weekKey();
-  const stationId = stationOfWord(word, week);
+  const bank = await getGlobalWordBank();
+  const stationId = stationOfWord(word, week, bank);
   if (stationId < 0) {
     return { ok: false, reason: "Word isn't in this week's stations." };
   }
@@ -263,8 +269,9 @@ export async function setParkHuntTargetWordAction(
 
 /** Server-side helper for the station route: get the 20-word list for a station. */
 export async function getStationWordsAction(stationId: number): Promise<string[]> {
-  if (stationId < 0 || stationId >= 6) return [];
-  return dailyStations().stations[stationId];
+  if (stationId < 0 || stationId >= STATION_COUNT) return [];
+  const bank = await getGlobalWordBank();
+  return dailyStations(weekKey(), bank).stations[stationId];
 }
 
 /**
@@ -309,13 +316,14 @@ export async function isCorrectStationAction(stationId: number): Promise<{
       outOfTries: false,
     };
   const date = todayKey();
+  const bank = await getGlobalWordBank();
   const map = readMap(user.privateMetadata);
   const target = map[childId];
 
   if (!target || target.date !== date) {
     // No active target yet — assign one. First scan can't count as a
     // 'wrong' attempt since there was nothing to hunt yet.
-    const fresh = pickTargetForChild(childId, date);
+    const fresh = pickTargetForChild(childId, date, bank);
     const stored: StoredTarget = {
       date,
       word: fresh.word,
@@ -350,7 +358,7 @@ export async function isCorrectStationAction(stationId: number): Promise<{
   const used = (target.wrongScans ?? 0) + 1;
   if (used >= MAX_WRONG_STATIONS) {
     // Out of tries — rotate to a fresh target and reset the counter.
-    const next = nextTargetForChild(childId, date, target.word);
+    const next = nextTargetForChild(childId, date, target.word, bank);
     const stored: StoredTarget = {
       date,
       word: next.word,

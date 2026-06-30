@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { appBaseUrl } from "@/lib/game-data";
 
 /**
- * 6 printable station cards, one per page. Each card has:
+ * 5 printable station cards, one per page. Each card has:
  *  - Big station number
- *  - Large QR encoding `parkhunt-station-N`
+ *  - Large QR encoding the station's full app URL, so scanning with a
+ *    normal phone camera opens the app straight at that station
  *  - Word list preview (so the parent can sanity-check before printing)
  *  - Tidy print stylesheet that hides nav + 1 page per station
  */
@@ -24,7 +26,7 @@ export function PrintableQrPack({
         <div className="card">
           <span className="kicker">Members · Printable</span>
           <h1 className="h-display mt-2 text-3xl">
-            <span className="h-gradient">Park Hunt — 6 Station QRs</span>
+            <span className="h-gradient">Park Hunt — 5 Station QRs</span>
           </h1>
           <p className="mt-2 text-[var(--ink-soft)]">
             Print these on US Letter or A4 paper. Each station is its own
@@ -42,7 +44,7 @@ export function PrintableQrPack({
               className="btn btn-gold"
             >
               <Printer aria-hidden className="h-5 w-5" />
-              Print all 6 stations
+              Print all 5 stations
             </button>
             <Link href="/admin" className="btn btn-ghost">
               Back to admin
@@ -56,7 +58,9 @@ export function PrintableQrPack({
 
       {stations.map((words, i) => {
         const stationNumber = i + 1;
-        const code = `parkhunt-station-${stationNumber}`;
+        // Encode the FULL app URL so a normal phone camera (not just the
+        // in-app scanner) opens the app straight at this station.
+        const code = `${appBaseUrl}/park-hunt/station/${stationNumber}`;
         return (
           <article className="qr-card" key={stationNumber}>
             <header className="qr-card-head">
@@ -75,7 +79,7 @@ export function PrintableQrPack({
                 level="H"
                 marginSize={2}
               />
-              <p className="qr-card-payload">{code}</p>
+              <p className="qr-card-payload">Station {stationNumber} · {code}</p>
             </div>
             <div className="qr-card-words">
               <h3>This station&apos;s 20 words</h3>
@@ -86,7 +90,7 @@ export function PrintableQrPack({
               </ol>
             </div>
             <footer className="qr-card-foot">
-              Scan with the Ms. Feather Pop app to reveal these words.
+              Scan with any phone camera — it opens Ms. Feather Pop at this station.
             </footer>
           </article>
         );

@@ -3,6 +3,7 @@ import {
   getStationWordsAction,
   isCorrectStationAction,
 } from "@/lib/park-hunt-actions";
+import { STATION_COUNT } from "@/lib/park-hunt";
 import { StationGrid } from "@/components/park-hunt/StationGrid";
 
 export const metadata = { title: "Park Hunt — Station" };
@@ -15,7 +16,7 @@ export default async function StationPage({
 }) {
   const { id } = await params;
   const raw = parseInt(id, 10);
-  if (!Number.isFinite(raw) || raw < 1 || raw > 6) redirect("/park-hunt");
+  if (!Number.isFinite(raw) || raw < 1 || raw > STATION_COUNT) redirect("/park-hunt");
   const stationId = raw - 1; // 0-indexed internally
 
   const [words, check] = await Promise.all([

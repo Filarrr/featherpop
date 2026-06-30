@@ -1,20 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Printer } from "lucide-react";
-import { listRewards } from "@/lib/admin-store";
 import { Reward } from "@/lib/game-data";
 import { useActiveChild } from "@/lib/use-active-child";
 
-export function PrintableReward({ rewardId }: { rewardId: string }) {
+export function PrintableReward({ reward }: { reward: Reward | null }) {
   const { active } = useActiveChild();
-  const [reward, setReward] = useState<Reward | null>(null);
-
-  useEffect(() => {
-    const r = listRewards().find((x) => x.id === rewardId);
-    setReward(r ?? null);
-  }, [rewardId]);
-
   const nickname = active?.nickname ?? "Feather Explorer";
 
   if (!reward) {

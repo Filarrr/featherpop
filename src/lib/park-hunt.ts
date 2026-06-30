@@ -1,17 +1,17 @@
-// Park Hunt session model — deterministic daily station partitioning.
+// Park Hunt session model — deterministic weekly station partitioning.
 //
-// Each day the app generates a fresh 120-word set, split into 6 stations
-// of 20. The split is DETERMINISTIC per (date, dayKey) so every child sees
-// the same word lists on the same day at the same station — which is
-// important because the physical QR codes don't change.
+// Each week the app generates a fresh 100-word set, split into 5 stations
+// of 20. The split is DETERMINISTIC per week so every child sees the same
+// word lists at the same station all week — which is important because the
+// physical QR codes don't change.
 //
-// Targets are per-child, picked from the day's 120 words.
+// Targets are per-child, picked from the week's 100 words.
 
 import { PARK_HUNT_BANK } from "./park-hunt-words";
 
-export const STATION_COUNT = 6;
+export const STATION_COUNT = 5;
 export const WORDS_PER_STATION = 20;
-export const TOTAL_DAILY_WORDS = STATION_COUNT * WORDS_PER_STATION; // 120
+export const TOTAL_DAILY_WORDS = STATION_COUNT * WORDS_PER_STATION; // 100
 
 /** YYYY-MM-DD in the user's local time. (Kept for per-day stats / bonuses.) */
 export function todayKey(now: Date = new Date()): string {
@@ -79,17 +79,21 @@ export interface WeeklyStations {
 }
 
 /**
- * Deterministically generate this week's 6 station word lists. Same
+ * Deterministically generate this week's 5 station word lists. Same
  * answer every time on the same week — Monday-to-Sunday rotation.
  * (Per client spec: words refresh weekly, not daily.)
  */
-export function weeklyStations(week: string = weekKey()): WeeklyStations {
+export function weeklyStations(
+  week: string = weekKey(),
+  bank: readonly string[] = PARK_HUNT_BANK,
+): WeeklyStations {
+  const source = bank.length > 0 ? bank : PARK_HUNT_BANK;
   const seed = hashString(`mfp-parkhunt-week-${week}`);
   const rand = mulberry32(seed);
-  const shuffled = shuffleSeeded(PARK_HUNT_BANK, rand);
+  const shuffled = shuffleSeeded(source.slice(), rand);
   if (shuffled.length < TOTAL_DAILY_WORDS) {
     while (shuffled.length < TOTAL_DAILY_WORDS) {
-      shuffled.push(shuffled[shuffled.length % PARK_HUNT_BANK.length]);
+      shuffled.push(shuffled[shuffled.length % source.length]);
     }
   }
   const picked = shuffled.slice(0, TOTAL_DAILY_WORDS);
@@ -101,15 +105,22 @@ export function weeklyStations(week: string = weekKey()): WeeklyStations {
 }
 
 /** Backwards-compatible alias — older callers still import `dailyStations`. */
-export const dailyStations = (key: string = weekKey()) => {
-  const w = weeklyStations(key);
+export const dailyStations = (
+  key: string = weekKey(),
+  bank: readonly string[] = PARK_HUNT_BANK,
+) => {
+  const w = weeklyStations(key, bank);
   return { date: w.week, stations: w.stations, allWords: w.allWords };
 };
 
-/** Given a target word, which station (0–5) contains it this week? */
-export function stationOfWord(word: string, week: string = weekKey()): number {
+/** Given a target word, which station (0–4) contains it this week? */
+export function stationOfWord(
+  word: string,
+  week: string = weekKey(),
+  bank: readonly string[] = PARK_HUNT_BANK,
+): number {
   const w = word.toUpperCase();
-  const { stations } = weeklyStations(week);
+  const { stations } = weeklyStations(week, bank);
   for (let i = 0; i < stations.length; i++) {
     if (stations[i].includes(w)) return i;
   }
@@ -119,18 +130,19 @@ export function stationOfWord(word: string, week: string = weekKey()): number {
 /**
  * Pick a per-session target word for a child. The TARGET varies day-to-day
  * per-child (so 'today's word' rotates) but is picked from the WEEK's
- * 120-word pool (which only refreshes Mondays).
+ * 100-word pool (which only refreshes Mondays).
  */
 export function pickTargetForChild(
   childId: string,
   date: string = todayKey(),
+  bank: readonly string[] = PARK_HUNT_BANK,
 ): { word: string; stationId: number } {
   const week = weekKey(new Date(date));
   const seed = hashString(`mfp-parkhunt-target-${childId}-${date}`);
   const rand = mulberry32(seed);
-  const { allWords } = weeklyStations(week);
+  const { allWords } = weeklyStations(week, bank);
   const word = allWords[Math.floor(rand() * allWords.length)];
-  return { word, stationId: stationOfWord(word, week) };
+  return { word, stationId: stationOfWord(word, week, bank) };
 }
 
 /**
@@ -175,15 +187,16 @@ export function nextTargetForChild(
   childId: string,
   date: string,
   excludeWord?: string,
+  bank: readonly string[] = PARK_HUNT_BANK,
 ): { word: string; stationId: number } {
   const week = weekKey(new Date(date));
   const seed = hashString(`mfp-parkhunt-target-${childId}-${date}-${excludeWord ?? "0"}-${Date.now()}`);
   const rand = mulberry32(seed);
-  const { allWords } = weeklyStations(week);
+  const { allWords } = weeklyStations(week, bank);
   let word = allWords[Math.floor(rand() * allWords.length)];
   let safety = 12;
   while (excludeWord && word === excludeWord && safety-- > 0) {
     word = allWords[Math.floor(rand() * allWords.length)];
   }
-  return { word, stationId: stationOfWord(word, week) };
+  return { word, stationId: stationOfWord(word, week, bank) };
 }

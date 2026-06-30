@@ -7,12 +7,35 @@
 // Every scene has a hidden tiny feather glyph somewhere for the
 // "Find the Feather" meta-game (mentioned on the prize reveal).
 
+import { getColoring } from "@/lib/prize-library";
+
 interface Props {
   id: string;
   size?: number;
 }
 
 export function ColoringScene({ id, size = 540 }: Props) {
+  // Prefer the client's real coloring-book artwork when the page has one.
+  const page = getColoring(id);
+  if (page?.image) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={page.image}
+        alt={page.title}
+        width={size}
+        height={Math.round(size * 1.5)}
+        style={{
+          width: size,
+          height: "auto",
+          maxWidth: "100%",
+          display: "block",
+          margin: "0 auto",
+        }}
+      />
+    );
+  }
+
   switch (id) {
     case "egg-cave":
       return <EggCave size={size} />;

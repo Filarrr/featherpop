@@ -87,6 +87,10 @@ export interface ChildProgress {
 
   // V2 (Word Hero / egg system) — optional so old saves keep working.
   wordsFound?: number;
+  // Letter Pop best single-round score (points). Per-child high score.
+  letterPopBest?: number;
+  // How many Letter Pop rounds this child has finished (for stats).
+  letterPopRounds?: number;
   egg?: EggState;
   hatched?: HatchedEntry[];
   freeSpins?: number;

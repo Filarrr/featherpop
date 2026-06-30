@@ -1,13 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState, useTransition } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
-import {
-  listRewards,
-  removeReward,
-  upsertReward,
-} from "@/lib/admin-store";
 import { Reward } from "@/lib/game-data";
+import { saveGlobalRewardsAction } from "@/lib/global-content-actions";
 
 const blank = (): Reward => ({
   id: `r-${Date.now().toString(36)}`,
@@ -18,15 +14,23 @@ const blank = (): Reward => ({
   active: true,
 });
 
-export function AdminRewardsManager() {
-  const [items, setItems] = useState<Reward[]>([]);
+export function AdminRewardsManager({ initial }: { initial: Reward[] }) {
+  const [items, setItems] = useState<Reward[]>(initial);
   const [draft, setDraft] = useState<Reward>(blank());
+  const [pending, startTransition] = useTransition();
+  const [status, setStatus] = useState<string | null>(null);
 
-  useEffect(() => setItems(listRewards()), []);
-
-  function refresh() {
-    setItems(listRewards());
+  // Persist the whole list globally (owner account). Optimistically updates
+  // local state, then writes through the server action.
+  function persist(next: Reward[]) {
+    setItems(next);
+    setStatus("Saving…");
+    startTransition(async () => {
+      const res = await saveGlobalRewardsAction(next);
+      setStatus(res.ok ? "Saved for everyone ✓" : `Error: ${res.reason}`);
+    });
   }
+
   function edit(r: Reward) {
     setDraft({ ...r });
   }
@@ -34,23 +38,34 @@ export function AdminRewardsManager() {
     setDraft(blank());
   }
   function remove(id: string) {
-    if (!confirm("Delete this reward?")) return;
-    removeReward(id);
-    refresh();
+    if (!confirm("Delete this reward for ALL families?")) return;
+    persist(items.filter((r) => r.id !== id));
     reset();
   }
   function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    upsertReward(draft);
-    refresh();
+    const idx = items.findIndex((x) => x.id === draft.id);
+    const next =
+      idx >= 0
+        ? items.map((x) => (x.id === draft.id ? draft : x))
+        : [...items, draft];
+    persist(next);
     reset();
   }
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_400px]">
       <section className="card">
-        <span className="kicker">Rewards</span>
+        <span className="kicker">Rewards · global</span>
         <h2 className="h-display mt-2 text-3xl">All rewards</h2>
+        <p className="text-sm text-[var(--ink-soft)]">
+          These are shared by every family. Changes save instantly.
+        </p>
+        {status ? (
+          <p className="mt-2 text-sm font-bold" aria-live="polite">
+            {status}
+          </p>
+        ) : null}
 
         <div className="mt-4 overflow-x-auto">
           <table className="admin-table">
@@ -85,6 +100,7 @@ export function AdminRewardsManager() {
                     <button
                       onClick={() => remove(r.id)}
                       className="btn btn-danger btn-sm"
+                      disabled={pending}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -155,8 +171,28 @@ export function AdminRewardsManager() {
             />
             Active
           </label>
+          <label className="flex items-center gap-2 text-sm font-bold">
+            <input
+              type="checkbox"
+              checked={draft.printable ?? false}
+              onChange={(e) =>
+                setDraft({ ...draft, printable: e.target.checked })
+              }
+            />
+            Printable certificate
+          </label>
+          <label className="flex items-center gap-2 text-sm font-bold">
+            <input
+              type="checkbox"
+              checked={draft.memberOnly ?? false}
+              onChange={(e) =>
+                setDraft({ ...draft, memberOnly: e.target.checked })
+              }
+            />
+            Members only
+          </label>
           <div className="grid grid-cols-2 gap-2">
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary" disabled={pending}>
               <Save aria-hidden className="h-4 w-4" />
               Save
             </button>

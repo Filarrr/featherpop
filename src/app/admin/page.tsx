@@ -5,89 +5,154 @@ import {
   Database,
   Egg,
   Gift,
+  Lock,
   MapPin,
   Printer,
   Sparkles,
   Users,
 } from "lucide-react";
-import { resolveActiveChild } from "@/lib/active-child-server";
-import { getMembership, isMemberActive } from "@/lib/membership";
+import { clerkClient } from "@clerk/nextjs/server";
+import { isMemberActive, type MembershipStatus } from "@/lib/membership";
 import { weekKey, weeklyStations } from "@/lib/park-hunt";
-import { getChildProgressAction } from "@/lib/child-progress-actions";
-import { defaultChildProgress } from "@/lib/child-profile";
+import { isOwner, ownerEmails } from "@/lib/owner";
+import { getGlobalWordBank } from "@/lib/global-content";
+import type { ChildProfile, ChildProgress } from "@/lib/child-profile";
 import { TestSeedCard } from "@/components/admin/TestSeedCard";
 
 export const metadata = { title: "Admin" };
 export const dynamic = "force-dynamic";
 
-// Clerk middleware already requires sign-in for /admin. The dashboard
-// only ever shows the *current Clerk user's* family (their children +
-// their membership) — there's no cross-account exposure here, so the
-// legacy localStorage password gate isn't needed.
+interface FamilyRow {
+  userId: string;
+  label: string;
+  email: string;
+  childCount: number;
+  featherPop: number;
+  words: number;
+  eggs: number;
+  golden: number;
+  member: boolean;
+  status: MembershipStatus;
+}
+
+/**
+ * Owner-wide control room. Unlike the old per-account dashboard, this reads
+ * EVERY family on the platform (gated to OWNER_EMAILS) so the owner has one
+ * place to see all activity, preview the live Park Hunt words, and print
+ * station QRs. Clerk middleware already requires sign-in; isOwner() narrows
+ * that to the owner account(s).
+ */
 export default async function AdminPage() {
-  // Server-side: pull current week's stations + this account's children +
-  // membership state in parallel. Each kid's progress is fetched then
-  // aggregated for the family overview row.
+  const owner = await isOwner();
+
+  if (!owner) {
+    return (
+      <main className="page">
+        <section className="card mx-auto max-w-md text-center">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[var(--purple)] text-white">
+            <Lock aria-hidden className="h-6 w-6" />
+          </div>
+          <span className="kicker mt-3">Owners only</span>
+          <h1 className="h-display mt-2 text-3xl">Control room</h1>
+          <p className="mt-2 text-[var(--ink-soft)]">
+            This area is for the Ms. Feather Pop owner account. Sign in with
+            the owner login ({ownerEmails().join(", ")}) to manage the
+            platform.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <Link href="/" className="btn btn-gold">
+              Back home
+            </Link>
+            <Link href="/account/profiles" className="btn btn-ghost">
+              Manage your children
+            </Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   const week = weekKey();
-  const [{ children }, membership] = await Promise.all([
-    resolveActiveChild(),
-    getMembership(),
-  ]);
-  const childrenWithProgress = await Promise.all(
-    children.map(async (c) => {
-      const p = await getChildProgressAction(c.id).catch(() => defaultChildProgress);
-      return { profile: c, progress: p };
-    }),
-  );
+  const bank = await getGlobalWordBank();
+  const { stations } = weeklyStations(week, bank);
 
-  const totalFeatherPop = childrenWithProgress.reduce(
-    (s, c) => s + (c.progress.featherPop ?? 0),
-    0,
-  );
-  const totalWords = childrenWithProgress.reduce(
-    (s, c) => s + (c.progress.wordsFound ?? 0),
-    0,
-  );
-  const totalEggs = childrenWithProgress.reduce(
-    (s, c) => s + (c.progress.hatched?.length ?? 0),
-    0,
-  );
-  const goldenFeathers = childrenWithProgress.reduce(
-    (s, c) => s + (c.progress.goldenFeatherMonths?.length ?? 0),
-    0,
-  );
+  // Pull every family. limit 100 covers the MVP; if there are more we flag it.
+  const client = await clerkClient();
+  const { data: users, totalCount } = await client.users.getUserList({
+    limit: 100,
+    orderBy: "-created_at",
+  });
 
-  const { stations } = weeklyStations(week);
-  const member = isMemberActive(membership);
+  const families: FamilyRow[] = users.map((u) => {
+    const children = (u.publicMetadata?.children ?? []) as ChildProfile[];
+    const progressMap = (u.privateMetadata?.childProgress ?? {}) as Record<
+      string,
+      ChildProgress
+    >;
+    const progresses = Object.values(progressMap);
+    const featherPop = progresses.reduce((s, p) => s + (p.featherPop ?? 0), 0);
+    const words = progresses.reduce((s, p) => s + (p.wordsFound ?? 0), 0);
+    const eggs = progresses.reduce((s, p) => s + (p.hatched?.length ?? 0), 0);
+    const golden = progresses.reduce(
+      (s, p) => s + (p.goldenFeatherMonths?.length ?? 0),
+      0,
+    );
+    const membership = (u.publicMetadata?.membership ?? {}) as {
+      status?: MembershipStatus;
+    };
+    const status: MembershipStatus = membership.status ?? "none";
+    const email = u.emailAddresses?.[0]?.emailAddress ?? "—";
+    const name =
+      [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || email;
+    return {
+      userId: u.id,
+      label: name,
+      email,
+      childCount: Array.isArray(children) ? children.length : 0,
+      featherPop,
+      words,
+      eggs,
+      golden,
+      member: isMemberActive({ status }),
+      status,
+    };
+  });
+
+  const totals = families.reduce(
+    (acc, f) => {
+      acc.children += f.childCount;
+      acc.featherPop += f.featherPop;
+      acc.words += f.words;
+      acc.eggs += f.eggs;
+      acc.golden += f.golden;
+      acc.members += f.member ? 1 : 0;
+      return acc;
+    },
+    { children: 0, featherPop: 0, words: 0, eggs: 0, golden: 0, members: 0 },
+  );
 
   return (
     <main className="page admin-page">
       <header className="mb-6">
-        <span className="kicker">Admin · {week} (this week)</span>
+        <span className="kicker">Owner control room · {week} (this week)</span>
         <h1 className="h-display mt-2 text-4xl md:text-5xl">
-          <span className="h-gradient">Control room</span>
+          <span className="h-gradient">Everything, everywhere</span>
         </h1>
         <p className="mt-2 max-w-2xl text-[var(--ink-soft)]">
-          Manage children, monitor progress, preview the live Park Hunt
-          word lists, print station QRs, and check membership status.
+          Every family on Ms. Feather Pop in one place. Monitor activity,
+          manage global content, preview this week&apos;s Park Hunt words, and
+          print station QRs.
         </p>
       </header>
 
-      {/* Family stats */}
+      {/* Platform-wide stats */}
       <section className="admin-stats">
-        <StatCard icon={<Users />} label="Children" value={children.length} tag="on this account" color="#a76bff" />
-        <StatCard icon={<Sparkles />} label="FeatherPop" value={totalFeatherPop} tag="across the family" color="#ffd14a" />
-        <StatCard icon={<BookOpenCheck />} label="Words found" value={totalWords} tag="lifetime, all kids" color="#4cc4ff" />
-        <StatCard icon={<Egg />} label="Eggs hatched" value={totalEggs} tag="across the family" color="#34e3a4" />
-        <StatCard icon={<Crown />} label="Golden Feathers" value={goldenFeathers} tag="monthly badges earned" color="#ff7ab8" />
-        <StatCard
-          icon={<Crown />}
-          label="Membership"
-          value={member ? "Active" : "None"}
-          tag={member ? `Status: ${membership.status}` : "Upgrade for printables"}
-          color={member ? "#34e3a4" : "#c98a52"}
-          asString
-        />
+        <StatCard icon={<Users />} label="Families" value={families.length} tag="accounts signed up" color="#a76bff" />
+        <StatCard icon={<Users />} label="Children" value={totals.children} tag="across all families" color="#6a2dff" />
+        <StatCard icon={<Sparkles />} label="FeatherPop" value={totals.featherPop} tag="earned platform-wide" color="#ffd14a" />
+        <StatCard icon={<BookOpenCheck />} label="Words found" value={totals.words} tag="lifetime, everyone" color="#4cc4ff" />
+        <StatCard icon={<Egg />} label="Eggs hatched" value={totals.eggs} tag="across all families" color="#34e3a4" />
+        <StatCard icon={<Crown />} label="Members" value={totals.members} tag="active subscriptions" color="#ff7ab8" />
       </section>
 
       {/* Quick actions */}
@@ -98,39 +163,37 @@ export default async function AdminPage() {
           </div>
           <div>
             <h2 className="h-display mt-2 text-2xl">Print station QRs</h2>
-            <p className="text-[var(--ink-soft)]">
-              {member ? "Print 6 station QRs with this week's word lists." : "Members only — unlock to print."}
-            </p>
+            <p className="text-[var(--ink-soft)]">Print 5 station QRs with this week&apos;s word lists.</p>
+          </div>
+        </Link>
+
+        <Link href="/admin/park-hunt" className="card admin-action-card">
+          <div className="admin-action-icon" style={{ background: "linear-gradient(135deg, #34e3a4, #1ea672)" }}>
+            <MapPin aria-hidden className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="h-display mt-2 text-2xl">Park Hunt words</h2>
+            <p className="text-[var(--ink-soft)]">Edit the global word bank every family hunts.</p>
+          </div>
+        </Link>
+
+        <Link href="/admin/rewards" className="card admin-action-card">
+          <div className="admin-action-icon" style={{ background: "linear-gradient(135deg, #ff9a3a, #ff6b3a)" }}>
+            <Gift aria-hidden className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="h-display mt-2 text-2xl">Rewards</h2>
+            <p className="text-[var(--ink-soft)]">Add or edit the prizes every family can earn.</p>
           </div>
         </Link>
 
         <Link href="/admin/challenges" className="card admin-action-card">
-          <div className="admin-action-icon" style={{ background: "linear-gradient(135deg, #ff9a3a, #ff6b3a)" }}>
+          <div className="admin-action-icon" style={{ background: "linear-gradient(135deg, #ff7ab8, #ff2d8e)" }}>
             <BookOpenCheck aria-hidden className="h-6 w-6" />
           </div>
           <div>
             <h2 className="h-display mt-2 text-2xl">Legacy challenges</h2>
             <p className="text-[var(--ink-soft)]">Edit the older Word Quest seed challenges.</p>
-          </div>
-        </Link>
-
-        <Link href="/admin/rewards" className="card admin-action-card">
-          <div className="admin-action-icon" style={{ background: "linear-gradient(135deg, #34e3a4, #1ea672)" }}>
-            <Gift aria-hidden className="h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="h-display mt-2 text-2xl">Rewards</h2>
-            <p className="text-[var(--ink-soft)]">Add or edit prizes shown on /rewards.</p>
-          </div>
-        </Link>
-
-        <Link href="/account/profiles" className="card admin-action-card">
-          <div className="admin-action-icon" style={{ background: "linear-gradient(135deg, #ff7ab8, #ff2d8e)" }}>
-            <Users aria-hidden className="h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="h-display mt-2 text-2xl">Child profiles</h2>
-            <p className="text-[var(--ink-soft)]">Add a child or switch the active profile.</p>
           </div>
         </Link>
       </section>
@@ -142,9 +205,9 @@ export default async function AdminPage() {
             <MapPin aria-hidden className="h-4 w-4" />
             This week&apos;s Park Hunt words
           </span>
-          <h2 className="h-display text-2xl">6 stations × 20 words</h2>
+          <h2 className="h-display text-2xl">5 stations × 20 words = 100</h2>
           <p className="text-[var(--ink-soft)]">
-            Same set kids see this week. Rotates automatically every Monday.
+            Same set every family sees this week. Rotates automatically every Monday.
           </p>
         </header>
         <div className="admin-stations-grid">
@@ -161,37 +224,49 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      {/* Children overview */}
+      {/* Families overview */}
       <section className="admin-section">
         <header className="admin-section-head">
           <span className="kicker">
             <Users aria-hidden className="h-4 w-4" />
-            Children
+            Families
           </span>
-          <h2 className="h-display text-2xl">Per-kid progress</h2>
-        </header>
-        {childrenWithProgress.length === 0 ? (
+          <h2 className="h-display text-2xl">All accounts</h2>
           <p className="text-[var(--ink-soft)]">
-            No children yet.{" "}
-            <Link href="/account/profiles" style={{ color: "var(--gold)", fontWeight: 800 }}>
-              Add one →
-            </Link>
+            Showing {families.length} of {totalCount}.{" "}
+            {totalCount > families.length
+              ? "More exist — paging coming soon."
+              : ""}
           </p>
+        </header>
+        {families.length === 0 ? (
+          <p className="text-[var(--ink-soft)]">No families yet.</p>
         ) : (
-          <div className="admin-children-grid">
-            {childrenWithProgress.map(({ profile, progress }) => (
-              <article key={profile.id} className="admin-child-card">
-                <h3>{profile.nickname}</h3>
-                <ul>
-                  <li><span>FeatherPop</span> <strong>{progress.featherPop}</strong></li>
-                  <li><span>Words found</span> <strong>{progress.wordsFound ?? 0}</strong></li>
-                  <li><span>Words this month</span> <strong>{progress.wordsThisMonth ?? 0}</strong></li>
-                  <li><span>Eggs hatched</span> <strong>{progress.hatched?.length ?? 0}</strong></li>
-                  <li><span>Free spins</span> <strong>{progress.freeSpins ?? 0}</strong></li>
-                  <li><span>Streak</span> <strong>{progress.streakDays}d</strong></li>
-                  <li><span>Golden Feathers</span> <strong>{progress.goldenFeatherMonths?.length ?? 0}</strong></li>
-                </ul>
-              </article>
+          <div className="admin-families-table">
+            <div className="admin-families-row admin-families-head">
+              <span>Family</span>
+              <span>Kids</span>
+              <span>FeatherPop</span>
+              <span>Words</span>
+              <span>Eggs</span>
+              <span>Membership</span>
+            </div>
+            {families.map((f) => (
+              <div key={f.userId} className="admin-families-row">
+                <span className="admin-families-name">
+                  <strong>{f.label}</strong>
+                  <small>{f.email}</small>
+                </span>
+                <span>{f.childCount}</span>
+                <span>{f.featherPop.toLocaleString()}</span>
+                <span>{f.words.toLocaleString()}</span>
+                <span>{f.eggs}</span>
+                <span>
+                  <em className={`admin-badge ${f.member ? "is-member" : ""}`}>
+                    {f.member ? f.status : "free"}
+                  </em>
+                </span>
+              </div>
             ))}
           </div>
         )}
@@ -208,10 +283,11 @@ export default async function AdminPage() {
           <h2 className="h-display text-2xl">Where data lives</h2>
         </header>
         <p className="text-[var(--ink-soft)]">
-          Children + per-child progress: Clerk privateMetadata.
-          Membership status: Clerk publicMetadata.membership (written by
-          the Stripe webhook). Park Hunt word lists are deterministic from
-          the week key — no DB write needed.
+          Children + per-child progress: Clerk privateMetadata. Membership
+          status: Clerk publicMetadata.membership (written by the Stripe
+          webhook). Global content (Park Hunt word bank + rewards): the owner
+          account&apos;s Clerk publicMetadata. Park Hunt station splits are
+          deterministic from the week key.
         </p>
       </section>
     </main>
@@ -224,21 +300,19 @@ function StatCard({
   value,
   tag,
   color,
-  asString,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number | string;
   tag: string;
   color: string;
-  asString?: boolean;
 }) {
   return (
     <article className="admin-stat-card" style={{ ["--stat-color" as string]: color }}>
       <div className="admin-stat-icon">{icon}</div>
       <span className="admin-stat-label">{label}</span>
       <span className="admin-stat-value">
-        {asString ? value : (value as number).toLocaleString()}
+        {typeof value === "number" ? value.toLocaleString() : value}
       </span>
       <span className="admin-stat-tag">{tag}</span>
     </article>

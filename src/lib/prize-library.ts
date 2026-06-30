@@ -110,14 +110,27 @@ export interface ColoringPage {
   title: string;
   scheme: "pink" | "blue" | "purple" | "orange" | "green" | "gold";
   description: string;
+  /** Real printable line-art image (under /media/coloring). When set, the
+   *  app renders this image instead of the built-in SVG fallback. */
+  image?: string;
 }
 
+// The client's own coloring-book artwork. Each is a ready-to-print line
+// drawing from the Ms. Feather Pop universe.
 export const COLORING_LIBRARY: ColoringPage[] = [
-  { id: "egg-cave",     title: "The Magical Egg Cave",   scheme: "purple", description: "A glittering cave of patterned eggs waiting to hatch." },
-  { id: "reading-tree", title: "The Eagle's Reading Tree", scheme: "green",  description: "Birds reading on a great oak — find the hidden feather!" },
-  { id: "park-map",     title: "Feather Park Map",        scheme: "blue",   description: "A whole park with QR stations to color." },
-  { id: "alphabet-garden", title: "Alphabet Garden",     scheme: "pink",   description: "26 flowers, one for every letter." },
+  { id: "rainbow-wings",    title: "Rainbow Wings",      scheme: "purple", description: "A big pair of feathered wings to fill with every color.", image: "/media/coloring/rainbow-wings.jpeg" },
+  { id: "angel-wings",      title: "Feather Friend Wings", scheme: "pink",  description: "Ms. Feather Pop spreads her rainbow wings.", image: "/media/coloring/angel-wings.jpeg" },
+  { id: "puppy-companion",  title: "Puppy Companion",    scheme: "gold",   description: "A happy puppy with its bone, ball, and bowl — D is for DOG!", image: "/media/coloring/puppy-companion.jpeg" },
+  { id: "forest-friends",   title: "Feather Forest Friends", scheme: "green", description: "Ms. Feather Pop dances with the friendly forest spider.", image: "/media/coloring/forest-friends.jpeg" },
+  { id: "playground-abc",   title: "Playground ABC",     scheme: "blue",   description: "A sunny playground with letters floating in the clouds.", image: "/media/coloring/playground-abc.jpeg" },
+  { id: "popcorn-party",    title: "Popcorn Party",      scheme: "orange", description: "A giggly family popcorn night to color in.", image: "/media/coloring/popcorn-party.jpeg" },
+  { id: "cozy-cottage",     title: "Cozy Feather Cottage", scheme: "green", description: "A storybook cottage with a feather on the door.", image: "/media/coloring/cozy-cottage.jpeg" },
+  { id: "city-hello",       title: "Hello, Big City",    scheme: "blue",   description: "Wave hello in front of the city skyline.", image: "/media/coloring/city-hello.jpeg" },
+  { id: "city-stroll",      title: "City Stroll",        scheme: "purple", description: "A friendly walk down a tree-lined street.", image: "/media/coloring/city-stroll.jpeg" },
 ];
+
+/** The one fully-colored example art — handy as decoration / a 'finished' preview. */
+export const COLORING_COLORED_EXAMPLE = "/media/coloring/rainbow-wings-colored.jpeg";
 
 export function getColoring(id: string): ColoringPage | undefined {
   return COLORING_LIBRARY.find((c) => c.id === id);
