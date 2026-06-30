@@ -2072,6 +2072,79 @@ a { color: inherit; }
   90%      { opacity: 0; }
 }
 
+/* ---------- Park Hunt station scanner (/scan) ----------
+   Self-contained classes (scan-*) so the layout never collides with the
+   StationGrid word grid or the eagle-stage mascot. Mobile-first: camera on
+   top, instructions BENEATH it, single column on every screen. */
+.scan-page {
+  display: grid;
+  gap: 1rem;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding-bottom: 6.5rem;
+}
+.scan-head { text-align: center; display: grid; gap: 0.4rem; }
+.scan-head .kicker { justify-self: center; }
+.scan-title { margin: 0; font-size: clamp(1.6rem, 6vw, 2.2rem); }
+.scan-subtitle { color: var(--ink-soft); margin: 0; font-size: 0.95rem; }
+.scan-camera {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 1rem;
+  display: grid;
+  gap: 0.7rem;
+  box-shadow: 0 18px 38px rgba(106, 45, 255, 0.18);
+}
+.scan-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  max-height: 56vh;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  background: #0c0526;
+}
+.scan-frame video { width: 100%; height: 100%; object-fit: cover; }
+.scan-frame .scanner-reticle { inset: 16%; }
+.scan-status {
+  text-align: center;
+  margin: 0;
+  font-weight: 700;
+  color: var(--ink-soft);
+  min-height: 1.2em;
+}
+.scan-busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.6rem;
+  background: rgba(12, 5, 38, 0.62);
+  color: white;
+  font-weight: 800;
+  z-index: 2;
+}
+.scan-spinner { animation: scan-spin 0.9s linear infinite; }
+@keyframes scan-spin { to { transform: rotate(360deg); } }
+.scan-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+.scan-steps li {
+  background: rgba(106, 45, 255, 0.06);
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.scan-steps strong:first-child { color: var(--magenta); margin-right: 0.15rem; }
+.scan-actions { display: grid; gap: 0.5rem; }
+.scan-actions .btn { justify-content: center; }
+
 /* ---------- Wallet/Rewards bits ---------- */
 .balance {
   display: grid;
