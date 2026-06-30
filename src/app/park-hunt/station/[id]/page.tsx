@@ -1,8 +1,5 @@
 import { redirect } from "next/navigation";
-import {
-  getStationWordsAction,
-  isCorrectStationAction,
-} from "@/lib/park-hunt-actions";
+import { isCorrectStationAction } from "@/lib/park-hunt-actions";
 import { STATION_COUNT } from "@/lib/park-hunt";
 import { StationGrid } from "@/components/park-hunt/StationGrid";
 
@@ -19,20 +16,15 @@ export default async function StationPage({
   if (!Number.isFinite(raw) || raw < 1 || raw > STATION_COUNT) redirect("/park-hunt");
   const stationId = raw - 1; // 0-indexed internally
 
-  const [words, check] = await Promise.all([
-    getStationWordsAction(stationId),
-    isCorrectStationAction(stationId),
-  ]);
+  const check = await isCorrectStationAction(stationId);
 
   return (
     <main className="page parkhunt-page">
       <StationGrid
         stationId={stationId}
-        words={words}
-        targetWord={check.targetWord}
+        hasTarget={check.hasTarget}
         matchesStation={check.matches}
-        triesRemaining={check.triesRemaining}
-        outOfTries={check.outOfTries}
+        targetWord={check.targetWord}
       />
     </main>
   );

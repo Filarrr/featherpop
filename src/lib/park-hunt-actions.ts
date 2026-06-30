@@ -20,8 +20,6 @@ import {
 import { recordWordsFoundAction } from "@/lib/child-progress-actions";
 import { getGlobalWordBank } from "@/lib/global-content";
 
-const MAX_WRONG_STATIONS = 3;
-
 interface StoredTarget {
   date: string;
   word: string;
@@ -30,9 +28,8 @@ interface StoredTarget {
   // the once-per-day video/music bonus and to track daily progress
   // without polluting featherPop).
   foundToday?: number;
-  // Number of wrong stations scanned for the CURRENT target. Resets
-  // whenever a new target is picked. At MAX_WRONG_STATIONS, the next
-  // wrong scan auto-rotates the target ('out of tries').
+  // Legacy: wrong-scan counter (no longer used now that scanning the right
+  // QR is an instant pass and wrong scans simply say "try another").
   wrongScans?: number;
 }
 
@@ -168,12 +165,17 @@ export async function submitFoundWordAction(args: {
     return { ok: false, reason: "No active target — start a new round." };
   }
 
-  // Validate: word + stationId must match the current stored target.
+  // Validate against the LIVE station list (not a possibly-stale stored
+  // stationId): the submitted word must be the child's target AND actually
+  // live at the scanned station this week.
   const submittedWord = args.word.toUpperCase();
   if (submittedWord !== target.word) {
     return { ok: false, reason: "Wrong word." };
   }
-  if (args.stationId !== target.stationId) {
+  const bankForCheck = await getGlobalWordBank();
+  const stationWords =
+    dailyStations(weekKey(), bankForCheck).stations[args.stationId] ?? [];
+  if (!stationWords.includes(target.word)) {
     return { ok: false, reason: "Wrong station — try another one." };
   }
 
@@ -275,119 +277,38 @@ export async function getStationWordsAction(stationId: number): Promise<string[]
 }
 
 /**
- * Verify a scanned station matches the active target.
+ * Check whether the child's CURRENT eagle word lives at the scanned station.
  *
- * Tracks wrong-scan attempts (per spec: 3 tries before the eagle gives
- * up and rotates to a new word). Returns:
- *   matches            — did this station have the target word?
- *   triesUsed          — wrong-scan counter for the CURRENT target
- *   triesRemaining     — MAX_WRONG_STATIONS - triesUsed
- *   outOfTries         — true if the kid has exhausted their attempts
- *                        (target was auto-rotated by this call)
- *   targetWord/targetStation reflect the CURRENT (possibly rotated)
- *   target so the UI shows what to hunt next.
+ * Read-only and side-effect free. The pass condition is exactly the spec:
+ * "if the QR has your word listed there, you pass." We look up the scanned
+ * station's word list LIVE (so it can't drift from a stale stored stationId)
+ * and check membership. We NEVER invent or credit a random word — if the
+ * child has no active eagle word, hasTarget is false and the UI tells them to
+ * play Feather Match first.
  */
 export async function isCorrectStationAction(stationId: number): Promise<{
+  hasTarget: boolean;
   matches: boolean;
-  targetStation: number | null;
   targetWord: string | null;
-  triesUsed: number;
-  triesRemaining: number;
-  outOfTries: boolean;
 }> {
   const childId = await getActiveChildId();
-  if (!childId)
-    return {
-      matches: false,
-      targetStation: null,
-      targetWord: null,
-      triesUsed: 0,
-      triesRemaining: MAX_WRONG_STATIONS,
-      outOfTries: false,
-    };
+  if (!childId) return { hasTarget: false, matches: false, targetWord: null };
   const user = await currentUser();
-  if (!user)
-    return {
-      matches: false,
-      targetStation: null,
-      targetWord: null,
-      triesUsed: 0,
-      triesRemaining: MAX_WRONG_STATIONS,
-      outOfTries: false,
-    };
+  if (!user) return { hasTarget: false, matches: false, targetWord: null };
+
   const date = todayKey();
-  const bank = await getGlobalWordBank();
   const map = readMap(user.privateMetadata);
   const target = map[childId];
 
+  // No word for today → the child hasn't been handed one by the eagle yet.
   if (!target || target.date !== date) {
-    // No active target yet — assign one. First scan can't count as a
-    // 'wrong' attempt since there was nothing to hunt yet.
-    const fresh = pickTargetForChild(childId, date, bank);
-    const stored: StoredTarget = {
-      date,
-      word: fresh.word,
-      stationId: fresh.stationId,
-      foundToday: 0,
-      wrongScans: 0,
-    };
-    await writeMap({ ...map, [childId]: stored }).catch(() => {});
-    return {
-      matches: fresh.stationId === stationId,
-      targetStation: fresh.stationId,
-      targetWord: fresh.word,
-      triesUsed: 0,
-      triesRemaining: MAX_WRONG_STATIONS,
-      outOfTries: false,
-    };
+    return { hasTarget: false, matches: false, targetWord: null };
   }
 
-  const matches = target.stationId === stationId;
-  if (matches) {
-    return {
-      matches: true,
-      targetStation: target.stationId,
-      targetWord: target.word,
-      triesUsed: target.wrongScans ?? 0,
-      triesRemaining: MAX_WRONG_STATIONS - (target.wrongScans ?? 0),
-      outOfTries: false,
-    };
-  }
-
-  // Wrong station — increment counter.
-  const used = (target.wrongScans ?? 0) + 1;
-  if (used >= MAX_WRONG_STATIONS) {
-    // Out of tries — rotate to a fresh target and reset the counter.
-    const next = nextTargetForChild(childId, date, target.word, bank);
-    const stored: StoredTarget = {
-      date,
-      word: next.word,
-      stationId: next.stationId,
-      foundToday: target.foundToday ?? 0,
-      wrongScans: 0,
-    };
-    await writeMap({ ...map, [childId]: stored }).catch(() => {});
-    return {
-      matches: false,
-      targetStation: next.stationId,
-      targetWord: next.word,
-      triesUsed: MAX_WRONG_STATIONS,
-      triesRemaining: 0,
-      outOfTries: true,
-    };
-  }
-
-  // Wrong but still has tries left — bump the counter, keep the target.
-  const stored: StoredTarget = { ...target, wrongScans: used };
-  await writeMap({ ...map, [childId]: stored }).catch(() => {});
-
-  return {
-    matches: false,
-    targetStation: target.stationId,
-    targetWord: target.word,
-    triesUsed: used,
-    triesRemaining: MAX_WRONG_STATIONS - used,
-    outOfTries: false,
-  };
+  const bank = await getGlobalWordBank();
+  const stationWords =
+    dailyStations(weekKey(), bank).stations[stationId] ?? [];
+  const matches = stationWords.includes(target.word);
+  return { hasTarget: true, matches, targetWord: target.word };
 }
 

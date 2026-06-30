@@ -7407,18 +7407,31 @@ a { color: inherit; }
 }
 .qr-card-words ol {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.25rem 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.2rem 1.25rem;
   margin: 0;
-  padding-left: 1.25rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: qrword;
   font-family: var(--font-baloo), sans-serif;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--ink);
 }
 .qr-card-words li {
-  list-style: decimal;
+  counter-increment: qrword;
   break-inside: avoid;
+  display: flex;
+  gap: 0.35rem;
+  min-width: 0;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.qr-card-words li::before {
+  content: counter(qrword) ".";
+  color: var(--magenta);
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
 }
 .qr-card-foot {
   font-size: 0.85rem;
