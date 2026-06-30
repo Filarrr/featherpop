@@ -269,6 +269,50 @@ export async function setParkHuntTargetWordAction(
   return { ok: true, word, stationId };
 }
 
+/**
+ * Pick the eagle's word for the child from THIS WEEK'S actual station words
+ * (server-side, using the live global bank) and store it as their target.
+ *
+ * This is the authoritative source for the Feather Sort "magic word": the
+ * sort game displays whatever this returns, so the word the child sees is
+ * GUARANTEED to be huntable at a station. (The old flow picked the word on
+ * the client from a static list, which could land on a word that wasn't in
+ * this week's stations — `setParkHuntTargetWordAction` then silently failed
+ * and the child kept a stale target, e.g. saw "star" but the park had
+ * "chair".)
+ */
+export async function assignEagleWordAction(
+  preferLength?: number,
+): Promise<{ word: string; stationId: number } | null> {
+  const childId = await getActiveChildId();
+  if (!childId) return null;
+  const user = await currentUser();
+  if (!user) return null;
+
+  const date = todayKey();
+  const week = weekKey();
+  const bank = await getGlobalWordBank();
+  const { allWords } = dailyStations(week, bank);
+  if (allWords.length === 0) return null;
+
+  let pool = allWords;
+  if (preferLength && preferLength > 0) {
+    const exact = allWords.filter((w) => w.length === preferLength);
+    const near = allWords.filter((w) => Math.abs(w.length - preferLength) <= 1);
+    pool = exact.length ? exact : near.length ? near : allWords;
+  }
+  const word = pool[Math.floor(Math.random() * pool.length)];
+  const stationId = stationOfWord(word, week, bank);
+
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId];
+  const foundToday = prev?.date === date ? prev.foundToday ?? 0 : 0;
+  const stored: StoredTarget = { date, word, stationId, foundToday };
+  await writeMap({ ...map, [childId]: stored });
+  revalidatePath("/park-hunt", "page");
+  return { word, stationId };
+}
+
 /** Server-side helper for the station route: get the 20-word list for a station. */
 export async function getStationWordsAction(stationId: number): Promise<string[]> {
   if (stationId < 0 || stationId >= STATION_COUNT) return [];

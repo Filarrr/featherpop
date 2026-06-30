@@ -20,7 +20,7 @@ import type { FeatherType } from "@/lib/missions";
 import { pickKeyWord } from "@/lib/sort-words";
 import { useActiveChild } from "@/lib/use-active-child";
 import { awardFeatherPopAction } from "@/lib/child-progress-actions";
-import { setParkHuntTargetWordAction } from "@/lib/park-hunt-actions";
+import { assignEagleWordAction } from "@/lib/park-hunt-actions";
 import { useNavGuard } from "@/lib/use-nav-guard";
 import { FeatherSvg, NestSvg } from "./FeatherSvg";
 import { BirdFlight } from "./BirdFlight";
@@ -154,24 +154,42 @@ export function FeatherSortGame() {
   const [mascotMsg, setMascotMsg] = useState<string | undefined>();
   const [mascotNudge, setMascotNudge] = useState(0);
 
-  // Re-roll key word per round; matches the round size. pickKeyWord
-  // cross-references this week's Park Hunt bank so the eagle's word
-  // ALWAYS exists in one of the 5 stations — when the kid clicks
-  // 'Find it at the park' it lands on a real, hunt-able word.
+  // Local key word — only used to size the round / drive the bird animation
+  // timing. The AUTHORITATIVE eagle word (what's shown + what Park Hunt
+  // stores) comes from the server (see eagleWord below), so it's guaranteed
+  // to be huntable at a real station this week.
   const keyWord = useMemo(
     () => pickKeyWord(Math.min(7, 3 + round)),
     [round],
   );
 
-  // Push the eagle's word to Park Hunt the moment we reveal it, so
-  // the /park-hunt page shows THIS word (not a fresh deterministic
-  // pick). Best-effort — if the user isn't signed in or has no active
-  // child, the action returns ok:false and we silently fall back to
-  // Park Hunt's own picker on the next page load.
+  // The server-assigned eagle word for THIS round. Null until the assign
+  // resolves; we fall back to keyWord.word for display until then.
+  const [eagleWord, setEagleWord] = useState<string | null>(null);
+
+  // The instant the round is won (bird phase begins), ask the server for a
+  // word drawn from this week's actual station list and store it as the
+  // child's Park Hunt target — atomically, so display == stored target.
   useEffect(() => {
-    if (phase !== "reveal" || !keyWord?.word) return;
-    void setParkHuntTargetWordAction(keyWord.word).catch(() => {});
-  }, [phase, keyWord?.word]);
+    if (phase !== "bird") return;
+    let cancelled = false;
+    (async () => {
+      const res = await assignEagleWordAction(keyWord.length).catch(() => null);
+      if (!cancelled && res?.word) setEagleWord(res.word);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, keyWord.length]);
+
+  // What the kid actually sees / hunts. Always equals the stored target once
+  // the server responds.
+  const displayWord = eagleWord ?? keyWord.word;
+
+  // Fresh round → forget the previous round's assigned word.
+  useEffect(() => {
+    setEagleWord(null);
+  }, [round]);
 
   // Boot music when the game mounts (the PLAY-button tap on home already
   // unlocked the AudioContext, so this just keeps the music going).
@@ -422,12 +440,12 @@ export function FeatherSortGame() {
 
       {phase === "bird" ? (
         <BirdFlight
-          word={keyWord.word}
+          word={displayWord}
           onReveal={() => {
             setPhase("reveal");
             setMood("cheer");
             setMascotMsg(
-              `Magic word: ${keyWord.word}! Find it at the park or play now!`,
+              `Magic word: ${displayWord}! Find it at the park or play now!`,
             );
             setMascotNudge((n) => n + 1);
           }}
@@ -445,15 +463,15 @@ export function FeatherSortGame() {
             <div
               className="sort-reveal-scroll"
               role="img"
-              aria-label={`Eagle's magic word: ${keyWord.word}`}
+              aria-label={`Eagle's magic word: ${displayWord}`}
             >
               <div className="sort-reveal-scroll-text">
                 <p className="kicker">
                   <Sparkles aria-hidden className="h-4 w-4" />
                   Eagle&apos;s magic word
                 </p>
-                <h2 className="sort-reveal-word">{keyWord.word}</h2>
-                {keyWord.hint ? (
+                <h2 className="sort-reveal-word">{displayWord}</h2>
+                {!eagleWord && keyWord.hint ? (
                   <p className="sort-reveal-hint">{keyWord.hint}</p>
                 ) : null}
               </div>
@@ -481,7 +499,7 @@ export function FeatherSortGame() {
       ) : null}
 
       {phase === "spider" ? (
-        <Spider letters={keyWord.word.split("")} onDone={() => setPhase("lost")} />
+        <Spider letters={displayWord.split("")} onDone={() => setPhase("lost")} />
       ) : null}
 
       {phase === "lost" ? (
