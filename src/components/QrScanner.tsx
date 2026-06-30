@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BrowserQRCodeReader, IScannerControls } from "@zxing/browser";
 import { Home, Loader2, Sparkles } from "lucide-react";
 import { ding } from "@/lib/audio";
@@ -22,6 +22,13 @@ import { parseStationCode } from "@/lib/park-hunt";
  */
 export function QrScanner() {
   const router = useRouter();
+  const params = useSearchParams();
+  // The eagle's word rides along in the URL so the station page knows what to
+  // check — single source of truth, never overwritten.
+  const word = useMemo(
+    () => (params.get("word") ?? "").toUpperCase().replace(/[^A-Z]/g, ""),
+    [params],
+  );
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const routedRef = useRef(false);
@@ -55,7 +62,8 @@ export function QrScanner() {
             setNavigating(true);
             setStatus(`Opening Station ${stationId + 1}…`);
             controlsRef.current?.stop();
-            router.push(`/park-hunt/station/${stationId + 1}`);
+            const q = word ? `?word=${encodeURIComponent(word)}` : "";
+            router.push(`/park-hunt/station/${stationId + 1}${q}`);
           },
         );
         if (mounted) {
@@ -78,7 +86,7 @@ export function QrScanner() {
       mounted = false;
       controlsRef.current?.stop();
     };
-  }, [router]);
+  }, [router, word]);
 
   return (
     <div className="scan-page">

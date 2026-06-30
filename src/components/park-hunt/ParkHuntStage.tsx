@@ -1,13 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Camera, Home, RefreshCw, Sparkles } from "lucide-react";
-import {
-  getCurrentTargetAction,
-  rotateTargetAction,
-} from "@/lib/park-hunt-actions";
+import { Camera, Home, Sparkles, Wand2 } from "lucide-react";
 import {
   childCheer,
   eagleCheers,
@@ -19,131 +15,42 @@ import {
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { Confetti } from "@/components/Confetti";
 
-interface TargetState {
-  word: string;
-  stationId: number; // 0-5 internally; +1 to display
-  foundToday: number;
-}
-
+/**
+ * Shows the eagle's word (from the URL) and sends the child to the scanner,
+ * carrying the word forward so it can never be lost or overwritten.
+ */
 export function ParkHuntStage({
-  initialTarget,
+  word,
   hasActiveChild,
   activeNickname,
 }: {
-  initialTarget: TargetState | null;
+  word: string | null;
   hasActiveChild: boolean;
   activeNickname: string | null;
 }) {
   const router = useRouter();
-  // Start with the server-resolved target — no client fetch race.
-  const [target, setTarget] = useState<TargetState | null>(initialTarget);
-  const [loading, setLoading] = useState(false);
-  const [confettiKey, setConfettiKey] = useState(0);
-  // Whether the read-only fallback fetch has finished (so we know to show the
-  // "play Feather Match" empty state instead of an endless loader).
-  const [checked, setChecked] = useState(Boolean(initialTarget));
   const playedIntroRef = useRef(false);
 
-  // If we arrived without a target (e.g. the assign write hadn't propagated
-  // when the page rendered), retry ONCE from the client. Read-only — never
-  // assigns a word; the eagle word comes only from Feather Match.
+  // Eagle audio + confetti once when a word is present.
   useEffect(() => {
-    if (target || !hasActiveChild) return;
-    let cancelled = false;
-    (async () => {
-      const res = await getCurrentTargetAction().catch(() => null);
-      if (cancelled) return;
-      if (res) {
-        setTarget({
-          word: res.word,
-          stationId: res.stationId,
-          foundToday: res.foundToday ?? 0,
-        });
-      }
-      setChecked(true);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [target, hasActiveChild]);
-
-  // Play the eagle audio once after the target loads.
-  useEffect(() => {
-    if (!target || playedIntroRef.current) return;
+    if (!word || playedIntroRef.current) return;
     playedIntroRef.current = true;
-    setConfettiKey((k) => k + 1);
     pop();
     window.setTimeout(() => wordReveal(), 200);
     window.setTimeout(() => fanfare(), 700);
-    // Park Hunt intro sequence — two voice clips back-to-back:
-    //   1) 'Can you help me find this word in the park?' (~4.4s)
-    //   2) 'Yes! Feather tag up and let's find the word!' (~3s)
-    // The eagle's 'Strudelay!' signature call already plays at the
-    // end of the Feather Sort handoff — here we want the kid to
-    // hear the mission line, not another Strudelay.
     window.setTimeout(() => eagleHandsWord(), 1300);
     window.setTimeout(() => eagleCheers(), 6200);
     window.setTimeout(() => childCheer(), 9600);
-  }, [target]);
-
-  async function rotate() {
-    pop();
-    setLoading(true);
-    const res = await rotateTargetAction();
-    if (res) {
-      setTarget({
-        word: res.word,
-        stationId: res.stationId,
-        foundToday: res.foundToday ?? 0,
-      });
-      playedIntroRef.current = false;
-    }
-    setLoading(false);
-  }
+  }, [word]);
 
   function goScan() {
+    if (!word) return;
     pop();
-    router.push("/scan");
+    router.push(`/scan?word=${encodeURIComponent(word)}`);
   }
 
-  if (loading && !target) {
-    return (
-      <div className="parkhunt-stage parkhunt-loading">
-        <p>Calling the eagle…</p>
-      </div>
-    );
-  }
-
-  // Only show the 'pick a profile' empty-state when we definitely don't
-  // have one — server already checked the cookie + Clerk auth.
-  if (!target && !hasActiveChild) {
-    return (
-      <div className="parkhunt-stage">
-        <div className="parkhunt-empty">
-          <h2 className="h-display text-3xl">
-            <span className="h-gradient">Pick a child profile first</span>
-          </h2>
-          <p>Park Hunt remembers each child&apos;s weekly target word.</p>
-          <Link href="/account/profiles" className="btn btn-gold btn-lg">
-            Choose a profile
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (!target && !checked) {
-    // Active child, no target yet — wait for the one-shot fallback fetch.
-    return (
-      <div className="parkhunt-stage parkhunt-loading">
-        <p>Calling the eagle for {activeNickname ?? "your hunter"}…</p>
-      </div>
-    );
-  }
-
-  if (!target) {
-    // No eagle word for today — the child needs to play Feather Match to
-    // earn one. (We never auto-assign here; that caused the race.)
+  // No word → tell them to play Feather Match (which hands out the word).
+  if (!word) {
     return (
       <div className="parkhunt-stage">
         <div className="parkhunt-empty">
@@ -152,9 +59,11 @@ export function ParkHuntStage({
           </h2>
           <p>
             Play <strong>Feather Match</strong> — the eagle will give{" "}
-            {activeNickname ?? "you"} a word to find at the park.
+            {hasActiveChild ? (activeNickname ?? "you") : "you"} a word to find
+            at the park.
           </p>
           <Link href="/sort" className="btn btn-gold btn-lg">
+            <Wand2 aria-hidden className="h-5 w-5" />
             Play Feather Match
           </Link>
         </div>
@@ -164,7 +73,7 @@ export function ParkHuntStage({
 
   return (
     <div className="parkhunt-stage">
-      <Confetti trigger={confettiKey} pieces={50} />
+      <Confetti trigger={1} pieces={50} />
 
       <div className="parkhunt-stage-art">
         <div className="parkhunt-eagle">
@@ -182,7 +91,7 @@ export function ParkHuntStage({
           The Eagle&apos;s Word
         </span>
         <p className="parkhunt-target-label">Find this word at the park:</p>
-        <h1 className="parkhunt-target-word">{target.word}</h1>
+        <h1 className="parkhunt-target-word">{word}</h1>
 
         <ol className="parkhunt-steps">
           <li>
@@ -192,8 +101,8 @@ export function ParkHuntStage({
             <strong>2.</strong> Scan each station&apos;s QR code with your phone.
           </li>
           <li>
-            <strong>3.</strong> Find the station that lists{" "}
-            <strong>{target.word}</strong> — scan it and you pass!
+            <strong>3.</strong> Find the station that lists <strong>{word}</strong>{" "}
+            — scan it and you pass!
           </li>
         </ol>
 
@@ -206,27 +115,11 @@ export function ParkHuntStage({
             <Camera aria-hidden className="h-5 w-5" />
             Scan a station QR
           </button>
-          <button
-            type="button"
-            onClick={rotate}
-            className="btn btn-ghost"
-            disabled={loading}
-          >
-            <RefreshCw aria-hidden className="h-5 w-5" />
-            New word
-          </button>
           <Link href="/" className="btn btn-ghost">
             <Home aria-hidden className="h-5 w-5" />
             Home
           </Link>
         </div>
-
-        {target.foundToday > 0 ? (
-          <p className="parkhunt-stage-count">
-            Found <strong>{target.foundToday}</strong>{" "}
-            {target.foundToday === 1 ? "word" : "words"} today. Keep going!
-          </p>
-        ) : null}
       </div>
     </div>
   );

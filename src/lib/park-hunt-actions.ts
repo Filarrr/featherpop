@@ -303,6 +303,79 @@ export async function assignEagleWordAction(
   return { word, stationId };
 }
 
+/**
+ * Pure pick of an eagle word from THIS WEEK'S station words. No storage,
+ * no per-child state — the chosen word is carried through the URL
+ * (Feather Match → Park Hunt → scan → station), so there is exactly one
+ * source of truth and nothing can overwrite it. Guaranteed huntable.
+ */
+export async function pickEagleWordAction(
+  preferLength?: number,
+): Promise<{ word: string } | null> {
+  const bank = await getGlobalWordBank();
+  const { allWords } = dailyStations(weekKey(), bank);
+  if (allWords.length === 0) return null;
+  let pool = allWords;
+  if (preferLength && preferLength > 0) {
+    const exact = allWords.filter((w) => w.length === preferLength);
+    const near = allWords.filter((w) => Math.abs(w.length - preferLength) <= 1);
+    pool = exact.length ? exact : near.length ? near : allWords;
+  }
+  const word = pool[Math.floor(Math.random() * pool.length)];
+  return { word };
+}
+
+/**
+ * The child scanned a station carrying `word` in the URL. If that word is
+ * genuinely in the scanned station's list this week, award 1 feather (+ egg
+ * progress) and report it. Stateless w.r.t. the target — the word is the
+ * URL's, validated live, so there's no stored target to drift or clobber.
+ */
+export async function findWordAtStationAction(args: {
+  word: string;
+  stationId: number;
+}): Promise<
+  | {
+      ok: true;
+      hatched?: import("@/lib/child-profile").HatchedEntry | null;
+      crackJustCrossed?: {
+        level: number;
+        label: string;
+        message: string;
+        color: import("@/lib/child-profile").EggColor;
+        wordsInEgg: number;
+      } | null;
+    }
+  | { ok: false; reason: string }
+> {
+  const word = (args.word || "").toUpperCase().replace(/[^A-Z]/g, "");
+  if (!word) return { ok: false, reason: "No word." };
+  const bank = await getGlobalWordBank();
+  const list = dailyStations(weekKey(), bank).stations[args.stationId] ?? [];
+  if (!list.includes(word)) {
+    return { ok: false, reason: "Not at this station." };
+  }
+
+  let hatched: import("@/lib/child-profile").HatchedEntry | null = null;
+  let crackJustCrossed:
+    | {
+        level: number;
+        label: string;
+        message: string;
+        color: import("@/lib/child-profile").EggColor;
+        wordsInEgg: number;
+      }
+    | null = null;
+  try {
+    const result = await recordWordsFoundAction(1);
+    if (result?.hatched) hatched = result.hatched;
+    if (result?.crackJustCrossed) crackJustCrossed = result.crackJustCrossed;
+  } catch (err) {
+    console.warn("[park-hunt] recordWordsFound failed", err);
+  }
+  return { ok: true, hatched, crackJustCrossed };
+}
+
 /** Server-side helper for the station route: get the 20-word list for a station. */
 export async function getStationWordsAction(stationId: number): Promise<string[]> {
   if (stationId < 0 || stationId >= STATION_COUNT) return [];

@@ -11,7 +11,7 @@ import {
   wordReveal,
 } from "@/lib/audio";
 import { Confetti } from "@/components/Confetti";
-import { submitFoundWordAction } from "@/lib/park-hunt-actions";
+import { findWordAtStationAction } from "@/lib/park-hunt-actions";
 import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
 import { EggCrackReveal } from "@/components/eggs/EggCrackReveal";
 import type { EggColor, HatchedEntry } from "@/lib/child-profile";
@@ -19,26 +19,22 @@ import type { EggColor, HatchedEntry } from "@/lib/child-profile";
 /**
  * Park Hunt station result.
  *
- * The kid has ONE word from the eagle. Scanning the station whose list
- * contains that word = instant pass. We deliberately do NOT show the
- * station's word list (the answer would be sitting right there) and we
- * never invent a word — if there's no active eagle word we send them to
- * Feather Match to get one.
+ * `word` is the eagle's word from the URL — the single source of truth. If
+ * it's in this scanned station's list (matchesStation), it's an instant pass:
+ * we award the feather and offer Letter Pop. We never show the station's word
+ * list and never invent a word.
  */
 export function StationGrid({
   stationId,
-  hasTarget,
+  word,
   matchesStation,
-  targetWord,
 }: {
   stationId: number; // 0-indexed (display +1)
-  hasTarget: boolean;
+  word: string | null;
   matchesStation: boolean;
-  targetWord: string | null;
 }) {
   const [phase, setPhase] = useState<"checking" | "won">("checking");
   const [confettiKey, setConfettiKey] = useState(0);
-  const [nextTarget, setNextTarget] = useState<string | null>(null);
   const [hatched, setHatched] = useState<HatchedEntry | null>(null);
   const [crackMilestone, setCrackMilestone] = useState<{
     level: number;
@@ -49,17 +45,13 @@ export function StationGrid({
   } | null>(null);
   const awardedRef = useRef(false);
 
-  // Correct station → award immediately, then celebrate.
   useEffect(() => {
-    if (!hasTarget || !matchesStation || !targetWord || awardedRef.current)
-      return;
+    if (!word || !matchesStation || awardedRef.current) return;
     awardedRef.current = true;
     (async () => {
-      const res = await submitFoundWordAction({
-        word: targetWord,
-        stationId,
-      }).catch(() => null);
-
+      const res = await findWordAtStationAction({ word, stationId }).catch(
+        () => null,
+      );
       setPhase("won");
       setConfettiKey((k) => k + 1);
       pop();
@@ -67,17 +59,15 @@ export function StationGrid({
       window.setTimeout(() => fanfare(), 600);
       window.setTimeout(() => eagleCheers(), 1100);
       window.setTimeout(() => childCheer(), 6600);
-
       if (res && res.ok) {
-        setNextTarget(res.next.word);
         if (res.hatched) setHatched(res.hatched);
         else if (res.crackJustCrossed) setCrackMilestone(res.crackJustCrossed);
       }
     })();
-  }, [hasTarget, matchesStation, targetWord, stationId]);
+  }, [word, matchesStation, stationId]);
 
-  // ---- No eagle word yet ----
-  if (!hasTarget) {
+  // No word in the URL → the child hasn't been handed one by the eagle.
+  if (!word) {
     return (
       <div className="parkhunt-station parkhunt-station-empty">
         <h2 className="h-display text-3xl">
@@ -100,23 +90,30 @@ export function StationGrid({
     );
   }
 
-  // ---- Wrong station ----
-  if (!matchesStation && phase !== "won") {
+  // Wrong station — the eagle's word isn't here.
+  if (!matchesStation) {
     return (
       <div className="parkhunt-station parkhunt-station-empty">
         <h2 className="h-display text-3xl">
           <span className="h-gradient">Not at this station!</span>
         </h2>
         <p>
-          Your word isn&apos;t at <strong>Station {stationId + 1}</strong>. Walk
-          around the park and scan a different QR code.
+          <strong>{word}</strong> isn&apos;t at{" "}
+          <strong>Station {stationId + 1}</strong>. Walk around the park and scan
+          a different QR code.
         </p>
         <div className="parkhunt-station-actions">
-          <Link href="/scan" className="btn btn-gold btn-lg">
+          <Link
+            href={`/scan?word=${encodeURIComponent(word)}`}
+            className="btn btn-gold btn-lg"
+          >
             <Camera aria-hidden className="h-5 w-5" />
             Scan another QR
           </Link>
-          <Link href="/park-hunt" className="btn btn-ghost">
+          <Link
+            href={`/park-hunt?word=${encodeURIComponent(word)}`}
+            className="btn btn-ghost"
+          >
             <RefreshCw aria-hidden className="h-5 w-5" />
             Back to the Eagle
           </Link>
@@ -125,7 +122,7 @@ export function StationGrid({
     );
   }
 
-  // ---- Correct station: checking → won ----
+  // Correct station: instant pass.
   return (
     <div className="parkhunt-station">
       <Confetti trigger={confettiKey} pieces={60} />
@@ -147,8 +144,7 @@ export function StationGrid({
             YOU PASSED
           </span>
           <h2 className="h-display text-3xl">
-            You found <span className="h-gradient">{targetWord}</span> at the
-            park!
+            You found <span className="h-gradient">{word}</span> at the park!
           </h2>
           <p className="parkhunt-station-result-sub">
             +1 feather earned. Want to spell it out in{" "}
@@ -156,15 +152,14 @@ export function StationGrid({
           </p>
           <div className="parkhunt-station-actions">
             <Link
-              href={`/play?word=${encodeURIComponent(targetWord ?? "")}`}
+              href={`/play?word=${encodeURIComponent(word)}`}
               className="btn btn-gold btn-lg btn-pulse"
             >
               <Sparkles aria-hidden className="h-5 w-5" />
-              Yes — play Letter Pop with {targetWord}
+              Yes — play Letter Pop with {word}
             </Link>
-            <Link href="/park-hunt" className="btn btn-ghost">
-              Find another word
-              {nextTarget ? ` (${nextTarget})` : ""}
+            <Link href="/sort" className="btn btn-ghost">
+              Find a new word (Feather Match)
             </Link>
           </div>
         </div>

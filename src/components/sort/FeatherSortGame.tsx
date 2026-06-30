@@ -20,7 +20,7 @@ import type { FeatherType } from "@/lib/missions";
 import { pickKeyWord } from "@/lib/sort-words";
 import { useActiveChild } from "@/lib/use-active-child";
 import { awardFeatherPopAction } from "@/lib/child-progress-actions";
-import { assignEagleWordAction } from "@/lib/park-hunt-actions";
+import { pickEagleWordAction } from "@/lib/park-hunt-actions";
 import { useNavGuard } from "@/lib/use-nav-guard";
 import { FeatherSvg, NestSvg } from "./FeatherSvg";
 import { BirdFlight } from "./BirdFlight";
@@ -167,14 +167,14 @@ export function FeatherSortGame() {
   // resolves; we fall back to keyWord.word for display until then.
   const [eagleWord, setEagleWord] = useState<string | null>(null);
 
-  // The instant the round is won (bird phase begins), ask the server for a
-  // word drawn from this week's actual station list and store it as the
-  // child's Park Hunt target — atomically, so display == stored target.
+  // The instant the round is won (bird phase begins), ask the server to pick
+  // a word from this week's actual station list. It's carried through the URL
+  // (no stored target), so it can never be overwritten before the kid scans.
   useEffect(() => {
     if (phase !== "bird") return;
     let cancelled = false;
     (async () => {
-      const res = await assignEagleWordAction(keyWord.length).catch(() => null);
+      const res = await pickEagleWordAction(keyWord.length).catch(() => null);
       if (!cancelled && res?.word) setEagleWord(res.word);
     })();
     return () => {
@@ -358,17 +358,14 @@ export function FeatherSortGame() {
   }
 
   async function goParkHunt() {
-    // After the eagle drops the word → the child goes to /park-hunt, which
-    // shows which word to hunt, then scans the park's QR stations until they
-    // find the one that lists it.
+    if (!eagleWord) return;
     try {
       if (activeChildId)
         await awardFeatherPopAction(Math.max(1, Math.floor(roundTypes.length / 2)));
     } catch {}
-    // Park Hunt is now its own flow: the daily station model picks a fresh
-    // target word for the child. We drop into /park-hunt and let it tell the
-    // child which word to find at which station.
-    router.push("/park-hunt");
+    // Carry the eagle's word through the URL — it's the single source of
+    // truth the whole way: /park-hunt → /scan → /park-hunt/station/N.
+    router.push(`/park-hunt?word=${encodeURIComponent(eagleWord)}`);
   }
 
   const timeUrgent = phase === "playing" && timeLeft <= 10;

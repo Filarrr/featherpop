@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { isCorrectStationAction } from "@/lib/park-hunt-actions";
-import { STATION_COUNT } from "@/lib/park-hunt";
+import { STATION_COUNT, dailyStations, weekKey } from "@/lib/park-hunt";
+import { getGlobalWordBank } from "@/lib/global-content";
 import { StationGrid } from "@/components/park-hunt/StationGrid";
 
 export const metadata = { title: "Park Hunt — Station" };
@@ -8,24 +8,30 @@ export const dynamic = "force-dynamic";
 
 export default async function StationPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ word?: string }>;
 }) {
   const { id } = await params;
+  const sp = await searchParams;
   const raw = parseInt(id, 10);
-  if (!Number.isFinite(raw) || raw < 1 || raw > STATION_COUNT) redirect("/park-hunt");
+  if (!Number.isFinite(raw) || raw < 1 || raw > STATION_COUNT) {
+    redirect("/park-hunt");
+  }
   const stationId = raw - 1; // 0-indexed internally
 
-  const check = await isCorrectStationAction(stationId);
+  // The eagle's word comes from the URL — the single source of truth carried
+  // all the way from Feather Match. We just check, live, whether it's in this
+  // station's list.
+  const word = (sp.word ?? "").toUpperCase().replace(/[^A-Z]/g, "") || null;
+  const bank = await getGlobalWordBank();
+  const list = dailyStations(weekKey(), bank).stations[stationId] ?? [];
+  const matches = Boolean(word) && list.includes(word as string);
 
   return (
     <main className="page parkhunt-page">
-      <StationGrid
-        stationId={stationId}
-        hasTarget={check.hasTarget}
-        matchesStation={check.matches}
-        targetWord={check.targetWord}
-      />
+      <StationGrid stationId={stationId} word={word} matchesStation={matches} />
     </main>
   );
 }
