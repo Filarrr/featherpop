@@ -2,14 +2,17 @@ import Link from "next/link";
 import { getMembership, isMemberActive } from "@/lib/membership";
 import { weekKey, weeklyStations } from "@/lib/park-hunt";
 import { getGlobalWordBank } from "@/lib/global-content";
+import { isOwner } from "@/lib/owner";
 import { PrintableQrPack } from "@/components/print/PrintableQrPack";
 
 export const metadata = { title: "Park Hunt QR Pack" };
 export const dynamic = "force-dynamic";
 
 export default async function ParkHuntQrsPage() {
-  const membership = await getMembership();
-  const member = isMemberActive(membership);
+  const [membership, owner] = await Promise.all([getMembership(), isOwner()]);
+  // Members can print for their own park; the owner can always print (no
+  // subscription needed) to set up stations and hand QRs to families.
+  const member = isMemberActive(membership) || owner;
 
   if (!member) {
     return (
