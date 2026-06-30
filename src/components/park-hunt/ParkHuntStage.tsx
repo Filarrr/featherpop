@@ -39,21 +39,28 @@ export function ParkHuntStage({
   const [target, setTarget] = useState<TargetState | null>(initialTarget);
   const [loading, setLoading] = useState(false);
   const [confettiKey, setConfettiKey] = useState(0);
+  // Whether the read-only fallback fetch has finished (so we know to show the
+  // "play Feather Match" empty state instead of an endless loader).
+  const [checked, setChecked] = useState(Boolean(initialTarget));
   const playedIntroRef = useRef(false);
 
-  // If somehow we have an active child but no target (e.g. the server
-  // call errored), retry from the client as a fallback.
+  // If we arrived without a target (e.g. the assign write hadn't propagated
+  // when the page rendered), retry ONCE from the client. Read-only — never
+  // assigns a word; the eagle word comes only from Feather Match.
   useEffect(() => {
     if (target || !hasActiveChild) return;
     let cancelled = false;
     (async () => {
       const res = await getCurrentTargetAction().catch(() => null);
-      if (cancelled || !res) return;
-      setTarget({
-        word: res.word,
-        stationId: res.stationId,
-        foundToday: res.foundToday ?? 0,
-      });
+      if (cancelled) return;
+      if (res) {
+        setTarget({
+          word: res.word,
+          stationId: res.stationId,
+          foundToday: res.foundToday ?? 0,
+        });
+      }
+      setChecked(true);
     })();
     return () => {
       cancelled = true;
@@ -125,13 +132,32 @@ export function ParkHuntStage({
     );
   }
 
-  if (!target) {
-    // We have an active child but the server didn't return a target yet
-    // (network blip during the page render). Show a soft loading state
-    // and let the client-side fallback effect retry.
+  if (!target && !checked) {
+    // Active child, no target yet — wait for the one-shot fallback fetch.
     return (
       <div className="parkhunt-stage parkhunt-loading">
         <p>Calling the eagle for {activeNickname ?? "your hunter"}…</p>
+      </div>
+    );
+  }
+
+  if (!target) {
+    // No eagle word for today — the child needs to play Feather Match to
+    // earn one. (We never auto-assign here; that caused the race.)
+    return (
+      <div className="parkhunt-stage">
+        <div className="parkhunt-empty">
+          <h2 className="h-display text-3xl">
+            <span className="h-gradient">No word to hunt yet!</span>
+          </h2>
+          <p>
+            Play <strong>Feather Match</strong> — the eagle will give{" "}
+            {activeNickname ?? "you"} a word to find at the park.
+          </p>
+          <Link href="/sort" className="btn btn-gold btn-lg">
+            Play Feather Match
+          </Link>
+        </div>
       </div>
     );
   }

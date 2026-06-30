@@ -191,6 +191,13 @@ export function FeatherSortGame() {
     setEagleWord(null);
   }, [round]);
 
+  // Announce the word once the eagle (server) has chosen it, during reveal.
+  useEffect(() => {
+    if (phase !== "reveal" || !eagleWord) return;
+    setMascotMsg(`Magic word: ${eagleWord}! Find it at the park!`);
+    setMascotNudge((n) => n + 1);
+  }, [phase, eagleWord]);
+
   // Boot music when the game mounts (the PLAY-button tap on home already
   // unlocked the AudioContext, so this just keeps the music going).
   // Cleanup on unmount — without it, the loop persisted into the next
@@ -444,9 +451,7 @@ export function FeatherSortGame() {
           onReveal={() => {
             setPhase("reveal");
             setMood("cheer");
-            setMascotMsg(
-              `Magic word: ${displayWord}! Find it at the park or play now!`,
-            );
+            setMascotMsg("The eagle has a magic word for you!");
             setMascotNudge((n) => n + 1);
           }}
         />
@@ -470,9 +475,9 @@ export function FeatherSortGame() {
                   <Sparkles aria-hidden className="h-4 w-4" />
                   Eagle&apos;s magic word
                 </p>
-                <h2 className="sort-reveal-word">{displayWord}</h2>
-                {!eagleWord && keyWord.hint ? (
-                  <p className="sort-reveal-hint">{keyWord.hint}</p>
+                <h2 className="sort-reveal-word">{eagleWord ?? "…"}</h2>
+                {!eagleWord ? (
+                  <p className="sort-reveal-hint">The eagle is choosing…</p>
                 ) : null}
               </div>
             </div>
@@ -486,9 +491,10 @@ export function FeatherSortGame() {
             <button
               type="button"
               onClick={goParkHunt}
+              disabled={!eagleWord}
               className="btn btn-gold btn-lg btn-pulse"
             >
-              Find it at the park (Scan)
+              {eagleWord ? "Find it at the park (Scan)" : "Calling the eagle…"}
             </button>
             <button type="button" onClick={nextRound} className="btn btn-ghost">
               <RefreshCw aria-hidden className="h-5 w-5" />

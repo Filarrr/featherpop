@@ -12,7 +12,6 @@ import {
   STATION_COUNT,
   dailyStations,
   nextTargetForChild,
-  pickTargetForChild,
   stationOfWord,
   todayKey,
   weekKey,
@@ -53,8 +52,11 @@ async function writeMap(map: ParkHuntMap): Promise<void> {
 }
 
 /**
- * Get (or freshly assign) today's target word for the active child.
- * Returns null if no active child cookie is set.
+ * READ-ONLY. Return today's stored eagle word for the active child, or null.
+ *
+ * Does NOT assign or write — the eagle word is assigned only by Feather
+ * Match's assignEagleWordAction. A second writer here would race that write
+ * and clobber the word the child just earned.
  */
 export async function getCurrentTargetAction(): Promise<
   | {
@@ -84,19 +86,7 @@ export async function getCurrentTargetAction(): Promise<
       foundToday: existing.foundToday ?? 0,
     };
   }
-
-  // New day or new child — pick fresh.
-  const bank = await getGlobalWordBank();
-  const next = pickTargetForChild(childId, date, bank);
-  const stored: StoredTarget = { date, word: next.word, stationId: next.stationId, foundToday: 0 };
-  await writeMap({ ...map, [childId]: stored });
-  return {
-    childId,
-    date: stored.date,
-    word: stored.word,
-    stationId: stored.stationId,
-    foundToday: 0,
-  };
+  return null;
 }
 
 /** Rotate to a fresh target (called after a correct find / "another round"). */
