@@ -2072,6 +2072,80 @@ a { color: inherit; }
   90%      { opacity: 0; }
 }
 
+/* ---------- Global navigation feedback ---------- */
+/* Top progress bar — appears on any internal link tap, clears on arrival. */
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.route-progress::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, var(--purple), var(--magenta), var(--gold));
+  box-shadow: 0 0 8px rgba(177, 59, 255, 0.6);
+}
+.route-progress.is-active {
+  opacity: 1;
+}
+.route-progress.is-active::before {
+  animation: route-progress-grow 6s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+@keyframes route-progress-grow {
+  0% { width: 0; }
+  25% { width: 45%; }
+  55% { width: 72%; }
+  80% { width: 88%; }
+  100% { width: 95%; }
+}
+
+/* Per-tab spinner in the bottom nav while its page loads. */
+.bottom-nav-icon { position: relative; display: inline-grid; place-items: center; }
+.bottom-nav-pending {
+  position: absolute;
+  inset: -5px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  opacity: 0;
+}
+.bottom-nav-pending.is-pending {
+  opacity: 0.85;
+  animation: scan-spin 0.7s linear infinite;
+}
+
+/* Route-level loading skeleton (loading.tsx). */
+.page-loading {
+  min-height: 50vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1rem;
+}
+.page-loading-spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 4px solid color-mix(in srgb, var(--purple) 25%, white);
+  border-top-color: var(--purple);
+  animation: scan-spin 0.8s linear infinite;
+}
+.page-loading-label {
+  margin: 0;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
 /* ---------- Park Hunt station scanner (/scan) ----------
    Self-contained classes (scan-*) so the layout never collides with the
    StationGrid word grid or the eagle-stage mascot. Mobile-first: camera on

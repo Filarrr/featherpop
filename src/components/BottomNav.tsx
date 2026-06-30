@@ -1,8 +1,20 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
+
+// Renders inside a <Link>, so it can read that link's pending state and show
+// a small spinner on the tapped tab while the next page loads.
+function NavPending() {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      aria-hidden
+      className={`bottom-nav-pending ${pending ? "is-pending" : ""}`}
+    />
+  );
+}
 
 type LinkDef = {
   href: string;
@@ -46,7 +58,10 @@ export function BottomNav() {
               link.featured ? "is-featured" : ""
             }`}
           >
-            <Icon aria-hidden className="h-5 w-5" />
+            <span className="bottom-nav-icon">
+              <Icon aria-hidden className="h-5 w-5" />
+              <NavPending />
+            </span>
             <span className="bottom-nav-label">
               {link.prefix ? (
                 <small className="bottom-nav-prefix">{link.prefix}</small>

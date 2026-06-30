@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { BrandBar } from "@/components/BrandBar";
 import { BottomNav } from "@/components/BottomNav";
+import { TopLoadingBar } from "@/components/TopLoadingBar";
 import { AudioNavCleanup } from "@/components/AudioNavCleanup";
 import { NavGuardProvider } from "@/components/NavGuardProvider";
 import { ActiveChildProvider } from "@/lib/use-active-child";
@@ -80,6 +81,7 @@ export default async function RootLayout({
             }}
           >
             <NavGuardProvider>
+              <TopLoadingBar />
               <div className="app-shell">
                 <BrandBar />
                 {children}
