@@ -10,7 +10,7 @@ import "server-only";
 import { clerkClient, currentUser } from "@clerk/nextjs/server";
 import type { User } from "@clerk/nextjs/server";
 
-const DEFAULT_OWNER_EMAILS = "admin@msfeatherpop.com";
+const DEFAULT_OWNER_EMAILS = "theanglroom@gmail.com";
 
 /** Lower-cased list of emails allowed into the owner control room. */
 export function ownerEmails(): string[] {
