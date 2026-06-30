@@ -166,29 +166,17 @@ export function FeatherSortGame() {
   // The server-assigned eagle word for THIS round. Null until the assign
   // resolves; we fall back to keyWord.word for display until then.
   const [eagleWord, setEagleWord] = useState<string | null>(null);
+  // Guards the once-per-round "win → fetch word → launch bird" sequence.
+  const summoningRef = useRef(false);
 
-  // The instant the round is won (bird phase begins), ask the server to pick
-  // a word from this week's actual station list. It's carried through the URL
-  // (no stored target), so it can never be overwritten before the kid scans.
-  useEffect(() => {
-    if (phase !== "bird") return;
-    let cancelled = false;
-    (async () => {
-      const res = await pickEagleWordAction(keyWord.length).catch(() => null);
-      if (!cancelled && res?.word) setEagleWord(res.word);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [phase, keyWord.length]);
-
-  // What the kid actually sees / hunts. Always equals the stored target once
-  // the server responds.
+  // What the kid sees / hunts. Set before the bird launches (see the win
+  // handler), so the parchment never shows a placeholder.
   const displayWord = eagleWord ?? keyWord.word;
 
-  // Fresh round → forget the previous round's assigned word.
+  // Fresh round → forget the previous round's word and re-arm the summon.
   useEffect(() => {
     setEagleWord(null);
+    summoningRef.current = false;
   }, [round]);
 
   // Announce the word once the eagle (server) has chosen it, during reveal.
@@ -264,24 +252,35 @@ export function FeatherSortGame() {
 
   const allPlaced = feathers.every((f) => f.placed !== null);
   useEffect(() => {
-    if (phase === "playing" && allPlaced && feathers.length > 0) {
-      setPhase("bird");
-      setMood("wow");
-      setMascotMsg("Wonderful! The eagle is coming with a magic word!");
-      setMascotNudge((n) => n + 1);
-      setConfettiKey((k) => k + 1);
-      pop();
-      window.setTimeout(() => childCheer(), 200);
-      window.setTimeout(() => birdWhoosh(), 500);
-      window.setTimeout(() => eagleVoice(), 900); // Strudelay! Strudelay!
-      window.setTimeout(() => fanfare(), 2000);
-      window.setTimeout(() => wordReveal(), 3000);
-      // "Yes! Feather tag up and let's find the word!" — the eagle's
-      // ask-to-go-find-it line. Plays after the parchment reveals so
-      // the kid knows the word's the next mission.
-      window.setTimeout(() => eagleCheers(), 4200);
+    if (
+      phase !== "playing" ||
+      !allPlaced ||
+      feathers.length === 0 ||
+      summoningRef.current
+    ) {
+      return;
     }
-  }, [allPlaced, phase, feathers.length]);
+    summoningRef.current = true;
+    setMood("wow");
+    setMascotMsg("Wonderful! The eagle is coming with a magic word!");
+    setMascotNudge((n) => n + 1);
+    setConfettiKey((k) => k + 1);
+    pop();
+    window.setTimeout(() => childCheer(), 200);
+    // Fetch the eagle's word FIRST, then launch the bird — so the parchment
+    // banner shows the real word from the very first frame (no placeholder
+    // flicker). The word stays in component state and rides the URL onward.
+    (async () => {
+      const res = await pickEagleWordAction(keyWord.length).catch(() => null);
+      setEagleWord(res?.word ?? keyWord.word);
+      setPhase("bird");
+      window.setTimeout(() => birdWhoosh(), 300);
+      window.setTimeout(() => eagleVoice(), 700); // Strudelay! Strudelay!
+      window.setTimeout(() => fanfare(), 1800);
+      window.setTimeout(() => wordReveal(), 2800);
+      window.setTimeout(() => eagleCheers(), 4000);
+    })();
+  }, [allPlaced, phase, feathers.length, keyWord.length, keyWord.word]);
 
   const onDragStart = useCallback((e: DragStartEvent) => {
     setActiveId(String(e.active.id));
