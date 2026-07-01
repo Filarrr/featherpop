@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { STATION_COUNT, dailyStations, weekKey } from "@/lib/park-hunt";
 import { getGlobalWordBank } from "@/lib/global-content";
+import { readPlayGate } from "@/lib/play-limits";
 import { StationGrid } from "@/components/park-hunt/StationGrid";
 
 export const metadata = { title: "Park Hunt — Station" };
@@ -25,13 +26,25 @@ export default async function StationPage({
   // all the way from Feather Match. We just check, live, whether it's in this
   // station's list.
   const word = (sp.word ?? "").toUpperCase().replace(/[^A-Z]/g, "") || null;
-  const bank = await getGlobalWordBank();
+  const [bank, gate] = await Promise.all([
+    getGlobalWordBank(),
+    readPlayGate("parkhunt").catch(() => ({
+      isMember: false,
+      remaining: 3,
+      locked: false,
+    })),
+  ]);
   const list = dailyStations(weekKey(), bank).stations[stationId] ?? [];
   const matches = Boolean(word) && list.includes(word as string);
 
   return (
     <main className="page parkhunt-page">
-      <StationGrid stationId={stationId} word={word} matchesStation={matches} />
+      <StationGrid
+        stationId={stationId}
+        word={word}
+        matchesStation={matches}
+        locked={gate.locked}
+      />
     </main>
   );
 }

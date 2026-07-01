@@ -18,6 +18,7 @@ import {
 } from "@/lib/park-hunt";
 import { recordWordsFoundAction } from "@/lib/child-progress-actions";
 import { getGlobalWordBank } from "@/lib/global-content";
+import { tryConsumePlay } from "@/lib/play-limits";
 
 interface StoredTarget {
   date: string;
@@ -346,7 +347,7 @@ export async function findWordAtStationAction(args: {
         wordsInEgg: number;
       } | null;
     }
-  | { ok: false; reason: string }
+  | { ok: false; reason: string; limit?: boolean }
 > {
   const word = (args.word || "").toUpperCase().replace(/[^A-Z]/g, "");
   if (!word) return { ok: false, reason: "No word." };
@@ -354,6 +355,12 @@ export async function findWordAtStationAction(args: {
   const list = dailyStations(weekKey(), bank).stations[args.stationId] ?? [];
   if (!list.includes(word)) {
     return { ok: false, reason: "Not at this station." };
+  }
+
+  // Free tier: 3 Park Hunt finds/day. Members unlimited.
+  const gate = await tryConsumePlay("parkhunt");
+  if (!gate.allowed) {
+    return { ok: false, reason: "Daily Park Hunt limit reached.", limit: true };
   }
 
   let hatched: import("@/lib/child-profile").HatchedEntry | null = null;

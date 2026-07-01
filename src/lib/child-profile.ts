@@ -91,6 +91,14 @@ export interface ChildProgress {
   letterPopBest?: number;
   // How many Letter Pop rounds this child has finished (for stats).
   letterPopRounds?: number;
+  // Free-tier daily play counters, per game, reset each day. Members are
+  // unlimited and never touch this.
+  dailyPlays?: {
+    date: string; // yyyy-mm-dd
+    sort?: number;
+    parkhunt?: number;
+    letterpop?: number;
+  };
   egg?: EggState;
   hatched?: HatchedEntry[];
   freeSpins?: number;

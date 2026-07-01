@@ -28,12 +28,14 @@ export function StationGrid({
   stationId,
   word,
   matchesStation,
+  locked = false,
 }: {
   stationId: number; // 0-indexed (display +1)
   word: string | null;
   matchesStation: boolean;
+  locked?: boolean;
 }) {
-  const [phase, setPhase] = useState<"checking" | "won">("checking");
+  const [phase, setPhase] = useState<"checking" | "won" | "limit">("checking");
   const [confettiKey, setConfettiKey] = useState(0);
   const [hatched, setHatched] = useState<HatchedEntry | null>(null);
   const [crackMilestone, setCrackMilestone] = useState<{
@@ -46,12 +48,16 @@ export function StationGrid({
   const awardedRef = useRef(false);
 
   useEffect(() => {
-    if (!word || !matchesStation || awardedRef.current) return;
+    if (!word || !matchesStation || locked || awardedRef.current) return;
     awardedRef.current = true;
     (async () => {
       const res = await findWordAtStationAction({ word, stationId }).catch(
         () => null,
       );
+      if (res && !res.ok && res.limit) {
+        setPhase("limit");
+        return;
+      }
       setPhase("won");
       setConfettiKey((k) => k + 1);
       pop();
@@ -64,7 +70,7 @@ export function StationGrid({
         else if (res.crackJustCrossed) setCrackMilestone(res.crackJustCrossed);
       }
     })();
-  }, [word, matchesStation, stationId]);
+  }, [word, matchesStation, stationId, locked]);
 
   // No word in the URL → the child hasn't been handed one by the eagle.
   if (!word) {
@@ -116,6 +122,31 @@ export function StationGrid({
           >
             <RefreshCw aria-hidden className="h-5 w-5" />
             Back to the Eagle
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Correct station BUT the free daily Park Hunt limit is used up.
+  if (locked || phase === "limit") {
+    return (
+      <div className="parkhunt-station parkhunt-station-empty">
+        <h2 className="h-display text-3xl">
+          <span className="h-gradient">You found it! 🎉</span>
+        </h2>
+        <p>
+          <strong>{word}</strong> was here — but you&apos;ve used your{" "}
+          <strong>3 free Park Hunts</strong> today. Subscribe for{" "}
+          <strong>$9.99/month</strong> to hunt unlimited and claim prizes.
+        </p>
+        <div className="parkhunt-station-actions">
+          <Link href="/membership" className="btn btn-gold btn-lg">
+            <Sparkles aria-hidden className="h-5 w-5" />
+            See membership
+          </Link>
+          <Link href="/" className="btn btn-ghost">
+            Home
           </Link>
         </div>
       </div>
