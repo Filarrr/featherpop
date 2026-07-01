@@ -14,4 +14,7 @@ export function stripe(): Stripe {
 
 export const MEMBERSHIP_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID ?? "";
 export const TRIAL_DAYS = 3;
-export const MEMBERSHIP_PRICE_LABEL = "$23.99/month";
+// Current live plan. The $23.99 "Premium" tier (meet & greet, photos, live
+// experiences, prizes) is marketed as Coming Soon, not chargeable yet.
+export const MEMBERSHIP_PRICE_LABEL = "$9.99/month";
+export const PREMIUM_PRICE_LABEL = "$23.99/month";

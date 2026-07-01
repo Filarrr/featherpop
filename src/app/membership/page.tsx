@@ -10,14 +10,15 @@ import {
   Sparkles,
 } from "lucide-react";
 import { CheckoutButton } from "@/components/CheckoutButton";
-import { MEMBERSHIP_PRICE_LABEL } from "@/lib/stripe";
+import { MailingListForm } from "@/components/MailingListForm";
+import { MEMBERSHIP_PRICE_LABEL, PREMIUM_PRICE_LABEL } from "@/lib/stripe";
 import { getMembership, isMemberActive } from "@/lib/membership";
 
 export const metadata = { title: "Adventure Membership" };
 
 const UNLOCKS = [
   { icon: MapPin,   label: "Unlimited Park Hunt Adventures", color: "linear-gradient(135deg, #a76bff, #6a2dff)" },
-  { icon: QrCode,   label: "6 Printable Adventure Stations", color: "linear-gradient(135deg, #34e3a4, #1ea672)" },
+  { icon: QrCode,   label: "5 Printable Adventure Stations", color: "linear-gradient(135deg, #34e3a4, #1ea672)" },
   { icon: BookOpen, label: "Daily Word Hunts",               color: "linear-gradient(135deg, #ff9a3a, #ff6b3a)" },
   { icon: Feather,  label: "Feather Rewards",                color: "linear-gradient(135deg, #ff7ab8, #ff2d8e)" },
   { icon: Egg,      label: "Egg Hatching",                   color: "linear-gradient(135deg, #b13bff, #6a2dff)" },
@@ -101,19 +102,21 @@ export default async function MembershipPage() {
         <section className="membership-coming-soon">
           <span className="kicker">
             <Sparkles aria-hidden className="h-4 w-4" />
-            Coming Soon
+            Coming Soon · Premium {PREMIUM_PRICE_LABEL}
           </span>
           <h3>Join the VIP Interest List</h3>
           <ul>
-            <li><span aria-hidden>🎤</span> Meet Miss Feather Pop</li>
-            <li><span aria-hidden>📖</span> Story Times</li>
-            <li><span aria-hidden>📸</span> Photo Opportunities</li>
-            <li><span aria-hidden>🎉</span> Live Adventures</li>
-            <li><span aria-hidden>⭐</span> Special Events</li>
+            <li><span aria-hidden>🎤</span> Meet &amp; greet Miss Feather Pop</li>
+            <li><span aria-hidden>📸</span> Photos with Miss Feather Pop</li>
+            <li><span aria-hidden>🎉</span> Live experiences</li>
+            <li><span aria-hidden>🎁</span> Real prizes</li>
+            <li><span aria-hidden>⭐</span> Special events</li>
           </ul>
           <p className="membership-coming-soon-tag">
-            No payment required now — we'll email you when these launch.
+            No payment required now — join our mailing list and we&apos;ll
+            email you when Premium launches.
           </p>
+          <MailingListForm />
         </section>
       </div>
     </main>
