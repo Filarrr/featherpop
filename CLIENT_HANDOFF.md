@@ -32,33 +32,27 @@ numbered steps, and we'll handle everything on our end.
 - **Printables** — coloring pages (your artwork is in!), reward certificates,
   and the station QR pack — all ready to print.
 
-**Memberships**
-- The **$23.99/month membership with a 3-day free trial** is built in.
-- It just needs to be connected to *your* payment account (Step 1 below) so
-  the money goes to you.
+**How the plans work**
+- **Free:** kids can play the games (Feather Match, Letter Pop) as much as
+  they like, and get **3 Park Hunt rounds a day**.
+- **Membership — $9.99/month:** unlocks **all the rewards/prizes** and
+  **unlimited Park Hunt**. (Built in — just needs your Stripe connected.)
+- **Premium — $23.99/month (Coming Soon):** meet & greet with Miss Feather
+  Pop, photos, live experiences, and real prizes. Shown in the app as
+  "Coming Soon" with a mailing-list signup so interested families can be
+  notified — not charged yet.
 
 ---
 
-## 📋 What we need from you (3 things)
+## 📋 What we need from you
 
-### 1) Stripe — so you can collect membership payments
-Stripe is the service that securely handles card payments and pays the money
-into your bank. **You should own this account** (it's your money).
+*(Stripe is already done — really just #2 below, plus a quick confirm on #3.)*
 
-Please:
-1. Go to **https://stripe.com** and click **Start now / Sign up**.
-2. Use **your business email** and create the account.
-3. Fill in your **business details** and **bank account** (this is where
-   member payments land). Stripe will guide you.
-4. Once that's done, **tell us it's ready** — we'll get on a quick call (or
-   you can add us as a team member) to finish connecting it to the app.
-   - *We only need two "keys" from Stripe to connect it. We'll show you the
-     exact screen, or you can invite us as a team member so we grab them
-     ourselves — whichever you prefer. **Never email or text the keys; share
-     them through the secure method we'll send.***
-
-> You don't need to create products or prices — we'll set up the
-> $23.99/month plan with the 3-day trial for you.
+### 1) Stripe — ✅ Done, thank you!
+You've created the Stripe account and added us as a team member — perfect.
+**Nothing more needed from you here.** We'll finish connecting it and set up
+the **$9.99/month** plan. Just make sure your Stripe **business details and
+bank account** are fully filled in so payouts can reach you.
 
 ### 2) Your website / domain — so the app lives on your address
 You already own **msfeatherpop.com** (on Wix). We'd like families to reach the

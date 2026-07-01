@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, Lock, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActiveChild } from "@/lib/use-active-child";
+import { useMembership } from "@/lib/use-membership";
 import { claimRewardAction } from "@/lib/child-progress-actions";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { RewardArt } from "@/components/rewards/RewardArt";
+import { EggWidget } from "@/components/eggs/EggWidget";
 import { childCheer, fanfare, pop, wordReveal } from "@/lib/audio";
 
 type Tier = "pink" | "blue" | "purple" | "orange";
@@ -61,12 +63,18 @@ const ULTIMATE_PRIZES = [
 export function RewardsClient() {
   const router = useRouter();
   const { progress, active } = useActiveChild();
+  const { isMember } = useMembership();
   const featherPop = progress.featherPop;
 
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function claim(reward: ShopReward) {
+    // Rewards are a membership benefit — free families browse but can't claim.
+    if (!isMember) {
+      router.push("/membership?from=/rewards");
+      return;
+    }
     if (featherPop < reward.cost || pending) return;
     setPending(reward.id);
     setError(null);
@@ -118,6 +126,22 @@ export function RewardsClient() {
         </div>
       </header>
 
+      {/* Magical egg — hatching lives here on the prizes page too. */}
+      <section className="prizes-egg-section">
+        <EggWidget />
+      </section>
+
+      {!isMember ? (
+        <Link href="/membership?from=/rewards" className="prizes-sub-banner">
+          <Lock aria-hidden className="h-5 w-5" />
+          <span>
+            <strong>Rewards are for members.</strong> Subscribe for $9.99/month
+            to claim prizes &amp; unlimited Park Hunt.
+          </span>
+          <ChevronRight aria-hidden className="h-5 w-5" />
+        </Link>
+      ) : null}
+
       <section className="prizes-choose-v2">
         <h1>
           <span className="prizes-gift-emoji" aria-hidden>
@@ -156,10 +180,15 @@ export function RewardsClient() {
                 <button
                   type="button"
                   onClick={() => claim(r)}
-                  disabled={!canAfford || pending === r.id}
+                  disabled={isMember && (!canAfford || pending === r.id)}
                   className="prize-card-cta"
                 >
-                  {pending === r.id ? (
+                  {!isMember ? (
+                    <>
+                      <Lock aria-hidden className="h-4 w-4" />
+                      <span>Subscribe to unlock</span>
+                    </>
+                  ) : pending === r.id ? (
                     "Unlocking…"
                   ) : canAfford ? (
                     <>

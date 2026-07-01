@@ -407,6 +407,16 @@ export async function claimRewardAction(
   const user = await currentUser();
   if (!user) return { ok: false, reason: "Not signed in." };
 
+  // Rewards are a membership benefit — free families can browse but not claim.
+  const membership = (user.publicMetadata?.membership ?? {}) as {
+    status?: string;
+  };
+  const isMember =
+    membership.status === "active" || membership.status === "trialing";
+  if (!isMember) {
+    return { ok: false, reason: "Subscribe to unlock rewards." };
+  }
+
   const map = readMap(user.privateMetadata);
   const prev = map[childId] ?? defaultChildProgress;
 

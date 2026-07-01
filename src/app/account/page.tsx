@@ -20,11 +20,20 @@ export default async function AccountPage() {
           Plan: {MEMBERSHIP_PRICE_LABEL} · status: <strong>{m.status}</strong>
           {trialEnds ? <> · trial ends {trialEnds}</> : null}
         </p>
-        {!active ? (
+        {active ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a href="/print/park-hunt-qrs" className="btn btn-gold btn-sm">
+              🖨️ Print Park Hunt QR codes
+            </a>
+            <a href="/print" className="btn btn-ghost btn-sm">
+              Printable quest pack
+            </a>
+          </div>
+        ) : (
           <a href="/membership" className="btn btn-gold btn-sm mt-4">
             See plans
           </a>
-        ) : null}
+        )}
       </section>
 
       <section className="grid place-items-center">
