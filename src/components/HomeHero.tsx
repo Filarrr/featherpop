@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { Play, Sparkles } from "lucide-react";
 import { useActiveChild } from "@/lib/use-active-child";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
-import { EggWidget } from "@/components/eggs/EggWidget";
 import {
   isMusicEnabled,
   pop,
@@ -101,8 +100,6 @@ export function HomeHero() {
         </span>
         <span className="play-button-text">PLAY</span>
       </button>
-
-      <EggWidget />
 
       <div className="home-secondary-links">
         <Link href="/progress" className="home-secondary-link">
