@@ -10,6 +10,7 @@ import { claimRewardAction } from "@/lib/child-progress-actions";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { RewardArt } from "@/components/rewards/RewardArt";
 import { EggWidget } from "@/components/eggs/EggWidget";
+import { MailingListForm } from "@/components/MailingListForm";
 import { childCheer, fanfare, pop, wordReveal } from "@/lib/audio";
 
 type Tier = "pink" | "blue" | "purple" | "orange";
@@ -238,6 +239,27 @@ export function RewardsClient() {
           Only the most dedicated readers earn the Golden Feather.{" "}
           <strong>You can do it!</strong>
         </p>
+      </section>
+
+      {/* Premium — Coming Soon. Surfaced here on the Prizes tab where families
+          actually look, with the interest-list signup. */}
+      <section className="prizes-premium">
+        <span className="prizes-premium-band">
+          <Sparkles aria-hidden className="h-3 w-3" />
+          COMING SOON · PREMIUM $23.99/mo
+        </span>
+        <h2 className="prizes-premium-title">The VIP Experience</h2>
+        <ul className="prizes-premium-list">
+          <li><span aria-hidden>🎤</span> Meet &amp; greet Miss Feather Pop</li>
+          <li><span aria-hidden>📸</span> Photos with Miss Feather Pop</li>
+          <li><span aria-hidden>🎉</span> Live experiences</li>
+          <li><span aria-hidden>🎁</span> Real prizes</li>
+        </ul>
+        <p className="prizes-premium-tag">
+          Not on sale yet — join the list and we&apos;ll email you the moment
+          it launches.
+        </p>
+        <MailingListForm />
       </section>
 
       {error ? (

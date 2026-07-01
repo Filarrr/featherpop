@@ -13,6 +13,7 @@ import { cache } from "react";
 import { clerkClient } from "@clerk/nextjs/server";
 import {
   Challenge,
+  MediaItem,
   Reward,
   defaultChallenges,
   defaultRewards,
@@ -24,6 +25,8 @@ export interface StoredGlobalContent {
   rewards?: Reward[];
   challenges?: Challenge[];
   wordBank?: string[];
+  videos?: MediaItem[];
+  songs?: MediaItem[];
 }
 
 export interface GlobalContent {
@@ -89,4 +92,14 @@ export async function getGlobalRewards(): Promise<Reward[]> {
 export async function getGlobalChallenges(): Promise<Challenge[]> {
   const { content } = await getStoredGlobalContent();
   return content.challenges?.length ? content.challenges : defaultChallenges;
+}
+
+export async function getGlobalVideos(): Promise<MediaItem[]> {
+  const { content } = await getStoredGlobalContent();
+  return Array.isArray(content.videos) ? content.videos : [];
+}
+
+export async function getGlobalSongs(): Promise<MediaItem[]> {
+  const { content } = await getStoredGlobalContent();
+  return Array.isArray(content.songs) ? content.songs : [];
 }

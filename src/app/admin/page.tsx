@@ -190,6 +190,16 @@ export default async function AdminPage() {
           </div>
         </Link>
 
+        <Link href="/admin/media" className="card admin-action-card">
+          <div className="admin-action-icon" style={{ background: "linear-gradient(135deg, #4cc4ff, #6a2dff)" }}>
+            <Sparkles aria-hidden className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="h-display mt-2 text-2xl">Videos &amp; Songs</h2>
+            <p className="text-[var(--ink-soft)]">Add TikTok/YouTube links kids watch &amp; listen to.</p>
+          </div>
+        </Link>
+
         <Link href="/admin/challenges" className="card admin-action-card">
           <div className="admin-action-icon" style={{ background: "linear-gradient(135deg, #ff7ab8, #ff2d8e)" }}>
             <BookOpenCheck aria-hidden className="h-6 w-6" />

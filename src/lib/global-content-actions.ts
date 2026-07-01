@@ -6,9 +6,13 @@
 
 import { revalidatePath } from "next/cache";
 import { clerkClient } from "@clerk/nextjs/server";
-import { Challenge, Reward } from "@/lib/game-data";
+import { Challenge, MediaItem, Reward } from "@/lib/game-data";
 import { isOwner, getOwnerUserId } from "@/lib/owner";
-import { StoredGlobalContent } from "@/lib/global-content";
+import {
+  StoredGlobalContent,
+  getGlobalVideos,
+  getGlobalSongs,
+} from "@/lib/global-content";
 
 async function writeGlobal(patch: Partial<StoredGlobalContent>): Promise<void> {
   if (!(await isOwner())) throw new Error("Forbidden");
@@ -78,4 +82,48 @@ export async function saveGlobalChallengesAction(
   } catch (err) {
     return { ok: false, reason: (err as Error).message };
   }
+}
+
+function cleanMedia(items: MediaItem[]): MediaItem[] {
+  return items
+    .map((m) => ({
+      id: m.id,
+      title: (m.title || "").trim().slice(0, 120),
+      url: (m.url || "").trim().slice(0, 500),
+    }))
+    .filter((m) => m.title && /^https?:\/\//i.test(m.url));
+}
+
+export async function saveGlobalVideosAction(
+  videos: MediaItem[],
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  try {
+    await writeGlobal({ videos: cleanMedia(videos) });
+    revalidatePath("/admin/media");
+    revalidatePath("/story");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, reason: (err as Error).message };
+  }
+}
+
+export async function saveGlobalSongsAction(
+  songs: MediaItem[],
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  try {
+    await writeGlobal({ songs: cleanMedia(songs) });
+    revalidatePath("/admin/media");
+    revalidatePath("/music");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, reason: (err as Error).message };
+  }
+}
+
+/** Public reads so the client Story/Music pages can list the owner's media. */
+export async function getVideosAction(): Promise<MediaItem[]> {
+  return getGlobalVideos();
+}
+export async function getSongsAction(): Promise<MediaItem[]> {
+  return getGlobalSongs();
 }

@@ -14,6 +14,7 @@ import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import type { FeatherPopPose } from "@/components/MsFeatherPopAvatar";
 import { speak, stopSpeaking } from "@/lib/audio";
 import { DailyBonusCard } from "@/components/DailyBonusCard";
+import { MediaGrid } from "@/components/MediaGrid";
 
 interface Chapter {
   title: string;
@@ -94,6 +95,7 @@ export default function StoryPage() {
   return (
     <main className="page">
       <DailyBonusCard kind="video" />
+      <MediaGrid kind="video" />
       <article
         className="story-card"
         style={{ ["--scene" as string]: ch.scene }}

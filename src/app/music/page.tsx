@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Home, Music, Pause, Play, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { DailyBonusCard } from "@/components/DailyBonusCard";
+import { MediaGrid } from "@/components/MediaGrid";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import {
   isMusicEnabled,
@@ -45,6 +46,7 @@ export default function MusicPage() {
   return (
     <main className="page">
       <DailyBonusCard kind="music" />
+      <MediaGrid kind="song" />
 
       <section className="card music-card">
         <span className="kicker">
