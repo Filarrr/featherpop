@@ -16,6 +16,8 @@ import { isMemberActive, type MembershipStatus } from "@/lib/membership";
 import { weekKey, weeklyStations } from "@/lib/park-hunt";
 import { isOwner, ownerEmails } from "@/lib/owner";
 import { getGlobalWordBank } from "@/lib/global-content";
+import { getMailingList } from "@/lib/mailing-list";
+import { MailingListPanel } from "@/components/admin/MailingListPanel";
 import type { ChildProfile, ChildProgress } from "@/lib/child-profile";
 import { TestSeedCard } from "@/components/admin/TestSeedCard";
 
@@ -75,6 +77,7 @@ export default async function AdminPage() {
   const week = weekKey();
   const bank = await getGlobalWordBank();
   const { stations } = weeklyStations(week, bank);
+  const mailingList = await getMailingList();
 
   // Pull every family. limit 100 covers the MVP; if there are more we flag it.
   const client = await clerkClient();
@@ -270,6 +273,22 @@ export default async function AdminPage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* VIP / Premium interest list */}
+      <section className="admin-section">
+        <header className="admin-section-head">
+          <span className="kicker">
+            <Crown aria-hidden className="h-4 w-4" />
+            Premium interest
+          </span>
+          <h2 className="h-display text-2xl">VIP wishlist</h2>
+          <p className="text-[var(--ink-soft)]">
+            Emails collected from the &ldquo;Coming Soon · Premium&rdquo; signup
+            on the membership page.
+          </p>
+        </header>
+        <MailingListPanel emails={mailingList} />
       </section>
 
       <TestSeedCard />
