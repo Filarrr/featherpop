@@ -1,4 +1,4 @@
-# Stripe go-live runbook
+ # Stripe go-live runbook
 
 The app's code is ready. To turn on live payments you need to set **4
 environment variables in Vercel** and create **2 things in Stripe** (a price

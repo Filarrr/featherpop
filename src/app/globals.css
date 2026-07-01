@@ -7474,6 +7474,26 @@ a { color: inherit; }
     width: 100%;
   }
   .qr-card:last-of-type { page-break-after: auto; break-after: auto; }
+  /* Gradient (background-clip:text) goes invisible in print because browsers
+     drop backgrounds — force the big station number + brand to a solid ink
+     color so they actually appear on paper. */
+  .qr-card-title {
+    background: none !important;
+    color: var(--purple) !important;
+    -webkit-text-fill-color: var(--purple) !important;
+  }
+  .qr-card-brand,
+  .qr-card-kicker,
+  .qr-card-station-label,
+  .qr-card-scan,
+  .qr-card-foot { color: #1a0f3a !important; }
+  /* Print the card's border + subtle tints instead of a bare white page. */
+  .qr-card {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    border: 3px solid #1a0f3a !important;
+    justify-content: center;
+  }
 }
 
 /* ============================================================
