@@ -23,7 +23,7 @@ export default async function ParkHuntQrsPage() {
             <span className="h-gradient">Printable Park Hunt QRs</span>
           </h1>
           <p className="mt-2 text-[var(--ink-soft)]">
-            Print the 5 station QRs to take Park Hunt to any park, backyard,
+            Print the 6 station QRs to take Park Hunt to any park, backyard,
             or birthday party. This pack is part of Adventure Membership.
           </p>
           <ul className="mt-4 grid gap-2">

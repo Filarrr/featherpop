@@ -35,7 +35,8 @@ export const metadata: Metadata = {
   description:
     "Scan a QR, get a magical mission, collect feathers. A bright literacy + adventure app for kids ages 3–11.",
   applicationName: "Ms. Feather Pop",
-  icons: { icon: "/media/logo-dark.jpeg" },
+  // Favicon + app icons come from src/app/{favicon.ico,icon.png,apple-icon.png}
+  // (Next file conventions) — no manual override needed.
   openGraph: {
     title: "Ms. Feather Pop · Feather Missions",
     description:

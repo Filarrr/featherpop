@@ -166,7 +166,7 @@ export default async function AdminPage() {
           </div>
           <div>
             <h2 className="h-display mt-2 text-2xl">Print station QRs</h2>
-            <p className="text-[var(--ink-soft)]">Print 5 station QRs with this week&apos;s word lists.</p>
+            <p className="text-[var(--ink-soft)]">Print 6 station QRs with this week&apos;s word lists.</p>
           </div>
         </Link>
 
@@ -218,7 +218,7 @@ export default async function AdminPage() {
             <MapPin aria-hidden className="h-4 w-4" />
             This week&apos;s Park Hunt words
           </span>
-          <h2 className="h-display text-2xl">5 stations × 20 words = 100</h2>
+          <h2 className="h-display text-2xl">6 stations × 20 words = 120</h2>
           <p className="text-[var(--ink-soft)]">
             Same set every family sees this week. Rotates automatically every Monday.
           </p>

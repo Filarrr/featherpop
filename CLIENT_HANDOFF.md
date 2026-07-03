@@ -16,7 +16,7 @@ numbered steps, and we'll handle everything on our end.
   eagle reveals a secret word.
 - **Park Hunt** — kids take that word to the park and scan the QR stations.
   When they scan the station that lists their word, they pass and earn a
-  feather. (5 stations, 20 words each = 100 words a week.)
+  feather. (6 stations, 20 words each = 120 words a week.)
 - **Letter Pop** — kids spell the word for bonus feathers, and now there's a
   **personal high score** so they keep trying to beat their best.
 - **Eggs & rewards** — feathers crack and hatch eggs, unlock prizes, and the

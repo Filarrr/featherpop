@@ -124,7 +124,7 @@ $9.99/mo price, add the 4 env vars, and create a webhook to
 ## 10. Owner / admin guide
 Sign in with an `OWNER_EMAILS` account → you're routed straight to **`/admin`**
 (owners never create a child). From there:
-- **Print station QRs** (`/print/park-hunt-qrs`) — print the 5 QR signs.
+- **Print station QRs** (`/print/park-hunt-qrs`) — print the 6 QR signs.
 - **Park Hunt words** (`/admin/park-hunt`) — edit the weekly word bank.
 - **Rewards** (`/admin/rewards`) — add/edit prizes.
 - **Videos & Songs** (`/admin/media`) — paste TikTok/YouTube links kids see on

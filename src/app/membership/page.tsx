@@ -18,7 +18,7 @@ export const metadata = { title: "Adventure Membership" };
 
 const UNLOCKS = [
   { icon: MapPin,   label: "Unlimited Park Hunt Adventures", color: "linear-gradient(135deg, #a76bff, #6a2dff)" },
-  { icon: QrCode,   label: "5 Printable Adventure Stations", color: "linear-gradient(135deg, #34e3a4, #1ea672)" },
+  { icon: QrCode,   label: "6 Printable Adventure Stations", color: "linear-gradient(135deg, #34e3a4, #1ea672)" },
   { icon: BookOpen, label: "Daily Word Hunts",               color: "linear-gradient(135deg, #ff9a3a, #ff6b3a)" },
   { icon: Feather,  label: "Feather Rewards",                color: "linear-gradient(135deg, #ff7ab8, #ff2d8e)" },
   { icon: Egg,      label: "Egg Hatching",                   color: "linear-gradient(135deg, #b13bff, #6a2dff)" },

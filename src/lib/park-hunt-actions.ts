@@ -221,7 +221,7 @@ export async function submitFoundWordAction(args: {
  * library and stores it for the active child so /park-hunt picks it up.
  *
  * Per the client spec: "If the eagle brings star, I will find that
- * 'star' word among the 5 QR stations." This is the wire that links
+ * 'star' word among the 6 QR stations." This is the wire that links
  * the two games.
  *
  * Returns ok:false (silently) if the word isn't in the bank. Sort

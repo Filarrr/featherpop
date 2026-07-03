@@ -6,7 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { appBaseUrl } from "@/lib/game-data";
 
 /**
- * 5 printable station cards, one per page. Each card is a clean, kid-friendly
+ * 6 printable station cards, one per page. Each card is a clean, kid-friendly
  * sign: brand, big station name, the QR (encoding the station's app URL so any
  * phone camera opens it), and a little feather flourish. The words are NOT
  * printed — they live in the app and rotate weekly; the physical sign never
@@ -25,7 +25,7 @@ export function PrintableQrPack({
         <div className="card">
           <span className="kicker">Members · Printable</span>
           <h1 className="h-display mt-2 text-3xl">
-            <span className="h-gradient">Park Hunt — 5 Station QRs</span>
+            <span className="h-gradient">Park Hunt — 6 Station QRs</span>
           </h1>
           <p className="mt-2 text-[var(--ink-soft)]">
             Print these on US Letter or A4 paper. Each station is its own page,
@@ -40,7 +40,7 @@ export function PrintableQrPack({
               className="btn btn-gold"
             >
               <Printer aria-hidden className="h-5 w-5" />
-              Print all 5 stations
+              Print all 6 stations
             </button>
             <Link href="/admin" className="btn btn-ghost">
               Back to admin

@@ -1,17 +1,17 @@
 // Park Hunt session model — deterministic weekly station partitioning.
 //
-// Each week the app generates a fresh 100-word set, split into 5 stations
+// Each week the app generates a fresh 120-word set, split into 6 stations
 // of 20. The split is DETERMINISTIC per week so every child sees the same
 // word lists at the same station all week — which is important because the
 // physical QR codes don't change.
 //
-// Targets are per-child, picked from the week's 100 words.
+// Targets are per-child, picked from the week's 120 words.
 
 import { PARK_HUNT_BANK } from "./park-hunt-words";
 
-export const STATION_COUNT = 5;
+export const STATION_COUNT = 6;
 export const WORDS_PER_STATION = 20;
-export const TOTAL_DAILY_WORDS = STATION_COUNT * WORDS_PER_STATION; // 100
+export const TOTAL_DAILY_WORDS = STATION_COUNT * WORDS_PER_STATION; // 120
 
 /** YYYY-MM-DD in the user's local time. (Kept for per-day stats / bonuses.) */
 export function todayKey(now: Date = new Date()): string {

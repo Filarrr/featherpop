@@ -3,14 +3,17 @@
 // sign in with a normal Clerk account (e.g. admin@msfeatherpop.com) and the
 // app recognises it as the owner.
 //
-// Configure via the OWNER_EMAILS env var (comma-separated). Defaults to
-// admin@msfeatherpop.com so it works out of the box once that account exists.
+// Configure via the OWNER_EMAILS env var (comma-separated). The FIRST email is
+// the "primary" owner whose account stores global content (word bank, rewards,
+// videos, VIP list). Chanel (the client) is primary; theanglroom is kept for
+// dev/admin access.
 
 import "server-only";
 import { clerkClient, currentUser } from "@clerk/nextjs/server";
 import type { User } from "@clerk/nextjs/server";
 
-const DEFAULT_OWNER_EMAILS = "theanglroom@gmail.com";
+const DEFAULT_OWNER_EMAILS =
+  "chaneljenkins25@gmail.com,theanglroom@gmail.com";
 
 /** Lower-cased list of emails allowed into the owner control room. */
 export function ownerEmails(): string[] {
@@ -45,10 +48,13 @@ export async function getOwnerUserId(): Promise<string | null> {
   const client = await clerkClient();
   const { data } = await client.users.getUserList({
     emailAddress: allow,
-    limit: 10,
+    limit: 20,
   });
-  for (const u of data) {
-    if (emailsOf(u).some((e) => allow.includes(e))) return u.id;
+  // Resolve in OWNER_EMAILS order so the PRIMARY owner (first email) is the
+  // stable home for global content, regardless of Clerk's return order.
+  for (const email of allow) {
+    const match = data.find((u) => emailsOf(u).includes(email));
+    if (match) return match.id;
   }
   return null;
 }
