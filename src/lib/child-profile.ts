@@ -42,8 +42,17 @@ export interface EggState {
   cracksShown?: number;
 }
 
-/** The 5 crack milestones (in words past wordsAtStart). 50 = hatch. */
-export const CRACK_THRESHOLDS = [10, 20, 30, 40, 50] as const;
+/**
+ * Words needed to hatch an egg. TEMPORARY: lowered to 10 for testing —
+ * change back to 50 for launch. Everything else (crack milestones, progress
+ * bars, "N/50" labels) is derived from this single number.
+ */
+export const WORDS_TO_HATCH = 10;
+
+/** The 5 crack milestones (in words past wordsAtStart). The last = hatch. */
+export const CRACK_THRESHOLDS: number[] = [0.2, 0.4, 0.6, 0.8, 1].map((f) =>
+  Math.max(1, Math.round(f * WORDS_TO_HATCH)),
+);
 /** Sequence-of-events labels shown at each milestone. */
 export const CRACK_LABELS = [
   "Small Crack",

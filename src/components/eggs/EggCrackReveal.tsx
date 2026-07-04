@@ -9,7 +9,7 @@
 
 import { useEffect } from "react";
 import { Sparkles, X } from "lucide-react";
-import type { EggColor } from "@/lib/child-profile";
+import { WORDS_TO_HATCH, type EggColor } from "@/lib/child-profile";
 import { Confetti } from "@/components/Confetti";
 import { eggCrack, fanfare, pop, wordReveal } from "@/lib/audio";
 import { EggSvg } from "@/components/eggs/EggSvg";
@@ -76,11 +76,11 @@ export function EggCrackReveal({
         </h2>
 
         <p className="egg-crack-progress">
-          <strong>{wordsInEgg}</strong> / 50 words to hatch
+          <strong>{wordsInEgg}</strong> / {WORDS_TO_HATCH} words to hatch
         </p>
 
         <div className="egg-crack-progress-bar" aria-hidden>
-          <span style={{ width: `${(wordsInEgg / 50) * 100}%` }} />
+          <span style={{ width: `${(wordsInEgg / WORDS_TO_HATCH) * 100}%` }} />
         </div>
 
         <button

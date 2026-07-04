@@ -6,6 +6,7 @@ import { Home, Sparkles } from "lucide-react";
 import { spinWheelAction, type SpinPrize } from "@/lib/child-progress-actions";
 import { childCheer, fanfare, pop, wordReveal } from "@/lib/audio";
 import { useActiveChild } from "@/lib/use-active-child";
+import { WORDS_TO_HATCH } from "@/lib/child-profile";
 import { Confetti } from "@/components/Confetti";
 
 interface PrizeMeta {
@@ -93,7 +94,7 @@ export function SpinWheelClient({ prizes }: { prizes: PrizeMeta[] }) {
           </span>
         </h1>
         <p className="text-[var(--ink-soft)]">
-          Earn a free spin every time an egg hatches (50 words read).
+          Earn a free spin every time an egg hatches ({WORDS_TO_HATCH} words read).
         </p>
       </header>
 

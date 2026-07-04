@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Beaker } from "lucide-react";
 import { seedWordsAction } from "@/lib/child-progress-actions";
+import { WORDS_TO_HATCH } from "@/lib/child-profile";
 
 /**
  * Temporary test tool — only renders when the URL has ?seed=1. Sets the active
@@ -22,8 +23,8 @@ export function TestSeedWords() {
       const res = await seedWordsAction(n);
       if (res.ok) {
         setMsg(
-          `Egg set to ${res.wordsInEgg}/50 words — play ${
-            50 - res.wordsInEgg
+          `Egg set to ${res.wordsInEgg}/${WORDS_TO_HATCH} words — play ${
+            WORDS_TO_HATCH - res.wordsInEgg
           } more to hatch!`,
         );
         router.refresh();
@@ -45,7 +46,11 @@ export function TestSeedWords() {
         Then play Letter Pop / Park Hunt to cross 50 and see the hatch.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {[45, 49, 30, 0].map((n) => (
+        {[
+          WORDS_TO_HATCH - 1,
+          Math.max(0, WORDS_TO_HATCH - 5),
+          0,
+        ].map((n) => (
           <button
             key={n}
             type="button"

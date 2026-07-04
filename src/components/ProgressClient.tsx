@@ -14,6 +14,7 @@ import {
   Video,
 } from "lucide-react";
 import { useActiveChild } from "@/lib/use-active-child";
+import { WORDS_TO_HATCH } from "@/lib/child-profile";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import { Medal } from "@/components/progress/Medal";
 import { EggWidget } from "@/components/eggs/EggWidget";
@@ -150,7 +151,7 @@ export function ProgressClient() {
           icon={<Egg aria-hidden className="h-6 w-6" />}
           label="Eggs Hatched"
           value={eggsHatched}
-          tag={eggsHatched > 0 ? "See your friends →" : "Read 50 words! →"}
+          tag={eggsHatched > 0 ? "See your friends →" : `Read ${WORDS_TO_HATCH} words! →`}
           tone="green"
           href="/collection-book"
         />

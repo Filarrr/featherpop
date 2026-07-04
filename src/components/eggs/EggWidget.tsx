@@ -12,12 +12,13 @@ import Link from "next/link";
 import { useActiveChild } from "@/lib/use-active-child";
 import {
   CRACK_THRESHOLDS,
+  WORDS_TO_HATCH,
   type EggColor,
 } from "@/lib/child-profile";
 import { EggSvg } from "@/components/eggs/EggSvg";
 import { Sparkles } from "lucide-react";
 
-const TOTAL_TO_HATCH = 50;
+const TOTAL_TO_HATCH = WORDS_TO_HATCH;
 
 export function EggWidget({ compact = false }: { compact?: boolean }) {
   const { progress } = useActiveChild();

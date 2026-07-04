@@ -16,6 +16,7 @@ import {
   EggState,
   HatchedCharacter,
   HatchedEntry,
+  WORDS_TO_HATCH,
   defaultChildProgress,
 } from "@/lib/child-profile";
 import { Mission, getMission } from "@/lib/missions";
@@ -227,7 +228,10 @@ export async function seedWordsAction(
   const user = await currentUser();
   if (!user) return { ok: false, reason: "Not signed in." };
 
-  const target = Math.max(0, Math.min(49, Math.floor(inEgg || 0)));
+  const target = Math.max(
+    0,
+    Math.min(WORDS_TO_HATCH - 1, Math.floor(inEgg || 0)),
+  );
   const map = readMap(user.privateMetadata);
   const prev = map[childId] ?? defaultChildProgress;
   const egg = prev.egg ?? {
@@ -236,9 +240,11 @@ export async function seedWordsAction(
     cracksShown: 0,
   };
   const wordsFound = (egg.wordsAtStart ?? 0) + target;
-  // Mark the 10/20/30/40 crack milestones already shown so only the 50-word
-  // hatch fires next.
-  const cracksShown = [10, 20, 30, 40].filter((t) => target >= t).length;
+  // Mark the crack milestones already passed so only the remaining ones (and
+  // the hatch) fire as the kid plays the last words.
+  const cracksShown = CRACK_THRESHOLDS.slice(0, -1).filter(
+    (t) => target >= t,
+  ).length;
 
   const next: ChildProgress = {
     ...prev,
@@ -292,7 +298,7 @@ function pickHatchedCharacter(): HatchedCharacter {
   return "baby-eagle";
 }
 
-const WORDS_PER_HATCH = 50;
+const WORDS_PER_HATCH = WORDS_TO_HATCH;
 const GOLDEN_FEATHER_GOAL = 1000;
 const GOLDEN_FEATHER_BONUS = 500; // +500 feathers when achieved
 
