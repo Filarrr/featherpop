@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, X } from "lucide-react";
 import type { HatchedCharacter, HatchedEntry, EggColor } from "@/lib/child-profile";
 import { Confetti } from "@/components/Confetti";
@@ -39,6 +39,38 @@ export function EggHatchReveal({
   const meta = CHARACTER_META[hatched.character];
   const color = COLOR_HEX[hatched.color];
 
+  // Optional AI-generated hatch clip. Drop a file at
+  // public/media/eggs/egg-hatch.webm (transparent) and/or .mp4 — if present
+  // it plays; otherwise we fall back to the CSS shell-crack animation. The
+  // clip should be egg + crack + sparkle ONLY (no creature); the specific
+  // character emoji is overlaid on top so one clip fits every hatch.
+  const [hatchVideo, setHatchVideo] = useState<string | null | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      for (const src of [
+        "/media/eggs/egg-hatch.webm",
+        "/media/eggs/egg-hatch.mp4",
+      ]) {
+        try {
+          const r = await fetch(src, { method: "HEAD" });
+          if (r.ok) {
+            if (!cancelled) setHatchVideo(src);
+            return;
+          }
+        } catch {
+          /* try next */
+        }
+      }
+      if (!cancelled) setHatchVideo(null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     pop();
     window.setTimeout(() => wordReveal(), 200);
@@ -67,10 +99,26 @@ export function EggHatchReveal({
           Your egg hatched!
         </p>
         <div className="egg-hatch-art">
-          <span className="egg-hatch-glow" aria-hidden />
-          <span className="egg-hatch-creature" aria-hidden>{meta.emoji}</span>
-          <span className="egg-hatch-shell-bottom" aria-hidden />
-          <span className="egg-hatch-shell-top" aria-hidden />
+          {hatchVideo ? (
+            <>
+              <video
+                className="egg-hatch-video"
+                autoPlay
+                muted
+                playsInline
+                onError={() => setHatchVideo(null)}
+                src={hatchVideo}
+              />
+              <span className="egg-hatch-creature" aria-hidden>{meta.emoji}</span>
+            </>
+          ) : (
+            <>
+              <span className="egg-hatch-glow" aria-hidden />
+              <span className="egg-hatch-creature" aria-hidden>{meta.emoji}</span>
+              <span className="egg-hatch-shell-bottom" aria-hidden />
+              <span className="egg-hatch-shell-top" aria-hidden />
+            </>
+          )}
         </div>
         <h2 id="egg-hatch-title" className={`egg-hatch-name is-${meta.rarity}`}>
           {meta.name}
