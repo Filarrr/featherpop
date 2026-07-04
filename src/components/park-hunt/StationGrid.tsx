@@ -2,16 +2,9 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Camera, RefreshCw, Sparkles, Trophy, Wand2 } from "lucide-react";
-import {
-  buzz,
-  childCheer,
-  ding,
-  eagleCheers,
-  fanfare,
-  pop,
-  wordReveal,
-} from "@/lib/audio";
+import { useRouter } from "next/navigation";
+import { Camera, RefreshCw, Sparkles, Wand2 } from "lucide-react";
+import { buzz, childCheer, ding, fanfare, pop, wordReveal } from "@/lib/audio";
 import { Confetti } from "@/components/Confetti";
 import { findWordAtStationAction } from "@/lib/park-hunt-actions";
 import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
@@ -21,10 +14,11 @@ import type { EggColor, HatchedEntry } from "@/lib/child-profile";
 /**
  * Park Hunt station result.
  *
- * After scanning the right station we reveal its 20 words and the child taps
- * the eagle's word among them (a real "find it" reading moment). Correct tap →
- * congratulations + find more. If the eagle's word isn't in this station, we
- * tell them to scan a different QR.
+ * After scanning the right station we reveal its 20 words with the eagle's
+ * word HIGHLIGHTED. The child taps the glowing word (a confirmation that they
+ * found it at the park) → it awards the feather and takes them to Letter Pop
+ * to spell it. If the eagle's word isn't in this station, we tell them to scan
+ * a different QR.
  */
 export function StationGrid({
   stationId,
@@ -39,9 +33,11 @@ export function StationGrid({
   stationWords: string[];
   locked?: boolean;
 }) {
-  const [phase, setPhase] = useState<"finding" | "won" | "limit">("finding");
+  const router = useRouter();
+  const [phase, setPhase] = useState<"finding" | "limit">("finding");
   const [confettiKey, setConfettiKey] = useState(0);
   const [wrongTap, setWrongTap] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [hatched, setHatched] = useState<HatchedEntry | null>(null);
   const [crackMilestone, setCrackMilestone] = useState<{
@@ -52,6 +48,10 @@ export function StationGrid({
     wordsInEgg: number;
   } | null>(null);
   const doneRef = useRef(false);
+
+  const goLetterPop = useCallback(() => {
+    router.push(`/play?word=${encodeURIComponent(word ?? "")}`);
+  }, [router, word]);
 
   // Shuffle the 20 words once so the target isn't always in the same spot.
   const shuffled = useMemo(() => {
@@ -65,38 +65,43 @@ export function StationGrid({
 
   const handleTap = useCallback(
     async (tapped: string) => {
-      if (!word || phase !== "finding" || submitting || doneRef.current) return;
+      if (!word || submitting || doneRef.current) return;
       if (tapped !== word) {
         buzz();
         setWrongTap(tapped);
+        setHint("Tap the glowing word you found!");
         window.setTimeout(() => setWrongTap(null), 450);
         return;
       }
-      // Correct word tapped — award it.
+      // Correct word tapped — award, celebrate, then head to Letter Pop.
       doneRef.current = true;
       setSubmitting(true);
       ding(1320, 90);
-      const res = await findWordAtStationAction({ word, stationId }).catch(
-        () => null,
-      );
-      setSubmitting(false);
-      if (res && !res.ok && res.limit) {
-        setPhase("limit");
-        return;
-      }
-      setPhase("won");
       setConfettiKey((k) => k + 1);
       pop();
       window.setTimeout(() => wordReveal(), 120);
-      window.setTimeout(() => fanfare(), 550);
-      window.setTimeout(() => eagleCheers(), 1100);
-      window.setTimeout(() => childCheer(), 3200);
-      if (res && res.ok) {
-        if (res.hatched) setHatched(res.hatched);
-        else if (res.crackJustCrossed) setCrackMilestone(res.crackJustCrossed);
+      window.setTimeout(() => fanfare(), 500);
+      window.setTimeout(() => childCheer(), 1000);
+
+      const res = await findWordAtStationAction({ word, stationId }).catch(
+        () => null,
+      );
+      if (res && !res.ok && res.limit) {
+        setPhase("limit");
+        setSubmitting(false);
+        return;
+      }
+      // Show a hatch/crack reveal first (if any); its close continues to
+      // Letter Pop. Otherwise go straight there.
+      if (res && res.ok && res.hatched) {
+        setHatched(res.hatched);
+      } else if (res && res.ok && res.crackJustCrossed) {
+        setCrackMilestone(res.crackJustCrossed);
+      } else {
+        window.setTimeout(goLetterPop, 700);
       }
     },
-    [word, phase, submitting, stationId],
+    [word, submitting, stationId, goLetterPop],
   );
 
   // No word in the URL → the child hasn't been handed one by the eagle.
@@ -180,74 +185,45 @@ export function StationGrid({
     );
   }
 
-  // Won — congratulations + find more.
-  if (phase === "won") {
-    return (
-      <div className="parkhunt-station">
-        <Confetti trigger={confettiKey} pieces={70} />
-        {hatched ? (
-          <EggHatchReveal hatched={hatched} onClose={() => setHatched(null)} />
-        ) : crackMilestone ? (
-          <EggCrackReveal
-            {...crackMilestone}
-            onClose={() => setCrackMilestone(null)}
-          />
-        ) : null}
-        <div className="parkhunt-station-result is-win">
-          <Trophy aria-hidden className="h-7 w-7" />
-          <span className="parkhunt-station-result-eyebrow">
-            <Sparkles aria-hidden className="h-4 w-4" />
-            CONGRATULATIONS!
-          </span>
-          <h2 className="h-display text-3xl">
-            You found <span className="h-gradient">{word}</span>!
-          </h2>
-          <p className="parkhunt-station-result-sub">
-            +1 feather earned. Spell it in <strong>Letter Pop</strong> for bonus
-            feathers, or find another word!
-          </p>
-          <div className="parkhunt-station-actions">
-            <Link
-              href={`/play?word=${encodeURIComponent(word)}`}
-              className="btn btn-gold btn-lg btn-pulse"
-            >
-              <Sparkles aria-hidden className="h-5 w-5" />
-              Play Letter Pop with {word}
-            </Link>
-            <Link href="/sort" className="btn btn-ghost">
-              <RefreshCw aria-hidden className="h-5 w-5" />
-              Find more words
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Finding — reveal the 20 words; child taps the eagle's word.
+  // Reveal the 20 words; the eagle's word is highlighted. Tap it → Letter Pop.
   return (
     <div className="parkhunt-station">
-      <Confetti trigger={confettiKey} pieces={0} />
+      <Confetti trigger={confettiKey} pieces={70} />
+
+      {hatched ? (
+        <EggHatchReveal hatched={hatched} onClose={goLetterPop} />
+      ) : crackMilestone ? (
+        <EggCrackReveal {...crackMilestone} onClose={goLetterPop} />
+      ) : null}
+
       <header className="parkhunt-station-hud">
         <span className="kicker">Station {stationId + 1}</span>
         <p className="parkhunt-station-find">
-          Find <strong>{word}</strong> and tap it!
+          You found <strong>{word}</strong>! Tap it to keep going →
         </p>
       </header>
+
       <div className="parkhunt-grid">
-        {shuffled.map((w) => (
-          <button
-            key={w}
-            type="button"
-            disabled={submitting}
-            onClick={() => handleTap(w)}
-            className={`parkhunt-word ${wrongTap === w ? "is-wrong" : ""}`}
-            aria-label={`Word ${w}`}
-          >
-            {w}
-          </button>
-        ))}
+        {shuffled.map((w) => {
+          const isTarget = w === word;
+          return (
+            <button
+              key={w}
+              type="button"
+              disabled={submitting}
+              onClick={() => handleTap(w)}
+              className={`parkhunt-word ${isTarget ? "is-target" : ""} ${
+                wrongTap === w ? "is-wrong" : ""
+              }`}
+              aria-label={isTarget ? `Your word ${w}` : `Word ${w}`}
+            >
+              {w}
+            </button>
+          );
+        })}
       </div>
+
+      {hint ? <p className="parkhunt-station-hint">{hint}</p> : null}
     </div>
   );
 }
