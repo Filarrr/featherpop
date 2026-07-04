@@ -34,65 +34,116 @@ import { Mascot, MascotMood } from "@/components/Mascot";
 const GRID_SIZE = 4;
 const ROUND_SECONDS = 120;
 
-// Distribution biased toward common letters and vowels — kid-friendly.
-const DICE = [
-  "AAEEGN","ABBJOO","ACHOPS","AFFKPS","AOOTTW","CIMOTU","DEILRX","DELRVY",
-  "DISTTY","EEGHNW","EEINSU","EHRTVW","EIOSST","ELRTTY","HIMNQU","HLNNRZ",
-];
+// Weighted letter bags (kid-friendly, biased toward word-forming letters).
+const VOWELS = "AEIOU";
+const isVowel = (ch: string) => VOWELS.includes(ch);
+// Vowel frequency ~ English (E/A most common, U least).
+const VOWEL_BAG = "EEEEEAAAAOOOIIIU";
+// Common consonants weighted up; rare ones (J/X/Q/Z) appear rarely.
+const CONSONANT_BAG =
+  "RRRTTTNNNSSSLLLDDDGGBBCCMMPPHHFFWWYYKV" + "JXQZ";
+const pickFrom = (bag: string) => bag[Math.floor(Math.random() * bag.length)];
+
+// Target 5–7 vowels on a 16-cell board so words are always formable.
+const MIN_VOWELS = 5;
+const MAX_VOWELS = 7;
+// 2×2 quadrant of a cell — used to spread vowels so they're never all boxed
+// into one corner.
+const quadrantOf = (idx: number) => {
+  const r = Math.floor(idx / GRID_SIZE);
+  const c = idx % GRID_SIZE;
+  return (r < 2 ? 0 : 1) * 2 + (c < 2 ? 0 : 1);
+};
+
+function neighborsOf(idx: number): number[] {
+  const r = Math.floor(idx / GRID_SIZE);
+  const c = idx % GRID_SIZE;
+  const out: number[] = [];
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const nr = r + dr,
+        nc = c + dc;
+      if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) continue;
+      out.push(nr * GRID_SIZE + nc);
+    }
+  }
+  return out.sort(() => Math.random() - 0.5);
+}
 
 function rollGrid(seedWord?: string): {
   grid: string[];
   seededPath?: number[];
 } {
-  const out: string[] = [];
-  const dice = [...DICE].sort(() => Math.random() - 0.5);
-  for (const d of dice) {
-    out.push(d[Math.floor(Math.random() * d.length)]);
-  }
-  if (!seedWord) return { grid: out };
-
-  const word = seedWord.toUpperCase().replace(/[^A-Z]/g, "");
-  if (word.length === 0 || word.length > GRID_SIZE * GRID_SIZE) {
-    return { grid: out };
-  }
-
-  // Random walk on the grid placing each letter into an unvisited adjacent
-  // cell. Try multiple starts before giving up.
   const cells = GRID_SIZE * GRID_SIZE;
-  const neighborsOf = (idx: number): number[] => {
-    const r = Math.floor(idx / GRID_SIZE);
-    const c = idx % GRID_SIZE;
-    const out: number[] = [];
-    for (let dr = -1; dr <= 1; dr++) {
-      for (let dc = -1; dc <= 1; dc++) {
-        if (dr === 0 && dc === 0) continue;
-        const nr = r + dr, nc = c + dc;
-        if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) continue;
-        out.push(nr * GRID_SIZE + nc);
+  const grid: (string | null)[] = new Array(cells).fill(null);
+  let seededPath: number[] | undefined;
+
+  // 1) Place the seeded key word along an adjacent path (fixed cells).
+  if (seedWord) {
+    const word = seedWord.toUpperCase().replace(/[^A-Z]/g, "");
+    if (word.length >= 1 && word.length <= cells) {
+      for (let tries = 0; tries < 60; tries++) {
+        const start = Math.floor(Math.random() * cells);
+        const path: number[] = [start];
+        let ok = true;
+        for (let i = 1; i < word.length; i++) {
+          const last = path[path.length - 1];
+          const next = neighborsOf(last).find((n) => !path.includes(n));
+          if (next === undefined) {
+            ok = false;
+            break;
+          }
+          path.push(next);
+        }
+        if (ok && path.length === word.length) {
+          for (let i = 0; i < word.length; i++) grid[path[i]] = word[i];
+          seededPath = path;
+          break;
+        }
       }
-    }
-    return out.sort(() => Math.random() - 0.5);
-  };
-  for (let tries = 0; tries < 40; tries++) {
-    const start = Math.floor(Math.random() * cells);
-    const path: number[] = [start];
-    let ok = true;
-    for (let i = 1; i < word.length; i++) {
-      const last = path[path.length - 1];
-      const next = neighborsOf(last).find((n) => !path.includes(n));
-      if (next === undefined) {
-        ok = false;
-        break;
-      }
-      path.push(next);
-    }
-    if (ok && path.length === word.length) {
-      const seeded = out.slice();
-      for (let i = 0; i < word.length; i++) seeded[path[i]] = word[i];
-      return { grid: seeded, seededPath: path };
     }
   }
-  return { grid: out };
+
+  // 2) Decide which empty cells become vowels: at least one per quadrant, and
+  //    at least MIN_VOWELS total, spread out rather than clustered.
+  const empties: number[] = [];
+  for (let i = 0; i < cells; i++) if (grid[i] === null) empties.push(i);
+  empties.sort(() => Math.random() - 0.5);
+
+  let vowelCount = 0;
+  const quadHasVowel = [false, false, false, false];
+  for (let i = 0; i < cells; i++) {
+    if (grid[i] !== null && isVowel(grid[i]!)) {
+      vowelCount++;
+      quadHasVowel[quadrantOf(i)] = true;
+    }
+  }
+
+  const vowelCells = new Set<number>();
+  const totalVowels = () => vowelCount + vowelCells.size;
+  // Ensure each quadrant has a vowel.
+  for (let q = 0; q < 4; q++) {
+    if (quadHasVowel[q] || totalVowels() >= MAX_VOWELS) continue;
+    const cell = empties.find(
+      (e) => quadrantOf(e) === q && !vowelCells.has(e),
+    );
+    if (cell !== undefined) vowelCells.add(cell);
+  }
+  // Top up to a random target in [MIN, MAX] for some variety.
+  const targetVowels =
+    MIN_VOWELS + Math.floor(Math.random() * (MAX_VOWELS - MIN_VOWELS + 1));
+  for (const e of empties) {
+    if (totalVowels() >= targetVowels) break;
+    if (!vowelCells.has(e)) vowelCells.add(e);
+  }
+
+  // 3) Fill the rest.
+  for (const e of empties) {
+    grid[e] = vowelCells.has(e) ? pickFrom(VOWEL_BAG) : pickFrom(CONSONANT_BAG);
+  }
+
+  return { grid: grid as string[], seededPath };
 }
 
 function scoreFor(word: string) {
