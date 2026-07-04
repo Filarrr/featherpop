@@ -67,8 +67,10 @@ export function EggHatchReveal({
           Your egg hatched!
         </p>
         <div className="egg-hatch-art">
-          <span className="egg-hatch-emoji" aria-hidden>{meta.emoji}</span>
-          <span className="egg-hatch-shell" aria-hidden />
+          <span className="egg-hatch-glow" aria-hidden />
+          <span className="egg-hatch-creature" aria-hidden>{meta.emoji}</span>
+          <span className="egg-hatch-shell-bottom" aria-hidden />
+          <span className="egg-hatch-shell-top" aria-hidden />
         </div>
         <h2 id="egg-hatch-title" className={`egg-hatch-name is-${meta.rarity}`}>
           {meta.name}

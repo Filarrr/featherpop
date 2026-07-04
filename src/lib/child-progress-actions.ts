@@ -678,6 +678,10 @@ export async function spinWheelAction(): Promise<
       prize: { id: SpinPrize; label: string; emoji: string };
       featherPop: number;
       freeSpinsRemaining: number;
+      // Timestamp of the claimed-reward entry for item prizes, so the wheel
+      // can send the kid to /prize/[at] to see the real prize. Null for
+      // feather-only wins (nothing to view).
+      claimAt: number | null;
     }
   | { ok: false; reason: string }
 > {
@@ -708,31 +712,91 @@ export async function spinWheelAction(): Promise<
     }
   }
 
-  // Resolve the prize's effect.
+  // Resolve the prize into a REAL, viewable reward (same rolls the shop
+  // uses), so a spin win opens the actual puzzle/coloring/card on /prize/[at]
+  // instead of a dead "a grown-up will help you claim this" message.
+  const at = Date.now();
+  const rand = rngFromSeed(hashSeed(`${childId}-spin-${landed.id}-${at}`));
+
   let featherDelta = 0;
+  let variantType: ClaimVariantType | undefined;
+  let variantId: string | undefined;
+  let mysteryPayload:
+    | { kind: ClaimVariantType; variantId: string; bonusFeathers?: number; bonusSpins?: number }
+    | undefined;
+  let bonusSpins = 0;
+  const ownedCards = { ...(prev.ownedCards ?? {}) };
+  const ownedColoring = [...(prev.ownedColoring ?? [])];
+  const ownedPuzzles = [...(prev.ownedPuzzles ?? [])];
+
   if (landed.id === "feathers-5") featherDelta = 5;
   else if (landed.id === "feathers-10") featherDelta = 10;
   else if (landed.id === "feathers-20") featherDelta = 20;
-  // Non-feather prizes get queued as a claimedRewards entry so they
-  // show in the wallet history (parent fulfils the physical/print
-  // prize later).
-  const claimedRewards =
-    featherDelta === 0
-      ? [
-          {
-            id: `spin-${landed.id}-${Date.now()}`,
-            at: Date.now(),
-            cost: 0,
-          },
-          ...(prev.claimedRewards ?? []),
-        ].slice(0, 50)
-      : prev.claimedRewards;
+  else if (landed.id === "character-card") {
+    const card = rollCard(rand);
+    variantType = "card";
+    variantId = card.id;
+    ownedCards[card.id] = (ownedCards[card.id] ?? 0) + 1;
+  } else if (landed.id === "coloring-page") {
+    const page = rollColoring(prev.ownedColoring, rand);
+    variantType = "coloring";
+    variantId = page.id;
+    if (!ownedColoring.includes(page.id)) ownedColoring.push(page.id);
+  } else if (landed.id === "puzzle") {
+    const puzzle = rollPuzzle(prev.ownedPuzzles, rand);
+    variantType = "puzzle";
+    variantId = puzzle.id;
+    if (!ownedPuzzles.includes(puzzle.id)) ownedPuzzles.push(puzzle.id);
+  } else if (landed.id === "mystery") {
+    const { outcome, resolvedVariantId } = rollMystery(
+      prev.ownedColoring,
+      prev.ownedPuzzles,
+      rand,
+    );
+    variantType = outcome.kind;
+    variantId = resolvedVariantId;
+    mysteryPayload = {
+      kind: outcome.kind,
+      variantId: resolvedVariantId,
+      bonusFeathers: outcome.bonusFeathers,
+      bonusSpins: outcome.bonusSpins,
+    };
+    if (outcome.kind === "card") {
+      ownedCards[resolvedVariantId] = (ownedCards[resolvedVariantId] ?? 0) + 1;
+    } else if (outcome.kind === "coloring") {
+      if (!ownedColoring.includes(resolvedVariantId)) ownedColoring.push(resolvedVariantId);
+    } else if (outcome.kind === "puzzle") {
+      if (!ownedPuzzles.includes(resolvedVariantId)) ownedPuzzles.push(resolvedVariantId);
+    } else if (outcome.kind === "feathers" && outcome.bonusFeathers) {
+      featherDelta += outcome.bonusFeathers;
+    } else if (outcome.kind === "spin" && outcome.bonusSpins) {
+      bonusSpins += outcome.bonusSpins;
+    }
+  }
+
+  const isViewable = Boolean(variantType) || landed.id === "mystery";
+  const claimedRewards = isViewable
+    ? [
+        {
+          id: landed.id === "mystery" ? "mystery" : landed.id,
+          at,
+          cost: 0,
+          variantType,
+          variantId,
+          mysteryPayload,
+        },
+        ...(prev.claimedRewards ?? []),
+      ].slice(0, 50)
+    : prev.claimedRewards;
 
   const next: ChildProgress = {
     ...prev,
-    freeSpins: freeSpins - 1,
+    freeSpins: freeSpins - 1 + bonusSpins,
     featherPop: prev.featherPop + featherDelta,
     claimedRewards,
+    ownedCards,
+    ownedColoring,
+    ownedPuzzles,
   };
   await writeMap({ ...map, [childId]: next });
   revalidatePath("/", "layout");
@@ -742,6 +806,7 @@ export async function spinWheelAction(): Promise<
     prize: { id: landed.id, label: landed.label, emoji: landed.emoji },
     featherPop: next.featherPop,
     freeSpinsRemaining: next.freeSpins ?? 0,
+    claimAt: isViewable ? at : null,
   };
 }
 

@@ -94,9 +94,21 @@ export async function getGlobalChallenges(): Promise<Challenge[]> {
   return content.challenges?.length ? content.challenges : defaultChallenges;
 }
 
+// Shown until the owner adds their own in /admin/media — so there's always a
+// TikTok link for kids to watch.
+const DEFAULT_VIDEOS: MediaItem[] = [
+  {
+    id: "mfp-tiktok",
+    title: "Ms. Feather Pop on TikTok",
+    url: "https://www.tiktok.com/@msfeatherpop1",
+  },
+];
+
 export async function getGlobalVideos(): Promise<MediaItem[]> {
   const { content } = await getStoredGlobalContent();
-  return Array.isArray(content.videos) ? content.videos : [];
+  return Array.isArray(content.videos) && content.videos.length
+    ? content.videos
+    : DEFAULT_VIDEOS;
 }
 
 export async function getGlobalSongs(): Promise<MediaItem[]> {

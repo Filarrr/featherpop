@@ -30,6 +30,7 @@ export function SpinWheelClient({ prizes }: { prizes: PrizeMeta[] }) {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<PrizeMeta | null>(null);
+  const [claimAt, setClaimAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confettiKey, setConfettiKey] = useState(0);
 
@@ -66,6 +67,7 @@ export function SpinWheelClient({ prizes }: { prizes: PrizeMeta[] }) {
     // Reveal after the CSS transition completes (3.5s).
     window.setTimeout(() => {
       setResult({ id: res.prize.id, label: res.prize.label, emoji: res.prize.emoji });
+      setClaimAt(res.claimAt);
       setConfettiKey((k) => k + 1);
       wordReveal();
       window.setTimeout(() => fanfare(), 400);
@@ -169,9 +171,9 @@ export function SpinWheelClient({ prizes }: { prizes: PrizeMeta[] }) {
         >
           {spinning ? "Spinning…" : freeSpins > 0 ? "Spin!" : "Hatch an egg for a spin"}
         </button>
-        <Link href="/" className="btn btn-ghost">
+        <Link href="/rewards" className="btn btn-ghost">
           <Home aria-hidden className="h-5 w-5" />
-          Home
+          Back to Prizes
         </Link>
       </div>
 
@@ -187,8 +189,17 @@ export function SpinWheelClient({ prizes }: { prizes: PrizeMeta[] }) {
           <p className="text-[var(--ink-soft)]">
             {result.id.startsWith("feathers-")
               ? "Added to your FeatherPop wallet."
-              : "A grown-up will help you claim this prize."}
+              : "It's yours — tap below to open it!"}
           </p>
+          {claimAt ? (
+            <Link
+              href={`/prize/${claimAt}`}
+              className="btn btn-gold btn-lg btn-pulse mt-3"
+            >
+              <Sparkles aria-hidden className="h-5 w-5" />
+              See my prize
+            </Link>
+          ) : null}
         </div>
       ) : null}
     </div>

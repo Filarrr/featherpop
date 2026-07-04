@@ -6318,31 +6318,81 @@ a { color: inherit; }
   position: relative;
   display: grid;
   place-items: center;
-  width: 140px;
-  height: 140px;
-  margin: 0.25rem 0;
+  width: 168px;
+  height: 168px;
+  margin: 0.25rem auto 0.5rem;
 }
-.egg-hatch-emoji {
-  font-size: 5rem;
-  animation: egg-hatch-pop 0.8s cubic-bezier(.2, .9, .3, 1.4) 0.3s both;
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,0.35));
-}
-.egg-hatch-shell {
+.egg-hatch-glow {
   position: absolute;
-  inset: 0;
+  inset: 8%;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--egg) 0%, transparent 70%);
-  opacity: 0.45;
-  animation: egg-hatch-shell-burst 0.6s ease-out both;
-  z-index: -1;
+  background: radial-gradient(circle, var(--egg) 0%, transparent 68%);
+  opacity: 0.5;
+  z-index: 0;
+  animation: egg-hatch-glow 0.7s ease-out both,
+             egg-hatch-glow-pulse 2.2s ease-in-out 0.9s infinite;
+}
+/* The creature scales up out of the egg with a bouncy pop, then idles. */
+.egg-hatch-creature {
+  position: relative;
+  z-index: 2;
+  font-size: 4.8rem;
+  transform: scale(0);
+  transform-origin: bottom center;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+  animation: egg-hatch-pop 0.7s cubic-bezier(.2, .9, .3, 1.5) 0.45s both,
+             egg-hatch-idle 2.4s ease-in-out 1.2s infinite;
+}
+/* Two egg-shell halves with a jagged crack line between them. */
+.egg-hatch-shell-top,
+.egg-hatch-shell-bottom {
+  position: absolute;
+  left: 50%;
+  width: 98px;
+  height: 60px;
+  margin-left: -49px;
+  background: linear-gradient(180deg, #fffdf7, var(--egg));
+  box-shadow: inset 0 -6px 12px rgba(0, 0, 0, 0.12);
+  z-index: 1;
+}
+.egg-hatch-shell-bottom {
+  top: 74px;
+  border-radius: 0 0 48px 48px / 0 0 50px 50px;
+  clip-path: polygon(0 0, 12% 40%, 25% 0, 38% 40%, 50% 4%, 62% 40%, 75% 0, 88% 40%, 100% 0, 100% 100%, 0 100%);
+  animation: egg-hatch-bottom 0.5s ease-out 0.35s both;
+}
+.egg-hatch-shell-top {
+  top: 44px;
+  border-radius: 48px 48px 0 0 / 50px 50px 0 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 88% 60%, 75% 100%, 62% 60%, 50% 96%, 38% 60%, 25% 100%, 12% 60%, 0 100%);
+  transform-origin: bottom center;
+  animation: egg-hatch-top 0.6s cubic-bezier(.3, .5, .3, 1) 0.35s both;
 }
 @keyframes egg-hatch-pop {
-  0%   { transform: scale(0.3) rotate(-12deg); opacity: 0; }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
+  0%   { transform: scale(0) translateY(12px); }
+  60%  { transform: scale(1.18) translateY(-10px); }
+  100% { transform: scale(1) translateY(0); }
 }
-@keyframes egg-hatch-shell-burst {
-  0%   { transform: scale(0.4); opacity: 0.9; }
-  100% { transform: scale(1.4); opacity: 0.45; }
+@keyframes egg-hatch-idle {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-7px) rotate(3deg); }
+}
+@keyframes egg-hatch-top {
+  0%   { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(-78px) rotate(26deg); opacity: 0; }
+}
+@keyframes egg-hatch-bottom {
+  0%   { transform: translateY(-6px); }
+  60%  { transform: translateY(3px); }
+  100% { transform: translateY(0); }
+}
+@keyframes egg-hatch-glow {
+  0%   { transform: scale(0.5); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 0.5; }
+}
+@keyframes egg-hatch-glow-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.62; }
 }
 .egg-hatch-name {
   font-family: var(--font-baloo), sans-serif;
@@ -6386,10 +6436,14 @@ a { color: inherit; }
 
 @media (prefers-reduced-motion: reduce) {
   .egg-hatch-rays,
-  .egg-hatch-emoji,
-  .egg-hatch-shell,
+  .egg-hatch-creature,
+  .egg-hatch-glow,
+  .egg-hatch-shell-top,
+  .egg-hatch-shell-bottom,
   .egg-hatch-name.is-ultra,
   .egg-hatch-card { animation: none !important; }
+  .egg-hatch-creature { transform: scale(1) !important; }
+  .egg-hatch-shell-top { opacity: 0 !important; }
 }
 
 /* Prize claim error pill */

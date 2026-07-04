@@ -43,6 +43,7 @@ export default async function StationPage({
         stationId={stationId}
         word={word}
         matchesStation={matches}
+        stationWords={list}
         locked={gate.locked}
       />
     </main>
