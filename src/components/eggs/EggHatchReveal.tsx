@@ -39,37 +39,13 @@ export function EggHatchReveal({
   const meta = CHARACTER_META[hatched.character];
   const color = COLOR_HEX[hatched.color];
 
-  // Optional AI-generated hatch clip. Drop a file at
-  // public/media/eggs/egg-hatch.webm (transparent) and/or .mp4 — if present
-  // it plays; otherwise we fall back to the CSS shell-crack animation. The
-  // clip should be egg + crack + sparkle ONLY (no creature); the specific
-  // character emoji is overlaid on top so one clip fits every hatch.
-  const [hatchVideo, setHatchVideo] = useState<string | null | undefined>(
-    undefined,
+  // AI-generated hatch clip at public/media/eggs/egg-hatch.mp4. We render it
+  // directly (no pre-probe, which was unreliable) and only fall back to the
+  // CSS shell-crack animation if the video genuinely fails to load. The clip
+  // is egg + crack + sparkle only; the character emoji is overlaid on top.
+  const [hatchVideo, setHatchVideo] = useState<string | null>(
+    "/media/eggs/egg-hatch.mp4",
   );
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      for (const src of [
-        "/media/eggs/egg-hatch.webm",
-        "/media/eggs/egg-hatch.mp4",
-      ]) {
-        try {
-          const r = await fetch(src, { method: "HEAD" });
-          if (r.ok) {
-            if (!cancelled) setHatchVideo(src);
-            return;
-          }
-        } catch {
-          /* try next */
-        }
-      }
-      if (!cancelled) setHatchVideo(null);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     pop();
@@ -107,6 +83,7 @@ export function EggHatchReveal({
                 autoPlay
                 muted
                 playsInline
+                preload="auto"
                 onError={() => setHatchVideo(null)}
                 src={hatchVideo}
               />
