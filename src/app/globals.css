@@ -43,7 +43,12 @@ html {
   margin: 0;
   padding: 0;
   width: 100%;
+  min-height: 100%;
   overflow-x: clip;
+  /* Fallback background so no white ever shows beneath the body (e.g. mobile
+     overscroll / when the document extends past the viewport). Matches the
+     page gradient's bottom colour. */
+  background: var(--sky-2);
 }
 body {
   margin: 0;
@@ -6343,6 +6348,37 @@ a { color: inherit; }
   z-index: 0;
   animation: egg-hatch-glow-pulse 2s ease-in-out infinite;
 }
+/* AI egg-crack clip. Its background is white, so it sits on a COLORED
+   spotlight (tinted to the egg) with its square edges faded by a radial mask
+   — otherwise it's invisible against the white reveal card. */
+.egg-hatch-video-glow {
+  position: absolute;
+  inset: -14%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--egg) 48%, white) 0%,
+    color-mix(in srgb, var(--egg) 30%, white) 46%,
+    transparent 72%
+  );
+  z-index: 0;
+}
+.egg-hatch-video {
+  position: absolute;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  object-fit: contain;
+  z-index: 1;
+  -webkit-mask-image: radial-gradient(circle, #000 54%, transparent 74%);
+  mask-image: radial-gradient(circle, #000 54%, transparent 74%);
+}
+/* Over the video, the character appears as the egg finishes opening. */
+.egg-hatch-creature.over-video {
+  animation: egg-hatch-pop 0.7s cubic-bezier(.2, .9, .3, 1.5) 2.1s both,
+             egg-hatch-idle 2.4s ease-in-out 2.9s infinite;
+}
+
 /* The detailed EggSvg wobbles, then bursts open. */
 .egg-hatch-eggwrap {
   position: absolute;

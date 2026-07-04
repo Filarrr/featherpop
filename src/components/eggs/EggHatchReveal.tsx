@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sparkles, X } from "lucide-react";
 import type { HatchedCharacter, HatchedEntry, EggColor } from "@/lib/child-profile";
 import { Confetti } from "@/components/Confetti";
@@ -40,6 +40,20 @@ export function EggHatchReveal({
   const meta = CHARACTER_META[hatched.character];
   const color = COLOR_HEX[hatched.color];
 
+  // Primary: the AI-generated egg-crack clip. Falls back to the SVG egg only
+  // if the video genuinely fails to load.
+  const [videoOk, setVideoOk] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    // React's `muted` attribute doesn't reliably set the DOM property, which
+    // makes mobile browsers block autoplay — set it directly and kick play().
+    const v = videoRef.current;
+    if (v) {
+      v.muted = true;
+      v.play?.().catch(() => {});
+    }
+  }, [videoOk]);
+
   useEffect(() => {
     pop();
     window.setTimeout(() => wordReveal(), 200);
@@ -68,11 +82,32 @@ export function EggHatchReveal({
           Your egg hatched!
         </p>
         <div className="egg-hatch-art">
-          <span className="egg-hatch-glow" aria-hidden />
-          <span className="egg-hatch-eggwrap" aria-hidden>
-            <EggSvg color={hatched.color} crackLevel={4} size={132} />
-          </span>
-          <span className="egg-hatch-creature" aria-hidden>{meta.emoji}</span>
+          {videoOk ? (
+            <>
+              <span className="egg-hatch-video-glow" aria-hidden />
+              <video
+                ref={videoRef}
+                className="egg-hatch-video"
+                autoPlay
+                muted
+                playsInline
+                preload="auto"
+                onError={() => setVideoOk(false)}
+                src="/media/eggs/egg-hatch.mp4"
+              />
+              <span className="egg-hatch-creature over-video" aria-hidden>
+                {meta.emoji}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="egg-hatch-glow" aria-hidden />
+              <span className="egg-hatch-eggwrap" aria-hidden>
+                <EggSvg color={hatched.color} crackLevel={4} size={132} />
+              </span>
+              <span className="egg-hatch-creature" aria-hidden>{meta.emoji}</span>
+            </>
+          )}
         </div>
         <h2 id="egg-hatch-title" className={`egg-hatch-name is-${meta.rarity}`}>
           {meta.name}
