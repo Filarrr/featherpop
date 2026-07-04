@@ -101,6 +101,7 @@ export function EggHatchReveal({
         <div className="egg-hatch-art">
           {hatchVideo ? (
             <>
+              <span className="egg-hatch-video-glow" aria-hidden />
               <video
                 className="egg-hatch-video"
                 autoPlay
@@ -109,7 +110,9 @@ export function EggHatchReveal({
                 onError={() => setHatchVideo(null)}
                 src={hatchVideo}
               />
-              <span className="egg-hatch-creature" aria-hidden>{meta.emoji}</span>
+              <span className="egg-hatch-creature over-video" aria-hidden>
+                {meta.emoji}
+              </span>
             </>
           ) : (
             <>

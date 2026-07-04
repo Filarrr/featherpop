@@ -6332,14 +6332,32 @@ a { color: inherit; }
   animation: egg-hatch-glow 0.7s ease-out both,
              egg-hatch-glow-pulse 2.2s ease-in-out 0.9s infinite;
 }
-/* AI-generated hatch clip fills the art box; the character emoji sits on top. */
+/* AI-generated hatch clip fills the art box; the character emoji sits on top.
+   The clip has a white background, so we sit it on a soft white glow and fade
+   its square edges with a radial mask — reads as an intentional spotlight and
+   works on every device (no fragile transparency). */
+.egg-hatch-video-glow {
+  position: absolute;
+  inset: -12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffdf9 46%, transparent 72%);
+  z-index: 0;
+}
 .egg-hatch-video {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
   object-fit: contain;
   z-index: 1;
+  -webkit-mask-image: radial-gradient(circle, #000 52%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 52%, transparent 72%);
+}
+/* Over the video, the character appears as the egg opens (~1.9s in). */
+.egg-hatch-creature.over-video {
+  z-index: 2;
+  animation: egg-hatch-pop 0.7s cubic-bezier(.2, .9, .3, 1.5) 1.9s both,
+             egg-hatch-idle 2.4s ease-in-out 2.7s infinite;
 }
 /* The creature scales up out of the egg with a bouncy pop, then idles. */
 .egg-hatch-creature {
