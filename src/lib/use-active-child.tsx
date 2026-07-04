@@ -37,5 +37,9 @@ export function ActiveChildProvider({
 }
 
 export function useActiveChild(): ActiveChildContextValue {
-  return useContext(ActiveChildContext);
+  const ctx = useContext(ActiveChildContext);
+  // Always merge over defaults so a partial/legacy progress object can never
+  // leave a numeric field undefined (which crashed pages calling
+  // .toLocaleString() on it, e.g. featherPop on Progress/Rewards).
+  return { ...ctx, progress: { ...defaultChildProgress, ...ctx.progress } };
 }

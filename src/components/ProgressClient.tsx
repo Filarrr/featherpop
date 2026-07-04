@@ -45,7 +45,7 @@ function currentMonthKey(): string {
 export function ProgressClient() {
   const { progress, active } = useActiveChild();
   const wordsFound = progress.wordsFound ?? 0;
-  const featherPop = progress.featherPop;
+  const featherPop = progress.featherPop ?? 0;
   const eggsHatched = progress.hatched?.length ?? 0;
   const freeSpins = progress.freeSpins ?? 0;
   const videosWatched = progress.videosWatched ?? 0;
