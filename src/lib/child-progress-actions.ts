@@ -64,7 +64,10 @@ export async function getChildProgressAction(
   const user = await currentUser();
   if (!user) return defaultChildProgress;
   const map = readMap(user.privateMetadata);
-  return map[childId] ?? defaultChildProgress;
+  // Merge over defaults so partial/legacy stored progress never leaves a
+  // numeric field undefined (e.g. featherPop) — that crashed pages calling
+  // .toLocaleString() on it.
+  return { ...defaultChildProgress, ...map[childId] };
 }
 
 /** Fetch progress for the currently-active child (cookie). */

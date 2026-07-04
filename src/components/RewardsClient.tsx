@@ -65,7 +65,7 @@ export function RewardsClient() {
   const router = useRouter();
   const { progress, active } = useActiveChild();
   const { isMember } = useMembership();
-  const featherPop = progress.featherPop;
+  const featherPop = progress.featherPop ?? 0;
 
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -9081,6 +9081,33 @@ a { color: inherit; }
   place-items: center;
   padding: 0.5rem;
   margin: 0.5rem 0 0.25rem;
+  /* The egg visibly jolts as it takes the new crack. */
+  animation: egg-crack-jolt 0.65s cubic-bezier(.36, .07, .19, .97) both;
+}
+/* Bright flash at the moment of impact. */
+.egg-crack-stage::after {
+  content: "";
+  position: absolute;
+  inset: -8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, transparent 60%);
+  opacity: 0;
+  pointer-events: none;
+  animation: egg-crack-flash 0.7s ease-out both;
+}
+@keyframes egg-crack-jolt {
+  0%   { transform: scale(0.9); }
+  12%  { transform: translateX(-7px) rotate(-4deg) scale(1.06); }
+  26%  { transform: translateX(7px) rotate(4deg) scale(1.04); }
+  40%  { transform: translateX(-5px) rotate(-2.5deg); }
+  55%  { transform: translateX(4px) rotate(2deg); }
+  70%  { transform: translateX(-2px) rotate(-1deg); }
+  100% { transform: translateX(0) rotate(0) scale(1); }
+}
+@keyframes egg-crack-flash {
+  0%   { opacity: 0; }
+  18%  { opacity: 0.85; }
+  100% { opacity: 0; }
 }
 .egg-crack-stage-halo {
   position: absolute;
@@ -9333,6 +9360,8 @@ a { color: inherit; }
   .egg-svg.is-hovering,
   .egg-svg-crack-layer,
   .egg-svg-sparkle-overlay circle,
+  .egg-crack-stage,
+  .egg-crack-stage::after,
   .egg-crack-stage-halo { animation: none; }
 }
 
