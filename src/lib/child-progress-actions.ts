@@ -206,6 +206,47 @@ export async function seedFeathersAction(
   return { ok: true, featherPop: next.featherPop };
 }
 
+/**
+ * TEST HELPER — set the active child's egg progress to `inEgg` words (capped
+ * below 50 so it doesn't hatch), so you can play a few more words and see the
+ * hatch reveal. Gated in the UI behind ?seed=1. Remove before public launch.
+ */
+export async function seedWordsAction(
+  inEgg: number,
+): Promise<
+  | { ok: true; wordsInEgg: number; wordsFound: number }
+  | { ok: false; reason: string }
+> {
+  const childId = await getActiveChildId();
+  if (!childId)
+    return { ok: false, reason: "No active child — pick a profile first." };
+  const user = await currentUser();
+  if (!user) return { ok: false, reason: "Not signed in." };
+
+  const target = Math.max(0, Math.min(49, Math.floor(inEgg || 0)));
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const egg = prev.egg ?? {
+    color: "purple" as const,
+    wordsAtStart: prev.wordsFound ?? 0,
+    cracksShown: 0,
+  };
+  const wordsFound = (egg.wordsAtStart ?? 0) + target;
+  // Mark the 10/20/30/40 crack milestones already shown so only the 50-word
+  // hatch fires next.
+  const cracksShown = [10, 20, 30, 40].filter((t) => target >= t).length;
+
+  const next: ChildProgress = {
+    ...prev,
+    wordsFound,
+    egg: { ...egg, cracksShown },
+  };
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/progress", "page");
+  revalidatePath("/", "layout");
+  return { ok: true, wordsInEgg: target, wordsFound };
+}
+
 // ============================================================
 // Word-found + Egg system
 // ============================================================
