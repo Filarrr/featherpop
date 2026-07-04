@@ -11,13 +11,11 @@
 import "server-only";
 import { clerkClient, currentUser } from "@clerk/nextjs/server";
 import type { User } from "@clerk/nextjs/server";
-
-const DEFAULT_OWNER_EMAILS =
-  "chaneljenkins25@gmail.com,theanglroom@gmail.com";
+import { DEFAULT_OWNER_EMAILS } from "@/lib/owner-emails";
 
 /** Lower-cased list of emails allowed into the owner control room. */
 export function ownerEmails(): string[] {
-  return (process.env.OWNER_EMAILS ?? DEFAULT_OWNER_EMAILS)
+  return (process.env.OWNER_EMAILS ?? DEFAULT_OWNER_EMAILS.join(","))
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
@@ -30,12 +28,17 @@ export function emailsOf(user: Pick<User, "emailAddresses">): string[] {
   );
 }
 
+/** Is this Clerk user one of the owners? (Sync — pass an already-fetched user.) */
+export function isOwnerUser(user: Pick<User, "emailAddresses">): boolean {
+  const allow = ownerEmails();
+  return emailsOf(user).some((e) => allow.includes(e));
+}
+
 /** Is the currently signed-in user one of the owners? */
 export async function isOwner(): Promise<boolean> {
   const user = await currentUser();
   if (!user) return false;
-  const allow = ownerEmails();
-  return emailsOf(user).some((e) => allow.includes(e));
+  return isOwnerUser(user);
 }
 
 /**

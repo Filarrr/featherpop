@@ -3,6 +3,7 @@
 // webhook handler. This file is server-only — do NOT import from client code.
 
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { isOwnerUser } from "@/lib/owner";
 
 export type MembershipStatus =
   | "active"
@@ -22,6 +23,9 @@ export type Membership = {
 export async function getMembership(): Promise<Membership> {
   const user = await currentUser();
   if (!user) return { status: "none" };
+  // Owner accounts are treated as active members (full access for testing /
+  // running the platform, no Stripe subscription needed).
+  if (isOwnerUser(user)) return { status: "active" };
   const m = (user.publicMetadata?.membership ?? {}) as Partial<Membership>;
   return { status: m.status ?? "none", ...m };
 }

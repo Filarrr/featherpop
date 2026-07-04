@@ -7,6 +7,7 @@
 import "server-only";
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { getActiveChildId } from "@/lib/active-child-server";
+import { isOwnerUser } from "@/lib/owner";
 import type { ChildProgress } from "@/lib/child-profile";
 
 export const FREE_DAILY_PLAYS = 3;
@@ -19,9 +20,12 @@ export function playDayKey(now: Date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
-function membershipActive(user: {
-  publicMetadata?: Record<string, unknown> | null;
-}): boolean {
+function membershipActive(
+  user: {
+    publicMetadata?: Record<string, unknown> | null;
+  } & Parameters<typeof isOwnerUser>[0],
+): boolean {
+  if (isOwnerUser(user)) return true;
   const m = (user.publicMetadata?.membership ?? {}) as { status?: string };
   return m.status === "active" || m.status === "trialing";
 }

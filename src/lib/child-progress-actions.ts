@@ -20,6 +20,7 @@ import {
 } from "@/lib/child-profile";
 import { Mission, getMission } from "@/lib/missions";
 import { getActiveChildId } from "@/lib/active-child-server";
+import { isOwnerUser } from "@/lib/owner";
 import {
   hashSeed,
   rngFromSeed,
@@ -452,11 +453,14 @@ export async function claimRewardAction(
   if (!user) return { ok: false, reason: "Not signed in." };
 
   // Rewards are a membership benefit — free families can browse but not claim.
+  // Owner accounts count as members.
   const membership = (user.publicMetadata?.membership ?? {}) as {
     status?: string;
   };
   const isMember =
-    membership.status === "active" || membership.status === "trialing";
+    isOwnerUser(user) ||
+    membership.status === "active" ||
+    membership.status === "trialing";
   if (!isMember) {
     return { ok: false, reason: "Subscribe to unlock rewards." };
   }
