@@ -6343,39 +6343,18 @@ a { color: inherit; }
   z-index: 0;
   animation: egg-hatch-glow-pulse 2s ease-in-out infinite;
 }
-/* A whole, colored egg that wobbles, cracks, then bursts open. */
-.egg-hatch-egg {
+/* The detailed EggSvg wobbles, then bursts open. */
+.egg-hatch-eggwrap {
   position: absolute;
-  width: 108px;
-  height: 138px;
   z-index: 1;
-  border-radius: 50% 50% 50% 50% / 60% 60% 42% 42%;
-  background:
-    radial-gradient(120% 80% at 32% 24%, rgba(255, 255, 255, 0.9), transparent 42%),
-    linear-gradient(150deg, #fffdf7 0%, var(--egg) 62%,
-      color-mix(in srgb, var(--egg) 62%, #3a2a5a) 100%);
-  box-shadow: inset -8px -12px 20px rgba(0, 0, 0, 0.18),
-    0 12px 22px rgba(0, 0, 0, 0.2);
+  display: grid;
+  place-items: center;
   transform-origin: bottom center;
   animation:
     egg-hatch-wobble 0.42s ease-in-out 3,
     egg-hatch-burst 0.55s ease-in 1.55s forwards;
 }
-/* Jagged crack that draws onto the egg just before it bursts. */
-.egg-hatch-crack {
-  position: absolute;
-  left: 22%;
-  top: 26%;
-  width: 56%;
-  height: 46%;
-  background: color-mix(in srgb, var(--egg) 40%, #2a1c46);
-  opacity: 0;
-  clip-path: polygon(
-    0 42%, 16% 8%, 30% 46%, 46% 4%, 60% 50%, 76% 12%, 92% 52%, 100% 24%,
-    100% 40%, 90% 66%, 76% 34%, 60% 74%, 46% 32%, 30% 70%, 16% 40%, 0 62%
-  );
-  animation: egg-hatch-crackin 0.35s ease 0.95s both;
-}
+.egg-hatch-eggwrap .egg-svg { filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22)); }
 /* The creature scales up out of the egg as it bursts, then idles. */
 .egg-hatch-creature {
   position: relative;
@@ -6463,13 +6442,12 @@ a { color: inherit; }
   .egg-hatch-rays,
   .egg-hatch-creature,
   .egg-hatch-glow,
-  .egg-hatch-egg,
-  .egg-hatch-crack,
+  .egg-hatch-eggwrap,
   .egg-hatch-art::after,
   .egg-hatch-name.is-ultra,
   .egg-hatch-card { animation: none !important; }
   .egg-hatch-creature { transform: scale(1) !important; }
-  .egg-hatch-egg { opacity: 0 !important; }
+  .egg-hatch-eggwrap { opacity: 0 !important; }
 }
 
 /* Prize claim error pill */

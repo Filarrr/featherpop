@@ -124,18 +124,19 @@ export function EggSvg({ color, crackLevel, size = 200, hovering = false }: Prop
           <path
             d="M 100 36 L 108 46 L 102 56 L 112 62"
             fill="none"
-            stroke="#1a0f3a"
-            strokeWidth="2.4"
+            stroke="#241634"
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
+            strokeOpacity={0.9}
           />
           <path
             d="M 100 36 L 108 46 L 102 56 L 112 62"
             fill="none"
             stroke="#fff"
-            strokeWidth="0.8"
+            strokeWidth="0.6"
             strokeLinecap="round"
-            strokeOpacity={0.6}
+            strokeOpacity={0.55}
           />
         </g>
       ) : null}
@@ -146,16 +147,17 @@ export function EggSvg({ color, crackLevel, size = 200, hovering = false }: Prop
           <path
             d="M 32 100 L 44 108 L 38 120 L 52 128 L 46 140"
             fill="none"
-            stroke="#1a0f3a"
-            strokeWidth="2.6"
+            stroke="#241634"
+            strokeWidth="1.6"
             strokeLinecap="round"
             strokeLinejoin="round"
+            strokeOpacity={0.9}
           />
           <path
             d="M 32 100 L 44 108 L 38 120 L 52 128 L 46 140"
             fill="none"
             stroke="#fff"
-            strokeWidth="0.8"
+            strokeWidth="0.6"
             strokeOpacity={0.5}
           />
         </g>
@@ -167,18 +169,20 @@ export function EggSvg({ color, crackLevel, size = 200, hovering = false }: Prop
           <path
             d="M 130 80 L 122 96 L 134 108 L 124 124 L 134 140 L 122 152 L 130 168"
             fill="none"
-            stroke="#1a0f3a"
-            strokeWidth="2.8"
+            stroke="#241634"
+            strokeWidth="1.7"
             strokeLinecap="round"
             strokeLinejoin="round"
+            strokeOpacity={0.9}
           />
           {/* Branch */}
           <path
             d="M 124 124 L 110 122 M 134 140 L 120 142"
             fill="none"
-            stroke="#1a0f3a"
-            strokeWidth="2.2"
+            stroke="#241634"
+            strokeWidth="1.3"
             strokeLinecap="round"
+            strokeOpacity={0.85}
           />
         </g>
       ) : null}
@@ -190,10 +194,11 @@ export function EggSvg({ color, crackLevel, size = 200, hovering = false }: Prop
           <path
             d="M 50 30 L 60 42 L 54 56 L 68 64 L 64 78 L 80 84 L 92 76 L 86 64"
             fill="none"
-            stroke="#1a0f3a"
-            strokeWidth="3"
+            stroke="#241634"
+            strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
+            strokeOpacity={0.92}
           />
           {/* Peek inside — small dark triangle on the upper crack */}
           <polygon

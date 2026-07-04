@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Sparkles, X } from "lucide-react";
 import type { HatchedCharacter, HatchedEntry, EggColor } from "@/lib/child-profile";
 import { Confetti } from "@/components/Confetti";
+import { EggSvg } from "@/components/eggs/EggSvg";
 import { childCheer, eagleVoice, fanfare, pop, wordReveal } from "@/lib/audio";
 
 const CHARACTER_META: Record<
@@ -68,8 +69,8 @@ export function EggHatchReveal({
         </p>
         <div className="egg-hatch-art">
           <span className="egg-hatch-glow" aria-hidden />
-          <span className="egg-hatch-egg" aria-hidden>
-            <span className="egg-hatch-crack" />
+          <span className="egg-hatch-eggwrap" aria-hidden>
+            <EggSvg color={hatched.color} crackLevel={4} size={132} />
           </span>
           <span className="egg-hatch-creature" aria-hidden>{meta.emoji}</span>
         </div>
