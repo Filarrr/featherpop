@@ -6319,55 +6319,64 @@ a { color: inherit; }
   display: grid;
   place-items: center;
   width: 168px;
-  height: 168px;
-  margin: 0.25rem auto 0.5rem;
+  height: 172px;
+  margin: 0.25rem auto 0.6rem;
+}
+/* White flash at the burst moment. */
+.egg-hatch-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, transparent 60%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  animation: egg-hatch-flash 0.6s ease-out 1.5s both;
 }
 .egg-hatch-glow {
   position: absolute;
-  inset: 8%;
+  inset: 4%;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--egg) 0%, transparent 68%);
-  opacity: 0.5;
+  background: radial-gradient(circle, var(--egg) 0%, transparent 66%);
+  opacity: 0.55;
   z-index: 0;
-  animation: egg-hatch-glow 0.7s ease-out both,
-             egg-hatch-glow-pulse 2.2s ease-in-out 0.9s infinite;
+  animation: egg-hatch-glow-pulse 2s ease-in-out infinite;
 }
-/* AI-generated hatch clip fills the art box; the character emoji sits on top.
-   The clip has a white background, so we sit it on a soft white glow and fade
-   its square edges with a radial mask — reads as an intentional spotlight and
-   works on every device (no fragile transparency). */
-.egg-hatch-video-glow {
+/* A whole, colored egg that wobbles, cracks, then bursts open. */
+.egg-hatch-egg {
   position: absolute;
-  inset: -14%;
-  border-radius: 50%;
-  /* Colored spotlight so the (white-background) egg clip stands out against
-     the white reveal card — otherwise the cracking egg is invisible. */
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--egg) 45%, white) 0%,
-    color-mix(in srgb, var(--egg) 30%, white) 46%,
-    transparent 72%
-  );
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--egg) 30%, white) inset;
-  z-index: 0;
-}
-.egg-hatch-video {
-  position: absolute;
-  inset: -6%;
-  width: 112%;
-  height: 112%;
-  object-fit: contain;
+  width: 108px;
+  height: 138px;
   z-index: 1;
-  -webkit-mask-image: radial-gradient(circle, #000 52%, transparent 72%);
-  mask-image: radial-gradient(circle, #000 52%, transparent 72%);
+  border-radius: 50% 50% 50% 50% / 60% 60% 42% 42%;
+  background:
+    radial-gradient(120% 80% at 32% 24%, rgba(255, 255, 255, 0.9), transparent 42%),
+    linear-gradient(150deg, #fffdf7 0%, var(--egg) 62%,
+      color-mix(in srgb, var(--egg) 62%, #3a2a5a) 100%);
+  box-shadow: inset -8px -12px 20px rgba(0, 0, 0, 0.18),
+    0 12px 22px rgba(0, 0, 0, 0.2);
+  transform-origin: bottom center;
+  animation:
+    egg-hatch-wobble 0.42s ease-in-out 3,
+    egg-hatch-burst 0.55s ease-in 1.55s forwards;
 }
-/* Over the video, the character appears as the egg opens (~1.9s in). */
-.egg-hatch-creature.over-video {
-  z-index: 2;
-  animation: egg-hatch-pop 0.7s cubic-bezier(.2, .9, .3, 1.5) 1.9s both,
-             egg-hatch-idle 2.4s ease-in-out 2.7s infinite;
+/* Jagged crack that draws onto the egg just before it bursts. */
+.egg-hatch-crack {
+  position: absolute;
+  left: 22%;
+  top: 26%;
+  width: 56%;
+  height: 46%;
+  background: color-mix(in srgb, var(--egg) 40%, #2a1c46);
+  opacity: 0;
+  clip-path: polygon(
+    0 42%, 16% 8%, 30% 46%, 46% 4%, 60% 50%, 76% 12%, 92% 52%, 100% 24%,
+    100% 40%, 90% 66%, 76% 34%, 60% 74%, 46% 32%, 30% 70%, 16% 40%, 0 62%
+  );
+  animation: egg-hatch-crackin 0.35s ease 0.95s both;
 }
-/* The creature scales up out of the egg with a bouncy pop, then idles. */
+/* The creature scales up out of the egg as it bursts, then idles. */
 .egg-hatch-creature {
   position: relative;
   z-index: 2;
@@ -6375,33 +6384,22 @@ a { color: inherit; }
   transform: scale(0);
   transform-origin: bottom center;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
-  animation: egg-hatch-pop 0.7s cubic-bezier(.2, .9, .3, 1.5) 1s both,
-             egg-hatch-idle 2.4s ease-in-out 1.7s infinite;
+  animation:
+    egg-hatch-pop 0.7s cubic-bezier(.2, .9, .3, 1.5) 1.6s both,
+    egg-hatch-idle 2.4s ease-in-out 2.3s infinite;
 }
-/* Two egg-shell halves with a jagged crack line between them. */
-.egg-hatch-shell-top,
-.egg-hatch-shell-bottom {
-  position: absolute;
-  left: 50%;
-  width: 98px;
-  height: 60px;
-  margin-left: -49px;
-  background: linear-gradient(180deg, #fffdf7, var(--egg));
-  box-shadow: inset 0 -6px 12px rgba(0, 0, 0, 0.12);
-  z-index: 1;
+@keyframes egg-hatch-wobble {
+  0%, 100% { transform: rotate(-5deg); }
+  50%      { transform: rotate(5deg); }
 }
-.egg-hatch-shell-bottom {
-  top: 74px;
-  border-radius: 0 0 48px 48px / 0 0 50px 50px;
-  clip-path: polygon(0 0, 12% 40%, 25% 0, 38% 40%, 50% 4%, 62% 40%, 75% 0, 88% 40%, 100% 0, 100% 100%, 0 100%);
-  animation: egg-hatch-bottom 0.5s ease-out 0.35s both;
+@keyframes egg-hatch-crackin {
+  0%   { opacity: 0; transform: scale(0.6); }
+  100% { opacity: 0.9; transform: scale(1); }
 }
-.egg-hatch-shell-top {
-  top: 44px;
-  border-radius: 48px 48px 0 0 / 50px 50px 0 0;
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 88% 60%, 75% 100%, 62% 60%, 50% 96%, 38% 60%, 25% 100%, 12% 60%, 0 100%);
-  transform-origin: bottom center;
-  animation: egg-hatch-top 0.6s cubic-bezier(.3, .5, .3, 1) 0.35s both;
+@keyframes egg-hatch-burst {
+  0%   { transform: scale(1) translateY(0); opacity: 1; }
+  35%  { transform: scale(1.16) translateY(-4px); }
+  100% { transform: scale(1.5) translateY(-6px); opacity: 0; }
 }
 @keyframes egg-hatch-pop {
   0%   { transform: scale(0) translateY(12px); }
@@ -6412,22 +6410,14 @@ a { color: inherit; }
   0%, 100% { transform: translateY(0) rotate(-3deg); }
   50%      { transform: translateY(-7px) rotate(3deg); }
 }
-@keyframes egg-hatch-top {
-  0%   { transform: translateY(0) rotate(0); opacity: 1; }
-  100% { transform: translateY(-78px) rotate(26deg); opacity: 0; }
-}
-@keyframes egg-hatch-bottom {
-  0%   { transform: translateY(-6px); }
-  60%  { transform: translateY(3px); }
-  100% { transform: translateY(0); }
-}
-@keyframes egg-hatch-glow {
-  0%   { transform: scale(0.5); opacity: 0.9; }
-  100% { transform: scale(1); opacity: 0.5; }
+@keyframes egg-hatch-flash {
+  0%   { opacity: 0; }
+  30%  { opacity: 0.85; }
+  100% { opacity: 0; }
 }
 @keyframes egg-hatch-glow-pulse {
-  0%, 100% { opacity: 0.4; }
-  50%      { opacity: 0.62; }
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%      { opacity: 0.65; transform: scale(1.06); }
 }
 .egg-hatch-name {
   font-family: var(--font-baloo), sans-serif;
@@ -6473,12 +6463,13 @@ a { color: inherit; }
   .egg-hatch-rays,
   .egg-hatch-creature,
   .egg-hatch-glow,
-  .egg-hatch-shell-top,
-  .egg-hatch-shell-bottom,
+  .egg-hatch-egg,
+  .egg-hatch-crack,
+  .egg-hatch-art::after,
   .egg-hatch-name.is-ultra,
   .egg-hatch-card { animation: none !important; }
   .egg-hatch-creature { transform: scale(1) !important; }
-  .egg-hatch-shell-top { opacity: 0 !important; }
+  .egg-hatch-egg { opacity: 0 !important; }
 }
 
 /* Prize claim error pill */
