@@ -41,18 +41,29 @@ export function EggHatchReveal({
   const color = COLOR_HEX[hatched.color];
 
   // Primary: the AI-generated egg-crack clip. Falls back to the SVG egg only
-  // if the video genuinely fails to load.
+  // if the video genuinely fails to load or autoplay is blocked.
   const [videoOk, setVideoOk] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Don't show the creature until the egg has cracked in the video (~2s in).
+  // Using a JS timer is more reliable than CSS animation-fill-mode on mobile.
+  const [creatureVisible, setCreatureVisible] = useState(false);
+
   useEffect(() => {
     // React's `muted` attribute doesn't reliably set the DOM property, which
     // makes mobile browsers block autoplay — set it directly and kick play().
     const v = videoRef.current;
     if (v) {
       v.muted = true;
-      v.play?.().catch(() => {});
+      v.play?.().catch(() => setVideoOk(false));
     }
   }, [videoOk]);
+
+  useEffect(() => {
+    // Reveal the creature after the egg cracks in the video.
+    const t = window.setTimeout(() => setCreatureVisible(true), 2100);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     pop();
@@ -95,9 +106,11 @@ export function EggHatchReveal({
                 onError={() => setVideoOk(false)}
                 src="/media/eggs/egg-hatch.mp4"
               />
-              <span className="egg-hatch-creature over-video" aria-hidden>
-                {meta.emoji}
-              </span>
+              {creatureVisible && (
+                <span className="egg-hatch-creature over-video" aria-hidden>
+                  {meta.emoji}
+                </span>
+              )}
             </>
           ) : (
             <>
