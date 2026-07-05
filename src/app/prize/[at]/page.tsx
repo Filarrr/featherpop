@@ -187,6 +187,7 @@ function MysteryRevealWrapper({ claim }: { claim: ClaimEntry }) {
   let emoji = "🎁";
   let sub: string | undefined;
   let inner: React.ReactNode = null;
+  let printHref: string | null = null;
 
   if (p.kind === "feathers") {
     label = `+${p.bonusFeathers} Bonus Feathers`;
@@ -221,6 +222,7 @@ function MysteryRevealWrapper({ claim }: { claim: ClaimEntry }) {
     label = page ? page.title : "A coloring page";
     emoji = "🎨";
     sub = page?.description;
+    if (page) printHref = `/print/coloring/${page.id}`;
     inner = page ? (
       <div className="prize-printable-frame">
         <ColoringScene id={page.id} size={420} />
@@ -231,6 +233,7 @@ function MysteryRevealWrapper({ claim }: { claim: ClaimEntry }) {
     label = puzzle ? puzzle.title : "A puzzle";
     emoji = "🧩";
     sub = puzzle?.description;
+    if (puzzle) printHref = `/print/puzzle/${puzzle.id}`;
     inner = puzzle ? (
       <div className="prize-printable-frame">
         <WordSearch id={puzzle.id} size={420} />
@@ -242,6 +245,12 @@ function MysteryRevealWrapper({ claim }: { claim: ClaimEntry }) {
     <MysteryReveal payload={{ label, emoji, sub }}>
       {inner}
       <div className="prize-stage-actions">
+        {printHref && (
+          <a href={printHref} target="_blank" rel="noreferrer" className="btn btn-gold btn-lg btn-pulse">
+            <Printer aria-hidden className="h-5 w-5" />
+            Print this prize
+          </a>
+        )}
         <Link href="/rewards" className="btn btn-ghost">
           Back to prizes
         </Link>

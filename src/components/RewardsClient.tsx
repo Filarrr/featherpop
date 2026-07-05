@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Lock, Sparkles } from "lucide-react";
+import { ChevronRight, Lock, Sparkles, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActiveChild } from "@/lib/use-active-child";
 import { useMembership } from "@/lib/use-membership";
@@ -156,6 +156,27 @@ export function RewardsClient() {
       </section>
 
       <section className="prizes-grid-v2">
+        {/* Spin Wheel — always accessible */}
+        <Link href="/spin" className="prize-card-v2 tier-pink is-available prize-card-spin-link">
+          <span className="prize-card-shine" aria-hidden />
+          <div className="prize-card-art-v2" aria-hidden>
+            <span style={{ fontSize: 64 }}>🎡</span>
+          </div>
+          <div className="prize-card-body">
+            <h3>Spin Wheel</h3>
+            <p className="prize-card-tagline">Use your free spins to win prizes!</p>
+            <div className="prize-card-cost-v2">
+              <Zap aria-hidden className="h-4 w-4" />
+              <strong>Free</strong>
+              <small>with hatched eggs</small>
+            </div>
+            <span className="prize-card-cta">
+              <span>Go Spin!</span>
+              <ChevronRight aria-hidden className="h-4 w-4" />
+            </span>
+          </div>
+        </Link>
+
         {REWARDS.map((r) => {
           const canAfford = featherPop >= r.cost;
           const remaining = Math.max(0, r.cost - featherPop);

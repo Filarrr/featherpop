@@ -6061,6 +6061,17 @@ a { color: inherit; }
 .prize-card-v2.tier-purple .prize-card-cta { background: linear-gradient(135deg, #a76bff, #6a2dff); }
 .prize-card-v2.tier-orange .prize-card-cta { background: linear-gradient(135deg, #ff9a3a, #ff6b3a); }
 
+/* Spin wheel card — it's a <Link> so strip anchor decoration */
+a.prize-card-spin-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+a.prize-card-spin-link .prize-card-cta {
+  background: linear-gradient(135deg, #ff7ab8, #ff2d8e);
+  pointer-events: none; /* card handles the click */
+}
+
 .prize-card-cta:disabled {
   background: rgba(120, 120, 140, 0.18);
   color: rgba(0,0,0,0.45);
