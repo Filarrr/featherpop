@@ -31,21 +31,27 @@ export async function POST() {
   const existingCustomerId = (user?.publicMetadata?.membership as { stripeCustomerId?: string } | undefined)
     ?.stripeCustomerId;
 
-  const session = await stripe().checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: MEMBERSHIP_PRICE_ID, quantity: 1 }],
-    subscription_data: {
-      // No trial — billing starts immediately.
+  let session;
+  try {
+    session = await stripe().checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: MEMBERSHIP_PRICE_ID, quantity: 1 }],
+      subscription_data: {
+        // No trial — billing starts immediately.
+        metadata: { clerkUserId: userId },
+      },
+      customer: existingCustomerId,
+      customer_email: existingCustomerId ? undefined : email,
+      client_reference_id: userId,
       metadata: { clerkUserId: userId },
-    },
-    customer: existingCustomerId,
-    customer_email: existingCustomerId ? undefined : email,
-    client_reference_id: userId,
-    metadata: { clerkUserId: userId },
-    success_url: `${appUrl}/account?checkout=success`,
-    cancel_url: `${appUrl}/membership?checkout=cancel`,
-    allow_promotion_codes: true,
-  });
+      success_url: `${appUrl}/account?checkout=success`,
+      cancel_url: `${appUrl}/membership?checkout=cancel`,
+      allow_promotion_codes: true,
+    });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Stripe error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 
   return NextResponse.json({ url: session.url });
 }
