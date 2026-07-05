@@ -112,11 +112,11 @@ function makeRound(types: FeatherType[], perColor: number): FeatherInstance[] {
       let y = 0;
       for (let attempt = 0; attempt < 12; attempt++) {
         x = 4 + Math.random() * 64;
-        y = 4 + Math.random() * 88;
+        y = 4 + Math.random() * 70;
         if (!inMascotZone(x, y)) break;
       }
       // If 12 attempts all landed in the mascot zone (unlucky), force above it.
-      if (inMascotZone(x, y)) y = 4 + Math.random() * 60;
+      if (inMascotZone(x, y)) y = 4 + Math.random() * 55;
       all.push({
         id: `${t}-${k}-${i++}`,
         type: t,

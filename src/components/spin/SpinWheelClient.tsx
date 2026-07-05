@@ -100,6 +100,7 @@ export function SpinWheelClient({ prizes }: { prizes: PrizeMeta[] }) {
 
       <div className="spin-stage">
         <div className="spin-pointer" aria-hidden>▼</div>
+        <div className="spin-outer-ring" aria-hidden />
         <svg
           viewBox="0 0 400 400"
           className={`spin-wheel ${spinning ? "is-spinning" : ""}`}
@@ -112,7 +113,6 @@ export function SpinWheelClient({ prizes }: { prizes: PrizeMeta[] }) {
             const start = i * sliceAngle;
             const end = (i + 1) * sliceAngle;
             const fill = SLICE_COLORS[i % SLICE_COLORS.length];
-            // SVG arc path for the slice.
             const cx = 200,
               cy = 200,
               r = 180;
@@ -124,7 +124,6 @@ export function SpinWheelClient({ prizes }: { prizes: PrizeMeta[] }) {
             const y2 = cy + r * Math.sin(endRad);
             const largeArc = sliceAngle > 180 ? 1 : 0;
             const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-            // Label position halfway between center and edge.
             const midRad = ((start + sliceAngle / 2 - 90) * Math.PI) / 180;
             const lx = cx + r * 0.62 * Math.cos(midRad);
             const ly = cy + r * 0.62 * Math.sin(midRad);
@@ -148,15 +147,35 @@ export function SpinWheelClient({ prizes }: { prizes: PrizeMeta[] }) {
               </g>
             );
           })}
-          {/* Hub circle */}
-          <circle cx="200" cy="200" r="32" fill="#1a0f3a" stroke="#fff" strokeWidth="4" />
+          {/* Outer rim ring */}
+          <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="6" />
+          {/* Tooth markers around the rim */}
+          {Array.from({ length: 24 }).map((_, i) => {
+            const a = (i * 15 - 90) * (Math.PI / 180);
+            const x1t = 200 + 174 * Math.cos(a);
+            const y1t = 200 + 174 * Math.sin(a);
+            const x2t = 200 + 186 * Math.cos(a);
+            const y2t = 200 + 186 * Math.sin(a);
+            return <line key={i} x1={x1t} y1={y1t} x2={x2t} y2={y2t} stroke="rgba(255,255,255,0.7)" strokeWidth="3" strokeLinecap="round" />;
+          })}
+          {/* Hub — gold gradient */}
+          <defs>
+            <radialGradient id="hub-grad" cx="40%" cy="35%">
+              <stop offset="0%" stopColor="#ffe87a" />
+              <stop offset="60%" stopColor="#ffd14a" />
+              <stop offset="100%" stopColor="#d4850a" />
+            </radialGradient>
+          </defs>
+          <circle cx="200" cy="200" r="38" fill="url(#hub-grad)" stroke="#fff" strokeWidth="5" />
+          <circle cx="200" cy="200" r="32" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
           <text
             x="200"
             y="207"
             textAnchor="middle"
-            fontSize="22"
-            fontWeight={800}
-            fill="#ffd14a"
+            fontSize="19"
+            fontWeight={900}
+            fill="#7a3800"
+            letterSpacing="1"
           >
             SPIN
           </text>

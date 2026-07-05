@@ -20,21 +20,14 @@ import { getMailingList } from "@/lib/mailing-list";
 import { MailingListPanel } from "@/components/admin/MailingListPanel";
 import type { ChildProfile, ChildProgress } from "@/lib/child-profile";
 import { TestSeedCard } from "@/components/admin/TestSeedCard";
+import { AdminFamilyRow, type FamilyRowData } from "@/components/admin/AdminFamilyRow";
 
 export const metadata = { title: "Admin" };
 export const dynamic = "force-dynamic";
 
-interface FamilyRow {
-  userId: string;
-  label: string;
-  email: string;
-  childCount: number;
-  featherPop: number;
-  words: number;
-  eggs: number;
+interface FamilyRow extends FamilyRowData {
   golden: number;
-  member: boolean;
-  status: MembershipStatus;
+  status: string;
 }
 
 /**
@@ -118,6 +111,18 @@ export default async function AdminPage() {
       golden,
       member: isMemberActive({ status }),
       status,
+      children: Array.isArray(children)
+        ? children.map((c) => {
+            const prog = (progressMap[c.id] ?? {}) as ChildProgress;
+            const wordsAtStart = prog.egg?.wordsAtStart ?? prog.wordsFound ?? 0;
+            return {
+              id: c.id,
+              nickname: c.nickname,
+              featherPop: prog.featherPop ?? 0,
+              wordsInEgg: Math.max(0, (prog.wordsFound ?? 0) - wordsAtStart),
+            };
+          })
+        : [],
     };
   });
 
@@ -263,23 +268,10 @@ export default async function AdminPage() {
               <span>Words</span>
               <span>Eggs</span>
               <span>Membership</span>
+              <span></span>
             </div>
             {families.map((f) => (
-              <div key={f.userId} className="admin-families-row">
-                <span className="admin-families-name">
-                  <strong>{f.label}</strong>
-                  <small>{f.email}</small>
-                </span>
-                <span>{f.childCount}</span>
-                <span>{f.featherPop.toLocaleString()}</span>
-                <span>{f.words.toLocaleString()}</span>
-                <span>{f.eggs}</span>
-                <span>
-                  <em className={`admin-badge ${f.member ? "is-member" : ""}`}>
-                    {f.member ? f.status : "free"}
-                  </em>
-                </span>
-              </div>
+              <AdminFamilyRow key={f.userId} family={f} />
             ))}
           </div>
         )}

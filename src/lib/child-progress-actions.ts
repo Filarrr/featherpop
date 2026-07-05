@@ -705,13 +705,13 @@ interface SpinPrizeMeta {
 }
 
 const SPIN_PRIZES: SpinPrizeMeta[] = [
-  { id: "feathers-5",      label: "+5 FeatherPop",       emoji: "🪶", weight: 30 },
-  { id: "feathers-10",     label: "+10 FeatherPop",      emoji: "✨", weight: 20 },
-  { id: "feathers-20",     label: "+20 FeatherPop",      emoji: "💎", weight: 8  },
-  { id: "coloring-page",   label: "Coloring page",       emoji: "🎨", weight: 15 },
-  { id: "puzzle",          label: "Puzzle",              emoji: "🧩", weight: 12 },
+  { id: "feathers-5",      label: "+25 FeatherPop",      emoji: "🪶", weight: 30 },
+  { id: "feathers-10",     label: "+50 FeatherPop",      emoji: "✨", weight: 20 },
+  { id: "feathers-20",     label: "+100 FeatherPop",     emoji: "💎", weight: 8  },
+  { id: "coloring-page",   label: "Coloring page",       emoji: "🎨", weight: 12 },
+  { id: "puzzle",          label: "Puzzle",              emoji: "🧩", weight: 10 },
   { id: "character-card",  label: "Character card",      emoji: "🃏", weight: 10 },
-  { id: "mystery",         label: "Mystery reward",      emoji: "🎁", weight: 5  },
+  { id: "mystery",         label: "Mystery reward",      emoji: "🎁", weight: 10 },
 ];
 
 /** Publicly-readable list of prizes the wheel can land on. */
@@ -783,9 +783,9 @@ export async function spinWheelAction(): Promise<
   const ownedColoring = [...(prev.ownedColoring ?? [])];
   const ownedPuzzles = [...(prev.ownedPuzzles ?? [])];
 
-  if (landed.id === "feathers-5") featherDelta = 5;
-  else if (landed.id === "feathers-10") featherDelta = 10;
-  else if (landed.id === "feathers-20") featherDelta = 20;
+  if (landed.id === "feathers-5") featherDelta = 25;
+  else if (landed.id === "feathers-10") featherDelta = 50;
+  else if (landed.id === "feathers-20") featherDelta = 100;
   else if (landed.id === "character-card") {
     const card = rollCard(rand);
     variantType = "card";
@@ -873,4 +873,53 @@ export async function deleteChildProgressAction(childId: string): Promise<void> 
   void _drop;
   await writeMap(rest);
   revalidatePath("/", "layout");
+}
+
+// ============================================================
+// Admin seed — owner-only, targets any user's child
+// ============================================================
+
+export async function adminSeedAction(
+  targetUserId: string,
+  childId: string,
+  type: "feathers" | "words",
+  amount: number,
+): Promise<{ ok: true; newValue: number } | { ok: false; reason: string }> {
+  const me = await currentUser();
+  if (!me) return { ok: false, reason: "Not signed in." };
+  if (!isOwnerUser(me)) return { ok: false, reason: "Not authorized." };
+
+  const client = await clerkClient();
+  const targetUser = await client.users.getUser(targetUserId);
+  const map = readMap(targetUser.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+
+  let next: ChildProgress;
+  let newValue: number;
+
+  if (type === "feathers") {
+    const capped = Math.min(10000, Math.floor(amount));
+    next = { ...prev, featherPop: (prev.featherPop ?? 0) + capped };
+    newValue = next.featherPop;
+  } else {
+    const target = Math.max(0, Math.min(WORDS_TO_HATCH - 1, Math.floor(amount || 0)));
+    const egg = prev.egg ?? {
+      color: "purple" as EggColor,
+      wordsAtStart: prev.wordsFound ?? 0,
+      cracksShown: 0,
+    };
+    const wordsFound = (egg.wordsAtStart ?? 0) + target;
+    const cracksShown = CRACK_THRESHOLDS.slice(0, -1).filter((t) => target >= t).length;
+    next = { ...prev, wordsFound, egg: { ...egg, cracksShown } };
+    newValue = target;
+  }
+
+  await client.users.updateUserMetadata(targetUserId, {
+    privateMetadata: {
+      ...targetUser.privateMetadata,
+      childProgress: { ...map, [childId]: next },
+    },
+  });
+  revalidatePath("/admin");
+  return { ok: true, newValue };
 }

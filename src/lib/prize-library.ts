@@ -194,9 +194,9 @@ export interface MysteryOutcome {
 }
 
 const MYSTERY_POOL: MysteryOutcome[] = [
-  { kind: "feathers", variantId: "feathers-50",  weight: 40, bonusFeathers: 50,  label: "+50 Bonus Feathers",  emoji: "🪶" },
-  { kind: "feathers", variantId: "feathers-100", weight: 20, bonusFeathers: 100, label: "+100 Bonus Feathers", emoji: "🪶" },
-  { kind: "feathers", variantId: "feathers-200", weight: 5,  bonusFeathers: 200, label: "+200 Mega Bonus",     emoji: "💎" },
+  { kind: "feathers", variantId: "feathers-200", weight: 35, bonusFeathers: 200, label: "+200 Bonus FeatherPop",  emoji: "🪶" },
+  { kind: "feathers", variantId: "feathers-300", weight: 18, bonusFeathers: 300, label: "+300 Bonus FeatherPop",  emoji: "✨" },
+  { kind: "feathers", variantId: "feathers-500", weight: 5,  bonusFeathers: 500, label: "+500 Mega Bonus!",       emoji: "💎" },
   { kind: "coloring", variantId: "rolled",       weight: 15,                     label: "Surprise Coloring Page", emoji: "🎨" },
   { kind: "puzzle",   variantId: "rolled",       weight: 10,                     label: "Surprise Puzzle",        emoji: "🧩" },
   { kind: "card",     variantId: "rolled",       weight: 6,                      label: "Bonus Character Card",   emoji: "🃏" },
