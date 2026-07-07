@@ -7705,6 +7705,12 @@ a.prize-card-spin-link .prize-card-cta {
 }
 .qr-card-feathers { font-size: 1.5rem; letter-spacing: 0.3rem; }
 
+/* On narrow screens the fixed page aspect-ratio clips content — let it grow. */
+@media (max-width: 600px) {
+  .qr-card { aspect-ratio: auto; padding: 1.25rem; }
+  .qr-card-qr svg { max-width: 100%; height: auto; }
+}
+
 @media print {
   body { background: white !important; }
   .no-print,
