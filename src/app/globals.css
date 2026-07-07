@@ -160,8 +160,7 @@ a { color: inherit; }
   text-decoration: none;
   color: var(--ink);
   min-width: 0;
-  flex-shrink: 1;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 .brand-mark img {
   width: 36px;
@@ -6925,6 +6924,28 @@ a.prize-card-spin-link .prize-card-cta {
   font-weight: 800;
 }
 .membership-active a { color: #0c6b48; text-decoration: underline; }
+
+.membership-active-wrap {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+}
+.membership-qr-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, rgba(167, 107, 255, 0.15), rgba(106, 45, 255, 0.15));
+  border: 2px solid rgba(167, 107, 255, 0.4);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  width: 100%;
+  max-width: 520px;
+}
+.membership-qr-banner > svg { flex-shrink: 0; color: #a76bff; }
+.membership-qr-banner > div { flex: 1; min-width: 0; }
+.membership-qr-banner > div strong { display: block; font-size: 1rem; margin-bottom: 0.2rem; }
+.membership-qr-banner > div p { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
 
 .membership-coming-soon {
   display: grid;

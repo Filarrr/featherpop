@@ -36,8 +36,8 @@ export function BrandBar() {
               unoptimized
             />
           </span>
-          <span>
-            <strong>Ms. Feather Pop</strong>
+          <span aria-label="Ms. Featherpop home">
+            <strong>Ms. Featherpop</strong>
             <small>Feather Adventures</small>
           </span>
         </Link>

@@ -43,14 +43,14 @@ export default async function MembershipPage() {
         <section className="membership-hero">
           <div className="membership-hero-body">
             <h2 className="membership-hero-title">
-              <span className="h-gradient">Miss</span>
+              <span className="h-gradient">Ms.</span>
               <br />
-              <span className="membership-hero-brand">Feather Pop</span>
+              <span className="membership-hero-brand">Featherpop</span>
             </h2>
             <p className="membership-hero-sub">Adventure Membership</p>
             <p className="membership-hero-msg">
               Turn any park, backyard, or party into a{" "}
-              <strong>Miss Feather Pop Adventure!</strong>
+              <strong>Ms. Featherpop Adventure!</strong>
             </p>
           </div>
           <div className="membership-hero-art" aria-hidden>
@@ -83,11 +83,23 @@ export default async function MembershipPage() {
         </section>
 
         {active ? (
-          <p className="membership-active" role="status">
-            <Crown aria-hidden className="h-5 w-5" />
-            You're a member — thank you!{" "}
-            <Link href="/account">Manage subscription</Link>.
-          </p>
+          <div className="membership-active-wrap">
+            <p className="membership-active" role="status">
+              <Crown aria-hidden className="h-5 w-5" />
+              You're a member — thank you!{" "}
+              <Link href="/account">Manage subscription</Link>.
+            </p>
+            <div className="membership-qr-banner">
+              <QrCode aria-hidden className="h-8 w-8" />
+              <div>
+                <strong>Print your Adventure Stations</strong>
+                <p>Print and set up the QR code stations for your Park Hunt adventure.</p>
+              </div>
+              <Link href="/print/park-hunt-qrs" className="btn btn-gold btn-pulse">
+                Print QR Codes
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="membership-cta-wrap">
             <CheckoutButton priceLabel={MEMBERSHIP_PRICE_LABEL} />
