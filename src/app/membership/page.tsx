@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   BookOpen,
   Crown,
@@ -28,6 +29,8 @@ const UNLOCKS = [
 export default async function MembershipPage() {
   const m = await getMembership();
   const active = isMemberActive(m);
+
+  if (active) redirect("/account");
 
   return (
     <main className="page membership-page-wrap">
