@@ -2167,6 +2167,15 @@ a { color: inherit; }
   color: var(--ink-soft);
   font-style: italic;
 }
+.cbw-recent {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
 
 /* ===== Membership banner (homepage CTA) ===== */
 .membership-banner {

@@ -100,26 +100,24 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {!isActive ? (
-        <section className="membership-banner">
+      <section className="membership-banner">
           <div>
             <span className="kicker">
               <Sparkles aria-hidden className="h-4 w-4" />
-              Unlock the full adventure
+              {isActive ? "You're a member" : "Unlock the full adventure"}
             </span>
             <h2 className="h-display mt-1 text-2xl">
-              <span className="h-gradient">Champions get more</span>
+              <span className="h-gradient">{isActive ? "Champion status active" : "Champions get more"}</span>
             </h2>
             <p className="mt-1 text-sm text-[var(--ink-soft)]">
               All 6 quest zones · Unlimited quests · Printable QR packs · Champions Battle Words
             </p>
           </div>
-          <Link href="/membership" className="btn btn-gold btn-lg">
+          <Link href={isActive ? "/account" : "/membership"} className="btn btn-gold btn-lg">
             <Sparkles aria-hidden className="h-5 w-5" />
-            Join for $23.99/month
+            {isActive ? "Manage membership" : "Join for $23.99/month"}
           </Link>
         </section>
-      ) : null}
 
       <section className="mt-8">
         <div className="mb-4 flex items-end justify-between gap-3">

@@ -17,11 +17,8 @@ export function HomeStats({ nickname }: { nickname?: string }) {
   const next = nextLevel(total);
   const toNext = next ? Math.max(0, next.min - total) : 0;
 
-  const now = new Date();
-  const monthlyWords = progress.history.filter((e) => {
-    const d = new Date(e.at);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }).length;
+  const totalWords = progress.wordsFound ?? 0;
+  const recentWords = progress.recentWords ?? [];
 
   if (!activeChildId) {
     return (
@@ -89,14 +86,17 @@ export function HomeStats({ nickname }: { nickname?: string }) {
           <div className="cbw-wrap">
             <div
               className="cbw-circle"
-              aria-label={`${monthlyWords} words this month`}
+              aria-label={`${totalWords} words found`}
             >
-              <span className="cbw-count">{monthlyWords}</span>
+              <span className="cbw-count">{totalWords}</span>
               <span className="cbw-unit">words</span>
             </div>
             <div className="cbw-meta">
               <strong className="cbw-title">Champions Battle Words</strong>
               <span className="cbw-sub">Can you beat your friends?</span>
+              {recentWords.length > 0 ? (
+                <span className="cbw-recent">{recentWords.join(" · ")}</span>
+              ) : null}
             </div>
           </div>
         ) : null}

@@ -8,6 +8,42 @@ import { progressKey, saveProgress, readProgress } from "./player";
 
 export type FeatherCounts = Partial<Record<FeatherType, number>>;
 
+export type EggColor = "purple" | "blue" | "pink" | "gold" | "rainbow" | "silver";
+
+export type HatchedCharacter =
+  | "baby-eagle"
+  | "baby-peacock"
+  | "baby-bunny"
+  | "baby-butterfly"
+  | "rainbow-peacock"
+  | "feather-dragon"
+  | "sparkle-unicorn"
+  | "golden-eagle";
+
+export interface HatchedEntry {
+  character: HatchedCharacter;
+  color: EggColor;
+  wordsRead: number; // total wordsFound at the moment of hatching
+  at: number; // timestamp ms
+}
+
+/** Words needed to hatch one egg. Set to 50 for production. */
+export const WORDS_TO_HATCH = 50;
+
+/**
+ * Crack milestones (words inside current egg). The last entry equals
+ * WORDS_TO_HATCH and triggers a hatch — earlier entries trigger cracks.
+ */
+export const CRACK_THRESHOLDS = [10, 20, 30, 40, 50] as const;
+
+/** Labels + messages shown for each crack milestone (indices 0–3). */
+export const CRACK_LABELS = [
+  { label: "First crack!",       message: "The magic is stirring inside your egg!" },
+  { label: "Another crack!",     message: "The shell is breaking — keep reading!" },
+  { label: "Almost there!",      message: "Your egg is nearly open — just a bit more!" },
+  { label: "One more word…",     message: "Your magical friend is about to burst out!" },
+] as const;
+
 export interface ChildProfile {
   id: string;
   nickname: string;
@@ -29,6 +65,10 @@ export interface ChildProgress {
   history: CompletedMissionEntry[]; // newest first, capped at 50
   streakDays: number;
   lastActiveDate: string; // yyyy-mm-dd
+  wordsFound?: number; // cumulative words found in all word games
+  egg?: { color: EggColor; wordsAtStart: number }; // current egg state
+  hatched?: HatchedEntry[]; // all hatched friends, newest first
+  recentWords?: string[]; // last 3 words found (for Champions Battle Words)
 }
 
 export const defaultChildProgress: ChildProgress = {
@@ -38,6 +78,7 @@ export const defaultChildProgress: ChildProgress = {
   history: [],
   streakDays: 0,
   lastActiveDate: "",
+  wordsFound: 0,
 };
 
 export const activeChildKey = "ms-feather-pop-active-child";
