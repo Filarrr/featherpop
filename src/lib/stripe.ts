@@ -13,4 +13,4 @@ export function stripe(): Stripe {
 }
 
 export const MEMBERSHIP_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID ?? "";
-export const MEMBERSHIP_PRICE_LABEL = "$23.99/month";
+export const MEMBERSHIP_PRICE_LABEL = "$9.99/month";
