@@ -1,4 +1,4 @@
-import { MissionRunnerClient } from "@/components/MissionRunnerClient";
+import { MissionRunner } from "@/components/MissionRunner";
 
 export default async function QuestPage({
   params,
@@ -8,7 +8,7 @@ export default async function QuestPage({
   const { slug } = await params;
   return (
     <main className="page">
-      <MissionRunnerClient slug={slug} />
+      <MissionRunner slug={slug} />
     </main>
   );
 }

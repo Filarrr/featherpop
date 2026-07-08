@@ -1,7 +1,10 @@
-// Child profile + progress shapes. Source of truth is Clerk metadata
-// (publicMetadata.children + privateMetadata.childProgress). No localStorage.
+// Child profile + per-child progress.
+// Profiles (id/nickname/avatar) live in Clerk publicMetadata.children[].
+// Progress (feathers / streak / completed missions) lives in localStorage,
+// keyed by child id — fast writes, no per-mission API call.
 
-import { FeatherType } from "./missions";
+import { Mission, FeatherType } from "./missions";
+import { progressKey, saveProgress, readProgress } from "./player";
 
 export type FeatherCounts = Partial<Record<FeatherType, number>>;
 
@@ -19,73 +22,6 @@ export interface CompletedMissionEntry {
   featherPop: number;
 }
 
-// Magical Egg system. Each egg progresses with words found (10 per crack,
-// 50 to hatch). On hatch a random character is rolled and added to the
-// collection book, then a fresh egg starts.
-export type EggColor = "purple" | "blue" | "pink" | "gold" | "rainbow" | "silver";
-export type HatchedCharacter =
-  | "baby-eagle"
-  | "baby-peacock"
-  | "baby-bunny"
-  | "baby-butterfly"
-  | "golden-eagle"
-  | "rainbow-peacock"
-  | "feather-dragon"
-  | "sparkle-unicorn";
-
-export interface EggState {
-  color: EggColor;
-  wordsAtStart: number; // wordsFound when this egg started
-  // Highest crack milestone already celebrated (0..4). Used so the
-  // cracking overlay only fires when the kid crosses a NEW threshold,
-  // not on every word past it.
-  cracksShown?: number;
-}
-
-/**
- * Words needed to hatch an egg. TEMPORARY: lowered to 10 for testing —
- * change back to 50 for launch. Everything else (crack milestones, progress
- * bars, "N/50" labels) is derived from this single number.
- */
-export const WORDS_TO_HATCH = 10;
-
-/** The 5 crack milestones (in words past wordsAtStart). The last = hatch. */
-export const CRACK_THRESHOLDS: number[] = [0.2, 0.4, 0.6, 0.8, 1].map((f) =>
-  Math.max(1, Math.round(f * WORDS_TO_HATCH)),
-);
-/** Sequence-of-events labels shown at each milestone. */
-export const CRACK_LABELS = [
-  "Small Crack",
-  "Medium Crack",
-  "Large Crack",
-  "Almost Open!",
-  "Hatching!",
-] as const;
-/** Encouragement copy at each crack — from Ms. Feather Pop herself. */
-export const CRACK_MESSAGES = [
-  "Great job, Feather Friend! Your egg is beginning to crack!",
-  "Wonderful! The crack is growing bigger!",
-  "Keep going! Your egg is getting closer!",
-  "Almost there! One more push and it will hatch!",
-  "It's hatching! Look who's coming out!",
-] as const;
-
-export interface HatchedEntry {
-  character: HatchedCharacter;
-  color: EggColor;
-  hatchedAt: number;
-  wordsRead: number;
-}
-
-/** What kind of underlying asset a reward claim resolved to. */
-export type ClaimVariantType =
-  | "card"      // collectible character card
-  | "coloring"  // printable coloring page
-  | "puzzle"    // printable / interactive puzzle
-  | "feathers"  // bonus feather drop (mystery box)
-  | "spin"      // bonus free spin (mystery box)
-  | "egg";      // golden egg (mystery box — rare)
-
 export interface ChildProgress {
   feathers: FeatherCounts;
   featherPop: number;
@@ -93,61 +29,6 @@ export interface ChildProgress {
   history: CompletedMissionEntry[]; // newest first, capped at 50
   streakDays: number;
   lastActiveDate: string; // yyyy-mm-dd
-
-  // V2 (Word Hero / egg system) — optional so old saves keep working.
-  wordsFound?: number;
-  // Letter Pop best single-round score (points). Per-child high score.
-  letterPopBest?: number;
-  // How many Letter Pop rounds this child has finished (for stats).
-  letterPopRounds?: number;
-  // Free-tier daily play counters, per game, reset each day. Members are
-  // unlimited and never touch this.
-  dailyPlays?: {
-    date: string; // yyyy-mm-dd
-    sort?: number;
-    parkhunt?: number;
-    letterpop?: number;
-  };
-  egg?: EggState;
-  hatched?: HatchedEntry[];
-  freeSpins?: number;
-  videosWatched?: number;
-  songsUnlocked?: number;
-  // Claimed reward log. variantId + variantType are populated by the new
-  // prize roll (card, coloring page, puzzle, mystery payload). Older
-  // claims pre-dating the roll have only id/at/cost — handled gracefully
-  // by /prize/[at] (falls back to a generic 'thanks for claiming' page).
-  claimedRewards?: {
-    id: string;
-    at: number;
-    cost: number;
-    variantId?: string;
-    variantType?: ClaimVariantType;
-    // For mystery: what the box actually contained (card id, coloring id, etc.)
-    mysteryPayload?: { kind: ClaimVariantType; variantId: string; bonusFeathers?: number; bonusSpins?: number };
-  }[];
-
-  // Character-card deck — cardId → number of copies owned.
-  ownedCards?: Record<string, number>;
-  // Coloring page IDs the kid has unlocked (printable).
-  ownedColoring?: string[];
-  // Puzzle IDs the kid has unlocked (printable / interactive).
-  ownedPuzzles?: string[];
-
-  // Monthly Golden Feather tracking. wordsThisMonth resets to 0 when the
-  // current month rolls over (server-side). monthKey is the YYYY-MM the
-  // counter belongs to; if it doesn't match today's, the counter resets
-  // on next write.
-  wordsThisMonth?: number;
-  monthKey?: string;
-  // Golden Feather earned in YYYY-MM. Persisted so the certificate route
-  // can render it after the fact.
-  goldenFeatherMonths?: string[];
-
-  // Daily +5 video/music bonus gates — keyed by 'YYYY-MM-DD'. The presence
-  // of today's key in either set means the bonus was claimed today.
-  videoBonusDates?: string[];
-  musicBonusDates?: string[];
 }
 
 export const defaultChildProgress: ChildProgress = {
@@ -157,15 +38,113 @@ export const defaultChildProgress: ChildProgress = {
   history: [],
   streakDays: 0,
   lastActiveDate: "",
-  wordsFound: 0,
-  hatched: [],
-  freeSpins: 0,
 };
+
+export const activeChildKey = "ms-feather-pop-active-child";
+export function progressKeyForChild(childId: string) {
+  return `ms-feather-pop-child-progress::${childId}`;
+}
+
+function readJson<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const v = window.localStorage.getItem(key);
+    return v ? (JSON.parse(v) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function writeJson<T>(key: string, value: T) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+export function readActiveChildId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(activeChildKey);
+}
+export function setActiveChildId(id: string | null) {
+  if (typeof window === "undefined") return;
+  if (id) window.localStorage.setItem(activeChildKey, id);
+  else window.localStorage.removeItem(activeChildKey);
+}
+
+export function readChildProgress(childId: string): ChildProgress {
+  return readJson<ChildProgress>(progressKeyForChild(childId), defaultChildProgress);
+}
+export function saveChildProgress(childId: string, p: ChildProgress) {
+  writeJson(progressKeyForChild(childId), p);
+}
 
 export function totalFeathers(p: ChildProgress): number {
   return Object.values(p.feathers).reduce((s, n) => s + (n ?? 0), 0);
 }
 
-export function recentMissionIds(p: ChildProgress, n = 6): string[] {
-  return p.history.slice(0, n).map((e) => e.id);
+function todayISO(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = `${d.getMonth() + 1}`.padStart(2, "0");
+  const day = `${d.getDate()}`.padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
+function yesterdayISO(today: string): string {
+  const [y, m, d] = today.split("-").map((n) => Number(n));
+  const dt = new Date(y, m - 1, d - 1);
+  const yy = dt.getFullYear();
+  const mm = `${dt.getMonth() + 1}`.padStart(2, "0");
+  const dd = `${dt.getDate()}`.padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+export function applyMissionReward(childId: string, mission: Mission): ChildProgress {
+  const prev = readChildProgress(childId);
+  const feathers = { ...prev.feathers };
+  feathers[mission.feather] = (feathers[mission.feather] ?? 0) + 1;
+
+  const today = todayISO();
+  let streakDays = prev.streakDays;
+  if (prev.lastActiveDate === today) {
+    // already counted today — keep streak
+  } else if (prev.lastActiveDate === yesterdayISO(today)) {
+    streakDays = prev.streakDays + 1;
+  } else {
+    streakDays = 1;
+  }
+
+  const entry: CompletedMissionEntry = {
+    id: mission.id,
+    at: Date.now(),
+    feather: mission.feather,
+    featherPop: mission.featherPop,
+  };
+  const history = [entry, ...prev.history].slice(0, 50);
+
+  const next: ChildProgress = {
+    feathers,
+    featherPop: prev.featherPop + mission.featherPop,
+    totalMissions: prev.totalMissions + 1,
+    history,
+    streakDays,
+    lastActiveDate: today,
+  };
+  saveChildProgress(childId, next);
+
+  // Mirror FeatherPop balance into the legacy player.ts store so existing
+  // RewardsClient / WalletClient / Letter Pop reward checks keep working.
+  const legacy = readProgress();
+  saveProgress({
+    ...legacy,
+    totalFeatherPop: legacy.totalFeatherPop + mission.featherPop,
+  });
+
+  return next;
+}
+
+export function recentMissionIds(childId: string, n = 6): string[] {
+  return readChildProgress(childId)
+    .history.slice(0, n)
+    .map((e) => e.id);
+}
+
+// Re-export the progress key so callers (e.g. legacy mirror) have one source of truth.
+export { progressKey as legacyProgressKey };

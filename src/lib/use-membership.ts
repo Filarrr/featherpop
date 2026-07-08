@@ -6,15 +6,10 @@
 
 import { useUser } from "@clerk/nextjs";
 import type { Membership } from "@/lib/membership";
-import { isOwnerEmail } from "@/lib/owner-emails";
 
 export function useMembership(): { membership: Membership; isMember: boolean; isLoaded: boolean } {
   const { user, isLoaded } = useUser();
   const m = ((user?.publicMetadata?.membership ?? { status: "none" }) as Membership);
-  // Owner accounts are treated as active members.
-  const owner = isOwnerEmail(
-    (user?.emailAddresses ?? []).map((e) => e.emailAddress),
-  );
-  const isMember = owner || m.status === "active" || m.status === "trialing";
+  const isMember = m.status === "active" || m.status === "trialing";
   return { membership: m, isMember, isLoaded };
 }

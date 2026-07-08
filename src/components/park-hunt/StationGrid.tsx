@@ -7,6 +7,7 @@ import { Camera, RefreshCw, Sparkles, Wand2 } from "lucide-react";
 import { buzz, childCheer, ding, fanfare, pop, wordReveal } from "@/lib/audio";
 import { Confetti } from "@/components/Confetti";
 import { findWordAtStationAction } from "@/lib/park-hunt-actions";
+import { STATION_META } from "@/lib/park-hunt";
 import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
 import { EggCrackReveal } from "@/components/eggs/EggCrackReveal";
 import type { EggColor, HatchedEntry } from "@/lib/child-profile";
@@ -35,6 +36,7 @@ export function StationGrid({
 }) {
   const router = useRouter();
   const [phase, setPhase] = useState<"finding" | "limit">("finding");
+  const station = STATION_META[stationId];
   const [confettiKey, setConfettiKey] = useState(0);
   const [wrongTap, setWrongTap] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
@@ -137,7 +139,7 @@ export function StationGrid({
         </h2>
         <p>
           <strong>{word}</strong> isn&apos;t at{" "}
-          <strong>Station {stationId + 1}</strong>. Walk around the park and scan
+          <strong>{station?.name ?? `Station ${stationId + 1}`}</strong>. Walk around the park and scan
           a different QR code.
         </p>
         <div className="parkhunt-station-actions">
@@ -196,8 +198,10 @@ export function StationGrid({
         <EggCrackReveal {...crackMilestone} onClose={goLetterPop} />
       ) : null}
 
-      <header className="parkhunt-station-hud">
-        <span className="kicker">Station {stationId + 1}</span>
+      <header className="parkhunt-station-hud" style={{ borderColor: station?.color }}>
+        <span className="kicker" style={{ color: station?.color }}>
+          {station?.name ?? `Station ${stationId + 1}`}
+        </span>
         <p className="parkhunt-station-find">
           You found <strong>{word}</strong>! Tap it to keep going →
         </p>

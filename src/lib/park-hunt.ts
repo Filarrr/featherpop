@@ -13,6 +13,15 @@ export const STATION_COUNT = 6;
 export const WORDS_PER_STATION = 20;
 export const TOTAL_DAILY_WORDS = STATION_COUNT * WORDS_PER_STATION; // 120
 
+export const STATION_META = [
+  { name: "Magic Station",       color: "#b13bff" },
+  { name: "Eagle Station",       color: "#ffd14a" },
+  { name: "Pop Station",         color: "#ff2d8e" },
+  { name: "Mirror Station",      color: "#4cc4ff" },
+  { name: "Miss. Nelly Station", color: "#34e3a4" },
+  { name: "Spider Isle Station", color: "#ff7a45" },
+] as const;
+
 /** YYYY-MM-DD in the user's local time. (Kept for per-day stats / bonuses.) */
 export function todayKey(now: Date = new Date()): string {
   const y = now.getFullYear();

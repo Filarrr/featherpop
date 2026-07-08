@@ -42,11 +42,11 @@ export function CheckoutButton({ priceLabel }: { priceLabel: string }) {
         className="btn btn-gold btn-lg"
       >
         <Sparkles aria-hidden className="h-5 w-5" />
-        {loading ? "Opening checkout…" : `Subscribe · ${priceLabel}`}
+        {loading ? "Opening checkout…" : `Start 3-day free trial · ${priceLabel}`}
       </button>
       {err ? <p className="text-sm font-bold text-red-300">{err}</p> : null}
       <p className="text-xs text-[var(--ink-soft)]">
-        Cancel any time from your account page.
+        Cancel any time during the trial — you won&apos;t be charged.
       </p>
     </div>
   );

@@ -1,12 +1,20 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Printer } from "lucide-react";
+import { listRewards } from "@/lib/admin-store";
 import { Reward } from "@/lib/game-data";
-import { useActiveChild } from "@/lib/use-active-child";
+import { readProfile } from "@/lib/player";
 
-export function PrintableReward({ reward }: { reward: Reward | null }) {
-  const { active } = useActiveChild();
-  const nickname = active?.nickname ?? "Feather Explorer";
+export function PrintableReward({ rewardId }: { rewardId: string }) {
+  const [reward, setReward] = useState<Reward | null>(null);
+  const [nickname, setNickname] = useState<string>("");
+
+  useEffect(() => {
+    const r = listRewards().find((x) => x.id === rewardId);
+    setReward(r ?? null);
+    setNickname(readProfile()?.nickname ?? "Word Explorer");
+  }, [rewardId]);
 
   if (!reward) {
     return (
@@ -41,7 +49,7 @@ export function PrintableReward({ reward }: { reward: Reward | null }) {
 
       <article className="reward-cert">
         <div className="reward-cert-frame">
-          <p className="reward-cert-kicker">Ms. Feather Pop · Feather Missions</p>
+          <p className="reward-cert-kicker">Ms. Feather Pop · Word Quest</p>
           <h2 className="reward-cert-title">Certificate of Achievement</h2>
           <p className="reward-cert-presented">This certificate is presented to</p>
           <p className="reward-cert-name">{nickname}</p>
@@ -51,12 +59,12 @@ export function PrintableReward({ reward }: { reward: Reward | null }) {
             ({reward.featherpopRequired} FeatherPop earned).
           </p>
           <p className="reward-cert-tag">
-            Way to go, brave explorer! Keep scanning, hopping, and helping.
+            Way to go, Word Explorer! Keep finding letters and building words.
           </p>
           <div className="reward-cert-signature">
             <div>
               <p className="line">Ms. Feather Pop</p>
-              <p className="sublabel">Chief Feather Whisperer</p>
+              <p className="sublabel">Chief Word Whisperer</p>
             </div>
             <div>
               <p className="line">{new Date().toLocaleDateString()}</p>

@@ -35,9 +35,6 @@ export type Reward = {
   printable?: boolean;
 };
 
-/** Owner-managed video/song entry (shown on the Story & Music pages). */
-export type MediaItem = { id: string; title: string; url: string };
-
 export const appBaseUrl =
   process.env.NEXT_PUBLIC_APP_URL ?? "https://play.msfeatherpop.com";
 
