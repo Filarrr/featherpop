@@ -43,11 +43,10 @@ export interface EggState {
 }
 
 /**
- * Words needed to hatch an egg. TEMPORARY: lowered to 10 for testing —
- * change back to 50 for launch. Everything else (crack milestones, progress
+ * Words needed to hatch an egg. Everything else (crack milestones, progress
  * bars, "N/50" labels) is derived from this single number.
  */
-export const WORDS_TO_HATCH = 10;
+export const WORDS_TO_HATCH = 50;
 
 /** The 5 crack milestones (in words past wordsAtStart). The last = hatch. */
 export const CRACK_THRESHOLDS: number[] = [0.2, 0.4, 0.6, 0.8, 1].map((f) =>
