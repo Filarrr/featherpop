@@ -29,7 +29,7 @@ export function AdminSeedPanel({
     if (!selectedId) return;
     setMsg(null);
     startTransition(async () => {
-      const res = await adminSeedAction(userId, selectedId, type, amount);
+      const res = await adminSeedAction({ childId: selectedId, type, amount });
       if (res.ok) {
         setMsg(
           type === "feathers"
@@ -37,7 +37,7 @@ export function AdminSeedPanel({
             : `Egg set to ${res.newValue}/${WORDS_TO_HATCH} words`,
         );
       } else {
-        setMsg(`Error: ${res.reason}`);
+        setMsg(`Error: ${res.error}`);
       }
     });
   }

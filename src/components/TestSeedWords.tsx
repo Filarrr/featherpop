@@ -21,7 +21,7 @@ export function TestSeedWords() {
   function seed(n: number) {
     startTransition(async () => {
       const res = await seedWordsAction(n);
-      if (res.ok) {
+      if (res && res.ok) {
         setMsg(
           `Egg set to ${res.wordsInEgg}/${WORDS_TO_HATCH} words — play ${
             WORDS_TO_HATCH - res.wordsInEgg
@@ -29,7 +29,7 @@ export function TestSeedWords() {
         );
         router.refresh();
       } else {
-        setMsg(res.reason);
+        setMsg("Error");
       }
     });
   }

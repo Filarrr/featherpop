@@ -8,6 +8,8 @@ import { progressKey, saveProgress, readProgress } from "./player";
 
 export type FeatherCounts = Partial<Record<FeatherType, number>>;
 
+export type ClaimVariantType = "feathers" | "card" | "coloring" | "puzzle" | "spin" | "egg";
+
 export type EggColor = "purple" | "blue" | "pink" | "gold" | "rainbow" | "silver";
 
 export type HatchedCharacter =
@@ -24,7 +26,8 @@ export interface HatchedEntry {
   character: HatchedCharacter;
   color: EggColor;
   wordsRead: number; // total wordsFound at the moment of hatching
-  at: number; // timestamp ms
+  at: number; // timestamp ms (legacy)
+  hatchedAt: number; // alias used by some UI pages (kept in sync)
 }
 
 /** Words needed to hatch one egg. Set to 50 for production. */
@@ -69,6 +72,23 @@ export interface ChildProgress {
   egg?: { color: EggColor; wordsAtStart: number }; // current egg state
   hatched?: HatchedEntry[]; // all hatched friends, newest first
   recentWords?: string[]; // last 3 words found (for Champions Battle Words)
+  // Optional legacy fields used by compatibility shims
+  freeSpins?: number;
+  goldenFeatherMonths?: string[];
+  lastMusicBonusDate?: string;
+  lastVideoBonusDate?: string;
+  // Optional media / engagement counters
+  videosWatched?: number;
+  songsUnlocked?: number;
+  // Month-scoped fields used by rewards/print pages
+  monthKey?: string;
+  wordsThisMonth?: number;
+  // Daily play counters used by free-play gate logic
+  dailyPlays?: { date?: string } & Record<string, number | string | undefined>;
+  // Optional collection/pack fields
+  ownedCards?: Record<string, number>;
+  // Claimed reward records (legacy compatibility)
+  claimedRewards?: any[];
 }
 
 export const defaultChildProgress: ChildProgress = {
@@ -79,6 +99,10 @@ export const defaultChildProgress: ChildProgress = {
   streakDays: 0,
   lastActiveDate: "",
   wordsFound: 0,
+  videosWatched: 0,
+  songsUnlocked: 0,
+  monthKey: "",
+  wordsThisMonth: 0,
 };
 
 export const activeChildKey = "ms-feather-pop-active-child";

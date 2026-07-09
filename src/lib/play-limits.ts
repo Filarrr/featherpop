@@ -59,7 +59,8 @@ export async function readPlayGate(game: GameKey): Promise<PlayGate> {
   const dp = map[childId]?.dailyPlays;
   const today = playDayKey();
   const count = dp && dp.date === today ? (dp[game] ?? 0) : 0;
-  const remaining = Math.max(0, FREE_DAILY_PLAYS - count);
+  const countNum = Number(count) || 0;
+  const remaining = Math.max(0, FREE_DAILY_PLAYS - countNum);
   return { isMember: false, remaining, locked: remaining <= 0 };
 }
 
@@ -89,7 +90,7 @@ export async function tryConsumePlay(
     prev.dailyPlays && prev.dailyPlays.date === today
       ? prev.dailyPlays
       : { date: today };
-  const count = dp[game] ?? 0;
+  const count = (dp as any)[game] ?? 0;
   if (count >= FREE_DAILY_PLAYS) {
     return { allowed: false, remaining: 0, isMember: false };
   }

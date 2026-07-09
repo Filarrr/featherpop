@@ -35,6 +35,8 @@ export type Reward = {
   printable?: boolean;
 };
 
+export type MediaItem = { id: string; title: string; url: string };
+
 export const appBaseUrl =
   process.env.NEXT_PUBLIC_APP_URL ?? "https://play.msfeatherpop.com";
 

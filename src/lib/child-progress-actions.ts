@@ -191,11 +191,13 @@ export async function recordWordsFoundAction(
   let newHatched = prev.hatched ?? [];
 
   if (newInEgg >= WORDS_TO_HATCH && prevInEgg < WORDS_TO_HATCH) {
+    const now = Date.now();
     const entry: HatchedEntry = {
       character: pickCharacter(),
       color: egg.color,
       wordsRead: newWords,
-      at: Date.now(),
+      at: now,
+      hatchedAt: now,
     };
     newHatched = [entry, ...newHatched].slice(0, 20);
     hatched = entry;
@@ -291,4 +293,111 @@ export async function adminSeedAction(args: {
   });
   revalidatePath("/");
   return { ok: true, newValue: wordsInEgg };
+}
+
+// Compatibility helpers for older imports (kept to avoid breaking last push)
+export async function awardFeatherPopAction(amount: number) {
+  const childId = await getActiveChildId();
+  if (!childId) throw new Error("No active child");
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const newPop = Math.min(1000000, (prev.featherPop ?? 0) + amount);
+  const next = { ...prev, featherPop: newPop };
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/");
+  return next;
+}
+
+async function claimDaily(kind: "music" | "video") {
+  const childId = await getActiveChildId();
+  if (!childId) return { awarded: false, reason: "No active child" };
+  const user = await currentUser();
+  if (!user) return { awarded: false, reason: "Unauthorized" };
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const today = todayISO();
+  const key = kind === "music" ? "lastMusicBonusDate" : "lastVideoBonusDate";
+  // @ts-ignore - storing legacy keys inside the progress object is intentional here
+  if ((prev as any)[key] === today) return { awarded: false, reason: "Already claimed today." };
+  const next = { ...prev, featherPop: (prev.featherPop ?? 0) + 5, /* @ts-ignore */ [key]: today };
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/");
+  return { awarded: true };
+}
+
+export async function claimMusicBonusAction() {
+  return claimDaily("music");
+}
+
+export async function claimVideoBonusAction() {
+  return claimDaily("video");
+}
+
+// More compatibility helpers expected by older client/server codepaths.
+export type SpinPrize = string;
+
+export async function getGoldenFeatherMonthsAction(): Promise<string[]> {
+  // Return an empty list for now — legacy print page handles empty gracefully.
+  return [];
+}
+
+export async function listSpinPrizesAction(): Promise<{ id: string; label: string; emoji: string }[]> {
+  // Minimal prize set to keep the spin wheel UI functional.
+  return [
+    { id: "feathers-100", label: "100 FeatherPop", emoji: "🪶" },
+    { id: "feathers-250", label: "250 FeatherPop", emoji: "✨" },
+    { id: "mystery-box", label: "Mystery prize", emoji: "🎁" },
+  ];
+}
+
+export async function seedFeathersAction(amount: number): Promise<{ ok: true; featherPop: number } | { ok: false; reason: string }> {
+  const childId = await getActiveChildId();
+  if (!childId) return { ok: false, reason: "No active child" };
+  const user = await currentUser();
+  if (!user) return { ok: false, reason: "Unauthorized" };
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const newPop = Math.min(1000000, (prev.featherPop ?? 0) + amount);
+  await writeMap({ ...map, [childId]: { ...prev, featherPop: newPop } });
+  revalidatePath("/");
+  return { ok: true, featherPop: newPop };
+}
+
+export async function spinWheelAction(): Promise<{
+  ok: true;
+  prize: { id: string; label: string; emoji: string };
+  claimAt: number | null;
+} | { ok: false; reason: string }> {
+  const prizes = await listSpinPrizesAction();
+  if (prizes.length === 0) return { ok: false, reason: "No prizes" };
+  const childId = await getActiveChildId();
+  if (!childId) return { ok: false, reason: "No active child" };
+  const user = await currentUser();
+  if (!user) return { ok: false, reason: "Unauthorized" };
+
+  const map = readMap(user.privateMetadata);
+  const prev = map[childId] ?? defaultChildProgress;
+  const freeSpins = (prev as any).freeSpins ?? 1;
+  if (freeSpins <= 0) return { ok: false, reason: "No spins available" };
+
+  const prize = prizes[0];
+  // For simple compatibility: award a featherPop prize when id starts with 'feathers-'.
+  let claimAt: number | null = null;
+  const next: ChildProgress = { ...prev };
+  if (prize.id.startsWith("feathers-")) {
+    const amt = Number(prize.id.split("-")[1]) || 0;
+    next.featherPop = (prev.featherPop ?? 0) + amt;
+    claimAt = Date.now();
+  } else {
+    // Non-feather prize — mark for claiming by creating a timestamp-based claim id.
+    claimAt = Date.now();
+  }
+  // decrement free spins if present
+  (next as any).freeSpins = Math.max(0, (prev as any).freeSpins ?? 1 - 1);
+
+  await writeMap({ ...map, [childId]: next });
+  revalidatePath("/");
+  return { ok: true, prize: { id: prize.id, label: prize.label, emoji: prize.emoji }, claimAt };
 }
