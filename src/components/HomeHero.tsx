@@ -77,33 +77,31 @@ export function HomeHero() {
         </h1>
 
         <div className="hero-home-mascot">
-          <MsFeatherPopAvatar pose={greet.pose} size={280} />
+          <MsFeatherPopAvatar pose={greet.pose} size={200} />
         </div>
       </div>
 
-      <div className="hero-home-action">
-        <div className="home-secondary-links">
-          <Link href="/progress" className="home-secondary-link">
-            <span aria-hidden>📊</span> My Progress
-          </Link>
-          <Link href="/membership" className="home-secondary-link is-gold">
-            <span aria-hidden>👑</span> Membership
-          </Link>
-        </div>
+      <button
+        type="button"
+        onClick={handlePlay}
+        className="play-button"
+        aria-label="Play"
+      >
+        <span className="play-button-ring" aria-hidden />
+        <span className="play-button-ring play-button-ring-2" aria-hidden />
+        <span className="play-button-icon">
+          <Play aria-hidden className="h-12 w-12 fill-current" />
+        </span>
+        <span className="play-button-text">PLAY</span>
+      </button>
 
-        <button
-          type="button"
-          onClick={handlePlay}
-          className="play-button"
-          aria-label="Play"
-        >
-          <span className="play-button-ring" aria-hidden />
-          <span className="play-button-ring play-button-ring-2" aria-hidden />
-          <span className="play-button-icon">
-            <Play aria-hidden className="h-12 w-12 fill-current" />
-          </span>
-          <span className="play-button-text">PLAY</span>
-        </button>
+      <div className="home-secondary-links">
+        <Link href="/progress" className="home-secondary-link">
+          <span aria-hidden>📊</span> My Progress
+        </Link>
+        <Link href="/membership" className="home-secondary-link is-gold">
+          <span aria-hidden>👑</span> Membership
+        </Link>
       </div>
 
       <div className="hero-home-stations">
