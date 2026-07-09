@@ -27,7 +27,7 @@ export default async function ParkHuntQrsPage() {
             or birthday party. This pack is part of Adventure Membership.
           </p>
           <ul className="mt-4 grid gap-2">
-            <li>📍 5 numbered QR stations, ready to print</li>
+            <li>📍 6 themed QR stations with names like Magic, Eagle, and Pop</li>
             <li>🧷 Weatherproof-laminate-friendly layout</li>
             <li>📅 Word lists refresh every Monday automatically</li>
             <li>🎉 No setup — kids scan and the app does the rest</li>
@@ -48,5 +48,5 @@ export default async function ParkHuntQrsPage() {
   const week = weekKey();
   const bank = await getGlobalWordBank();
   const { stations } = weeklyStations(week, bank);
-  return <PrintableQrPack stations={stations} weekKey={week} />;
+  return <PrintableQrPack stations={stations} />;
 }

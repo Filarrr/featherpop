@@ -13,6 +13,19 @@ export const STATION_COUNT = 6;
 export const WORDS_PER_STATION = 20;
 export const TOTAL_DAILY_WORDS = STATION_COUNT * WORDS_PER_STATION; // 120
 
+export const STATION_THEMES = [
+  { label: "Magic Station", color: "linear-gradient(135deg, #9b5cff, #6b2aff)" },
+  { label: "Eagle Station", color: "linear-gradient(135deg, #34d1ff, #2271ff)" },
+  { label: "Pop Station", color: "linear-gradient(135deg, #ff6b93, #ff3a96)" },
+  { label: "Mirror Station", color: "linear-gradient(135deg, #ffd14a, #ff9f3a)" },
+  { label: "Miss. Nelly Station", color: "linear-gradient(135deg, #34e3a4, #1ea672)" },
+  { label: "Spider Isle Station", color: "linear-gradient(135deg, #ff8a4d, #ff4d8d)" },
+];
+
+export function getStationLabel(stationIndex: number): string {
+  return STATION_THEMES[stationIndex]?.label ?? `Station ${stationIndex + 1}`;
+}
+
 /** YYYY-MM-DD in the user's local time. (Kept for per-day stats / bonuses.) */
 export function todayKey(now: Date = new Date()): string {
   const y = now.getFullYear();
@@ -79,7 +92,7 @@ export interface WeeklyStations {
 }
 
 /**
- * Deterministically generate this week's 5 station word lists. Same
+ * Deterministically generate this week's 6 station word lists. Same
  * answer every time on the same week — Monday-to-Sunday rotation.
  * (Per client spec: words refresh weekly, not daily.)
  */
@@ -113,7 +126,7 @@ export const dailyStations = (
   return { date: w.week, stations: w.stations, allWords: w.allWords };
 };
 
-/** Given a target word, which station (0–4) contains it this week? */
+/** Given a target word, which station (0–5) contains it this week? */
 export function stationOfWord(
   word: string,
   week: string = weekKey(),

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Play, Sparkles } from "lucide-react";
 import { useActiveChild } from "@/lib/use-active-child";
+import { STATION_THEMES } from "@/lib/park-hunt";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import {
   isMusicEnabled,
@@ -20,15 +21,6 @@ function greetingForTime(): { greeting: string; pose: "wave" | "cheer" | "idle" 
   if (h < 17) return { greeting: "Hey there", pose: "cheer" };
   return { greeting: "Good evening", pose: "idle" };
 }
-
-const STATIONS = [
-  { label: "Magic Station", color: "linear-gradient(135deg, #9b5cff, #6b2aff)" },
-  { label: "Eagle Station", color: "linear-gradient(135deg, #34d1ff, #2271ff)" },
-  { label: "Pop Station", color: "linear-gradient(135deg, #ff6b93, #ff3a96)" },
-  { label: "Mirror Station", color: "linear-gradient(135deg, #ffd14a, #ff9f3a)" },
-  { label: "Miss. Nelly", color: "linear-gradient(135deg, #34e3a4, #1ea672)" },
-  { label: "Spider Isle", color: "linear-gradient(135deg, #ff8a4d, #ff4d8d)" },
-];
 
 export function HomeHero() {
   const router = useRouter();
@@ -90,6 +82,15 @@ export function HomeHero() {
       </div>
 
       <div className="hero-home-action">
+        <div className="home-secondary-links">
+          <Link href="/progress" className="home-secondary-link">
+            <span aria-hidden>📊</span> My Progress
+          </Link>
+          <Link href="/membership" className="home-secondary-link is-gold">
+            <span aria-hidden>👑</span> Membership
+          </Link>
+        </div>
+
         <button
           type="button"
           onClick={handlePlay}
@@ -103,21 +104,12 @@ export function HomeHero() {
           </span>
           <span className="play-button-text">PLAY</span>
         </button>
-
-        <div className="home-secondary-links">
-          <Link href="/progress" className="home-secondary-link">
-            <span aria-hidden>📊</span> My Progress
-          </Link>
-          <Link href="/membership" className="home-secondary-link is-gold">
-            <span aria-hidden>👑</span> Membership
-          </Link>
-        </div>
       </div>
 
       <div className="hero-home-stations">
         <p className="hero-home-stations-title">Adventure Stations</p>
         <div className="hero-home-station-list">
-          {STATIONS.map((station) => (
+          {STATION_THEMES.map((station) => (
             <span
               key={station.label}
               className="hero-home-station-pill"

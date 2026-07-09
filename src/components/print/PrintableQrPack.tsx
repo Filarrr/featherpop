@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { STATION_THEMES } from "@/lib/park-hunt";
 import { appBaseUrl } from "@/lib/game-data";
 
 /**
@@ -14,10 +15,8 @@ import { appBaseUrl } from "@/lib/game-data";
  */
 export function PrintableQrPack({
   stations,
-  weekKey,
 }: {
   stations: string[][];
-  weekKey: string;
 }) {
   return (
     <>
@@ -54,6 +53,7 @@ export function PrintableQrPack({
 
       {stations.map((_words, i) => {
         const stationNumber = i + 1;
+        const stationName = STATION_THEMES[i]?.label ?? `Station ${stationNumber}`;
         // Encode the FULL app URL so a normal phone camera (not just the
         // in-app scanner) opens the app straight at this station.
         const code = `${appBaseUrl}/park-hunt/station/${stationNumber}`;
@@ -63,11 +63,12 @@ export function PrintableQrPack({
               <span className="qr-card-brand">🪶 Ms. Feather Pop</span>
               <span className="qr-card-kicker">Park Hunt</span>
             </header>
-
+ 
             <div className="qr-card-body">
-              <p className="qr-card-station-label">Station</p>
-              <h2 className="qr-card-title">{stationNumber}</h2>
-
+              <p className="qr-card-station-label">Adventure Station</p>
+              <h2 className="qr-card-title">{stationName}</h2>
+              <p className="qr-card-station-sub">Station {stationNumber}</p>
+ 
               <div className="qr-card-qr">
                 <QRCodeSVG
                   value={code}

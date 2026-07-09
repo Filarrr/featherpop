@@ -7845,13 +7845,21 @@ a.prize-card-spin-link .prize-card-cta {
 .qr-card-title {
   font-family: var(--font-baloo), sans-serif;
   font-weight: 800;
-  font-size: clamp(4rem, 22vw, 9rem);
-  line-height: 0.9;
+  font-size: clamp(3rem, 16vw, 6rem);
+  line-height: 0.95;
   margin: 0 0 0.5rem;
   background: linear-gradient(180deg, var(--magenta), var(--purple));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+.qr-card-station-sub {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  margin: 0;
 }
 .qr-card-qr svg {
   border: 5px solid #1a0f3a;

@@ -11,8 +11,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { CheckoutButton } from "@/components/CheckoutButton";
+import { ChampionWordsBadge } from "@/components/ChampionWordsBadge";
 import { MailingListForm } from "@/components/MailingListForm";
 import { MEMBERSHIP_PRICE_LABEL, PREMIUM_PRICE_LABEL } from "@/lib/stripe";
+import { STATION_THEMES } from "@/lib/park-hunt";
 import { getMembership, isMemberActive } from "@/lib/membership";
 
 export const metadata = { title: "Adventure Membership" };
@@ -24,15 +26,6 @@ const UNLOCKS = [
   { icon: Feather,  label: "Feather Rewards",                color: "linear-gradient(135deg, #ff7ab8, #ff2d8e)" },
   { icon: Egg,      label: "Egg Hatching",                   color: "linear-gradient(135deg, #b13bff, #6a2dff)" },
   { icon: Crown,    label: "Golden Feather Challenge",       color: "linear-gradient(135deg, #ffd14a, #f0a900)" },
-];
-
-const STATION_NAMES = [
-  { label: "Magic Station", color: "linear-gradient(135deg, #9b5cff, #6b2aff)" },
-  { label: "Eagle Station", color: "linear-gradient(135deg, #34d1ff, #2271ff)" },
-  { label: "Pop Station", color: "linear-gradient(135deg, #ff6b93, #ff3a96)" },
-  { label: "Mirror Station", color: "linear-gradient(135deg, #ffd14a, #ff9f3a)" },
-  { label: "Miss. Nelly", color: "linear-gradient(135deg, #34e3a4, #1ea672)" },
-  { label: "Spider Isle Station", color: "linear-gradient(135deg, #ff8a4d, #ff4d8d)" },
 ];
 
 export default async function MembershipPage() {
@@ -69,24 +62,14 @@ export default async function MembershipPage() {
             <span className="membership-hero-bird">🦅</span>
             <span className="membership-hero-butterfly">🦋</span>
             <span className="membership-hero-flowers">🌸</span>
-            <div className="membership-hero-champion-card" aria-hidden>
-              <div className="membership-hero-champion-ring">
-                <span className="membership-hero-champion-feather">🪶</span>
-                <span className="membership-hero-champion-number">38</span>
-              </div>
-              <div className="membership-hero-champion-copy">
-                <strong>Champions Battle Words</strong>
-                <p>Show your friends how many words you got this month.</p>
-                <span>Are you able to get more words than your friends?</span>
-              </div>
-            </div>
+            <ChampionWordsBadge />
           </div>
         </section>
 
         <section className="membership-stations">
           <p className="membership-stations-title">Adventure Station Names</p>
           <div className="membership-station-list">
-            {STATION_NAMES.map((station) => (
+            {STATION_THEMES.map((station) => (
               <span
                 key={station.label}
                 className="membership-station-pill"
