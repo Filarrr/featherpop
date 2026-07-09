@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Play, Sparkles } from "lucide-react";
 import { useActiveChild } from "@/lib/use-active-child";
-import { STATION_THEMES } from "@/lib/park-hunt";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
 import {
   isMusicEnabled,
@@ -77,7 +76,7 @@ export function HomeHero() {
         </h1>
 
         <div className="hero-home-mascot">
-          <MsFeatherPopAvatar pose={greet.pose} size={200} />
+          <MsFeatherPopAvatar pose={greet.pose} size={120} />
         </div>
       </div>
 
@@ -102,21 +101,6 @@ export function HomeHero() {
         <Link href="/membership" className="home-secondary-link is-gold">
           <span aria-hidden>👑</span> Membership
         </Link>
-      </div>
-
-      <div className="hero-home-stations">
-        <p className="hero-home-stations-title">Adventure Stations</p>
-        <div className="hero-home-station-list">
-          {STATION_THEMES.map((station) => (
-            <span
-              key={station.label}
-              className="hero-home-station-pill"
-              style={{ background: station.color }}
-            >
-              {station.label}
-            </span>
-          ))}
-        </div>
       </div>
     </section>
   );

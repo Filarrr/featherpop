@@ -4291,7 +4291,7 @@ a { color: inherit; }
   margin: 0;
 }
 .hero-home-mascot {
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   animation: mascot-bob 3.2s ease-in-out infinite;
 }
 .hero-home-action {
