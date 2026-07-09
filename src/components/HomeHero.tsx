@@ -33,14 +33,7 @@ const STATIONS = [
 export function HomeHero() {
   const router = useRouter();
   const { active } = useActiveChild();
-  const [greet, setGreet] = useState<{ greeting: string; pose: "wave" | "cheer" | "idle" }>({
-    greeting: "Hello",
-    pose: "wave",
-  });
-
-  useEffect(() => {
-    setGreet(greetingForTime());
-  }, []);
+  const [greet] = useState<{ greeting: string; pose: "wave" | "cheer" | "idle" }>(() => greetingForTime());
 
   function handlePlay() {
     pop();
