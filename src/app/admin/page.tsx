@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { clerkClient } from "@clerk/nextjs/server";
 import { isMemberActive, type MembershipStatus } from "@/lib/membership";
-import { weekKey, weeklyStations } from "@/lib/park-hunt";
+import { getStationLabel, weekKey, weeklyStations } from "@/lib/park-hunt";
 import { isOwner, ownerEmails } from "@/lib/owner";
 import { getGlobalWordBank } from "@/lib/global-content";
 import { getMailingList } from "@/lib/mailing-list";
@@ -171,7 +171,7 @@ export default async function AdminPage() {
           </div>
           <div>
             <h2 className="h-display mt-2 text-2xl">Print station QRs</h2>
-            <p className="text-[var(--ink-soft)]">Print 6 station QRs with this week&apos;s word lists.</p>
+            <p className="text-[var(--ink-soft)]">Print the 8 story station signs with this week&apos;s word lists.</p>
           </div>
         </Link>
 
@@ -223,7 +223,7 @@ export default async function AdminPage() {
             <MapPin aria-hidden className="h-4 w-4" />
             This week&apos;s Park Hunt words
           </span>
-          <h2 className="h-display text-2xl">6 stations × 20 words = 120</h2>
+          <h2 className="h-display text-2xl">8 stations × 20 words = 160</h2>
           <p className="text-[var(--ink-soft)]">
             Same set every family sees this week. Rotates automatically every Monday.
           </p>
@@ -231,7 +231,7 @@ export default async function AdminPage() {
         <div className="admin-stations-grid">
           {stations.map((words, i) => (
             <article key={i} className="admin-station-card">
-              <h3>Station {i + 1}</h3>
+              <h3>{i + 1}. {getStationLabel(i)}</h3>
               <ol>
                 {words.map((w) => (
                   <li key={w}>{w}</li>

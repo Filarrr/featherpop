@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Camera, RefreshCw, Sparkles, Wand2 } from "lucide-react";
 import { buzz, childCheer, ding, fanfare, pop, wordReveal } from "@/lib/audio";
+import { STATION_THEMES, getStationLabel } from "@/lib/park-hunt";
 import { Confetti } from "@/components/Confetti";
 import { findWordAtStationAction } from "@/lib/park-hunt-actions";
 import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
@@ -137,8 +138,8 @@ export function StationGrid({
         </h2>
         <p>
           <strong>{word}</strong> isn&apos;t at{" "}
-          <strong>Station {stationId + 1}</strong>. Walk around the park and scan
-          a different QR code.
+          <strong>{getStationLabel(stationId)}</strong>. Walk around the park
+          and scan a different QR code.
         </p>
         <div className="parkhunt-station-actions">
           <Link
@@ -197,7 +198,10 @@ export function StationGrid({
       ) : null}
 
       <header className="parkhunt-station-hud">
-        <span className="kicker">Station {stationId + 1}</span>
+        <span className="kicker">
+          {STATION_THEMES[stationId]?.emoji ?? "🪶"}{" "}
+          {getStationLabel(stationId)}
+        </span>
         <p className="parkhunt-station-find">
           You found <strong>{word}</strong>! Tap it to keep going →
         </p>

@@ -68,12 +68,12 @@ export function WordBankEditor({ initial }: { initial: string[] }) {
           </span>
         </p>
         <p className="mt-1 text-sm text-[var(--ink-soft)]">
-          Need at least 120 to fill all 6 stations without repeats (minimum 20
+          Need at least 160 to fill all 8 stations without repeats (minimum 20
           to save).
         </p>
-        {words.length < 120 ? (
+        {words.length < 160 ? (
           <p className="mt-2 text-sm font-bold text-[var(--pink, #ff2d8e)]">
-            ⚠ Fewer than 120 words — some stations will repeat words.
+            ⚠ Fewer than 160 words — some stations will repeat words.
           </p>
         ) : null}
         {status ? (

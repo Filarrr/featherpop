@@ -1,25 +1,70 @@
 // Park Hunt session model — deterministic weekly station partitioning.
 //
-// Each week the app generates a fresh 120-word set, split into 6 stations
+// Each week the app generates a fresh 160-word set, split into 8 stations
 // of 20. The split is DETERMINISTIC per week so every child sees the same
 // word lists at the same station all week — which is important because the
 // physical QR codes don't change.
 //
-// Targets are per-child, picked from the week's 120 words.
+// Targets are per-child, picked from the week's 160 words.
 
 import { PARK_HUNT_BANK } from "./park-hunt-words";
 
-export const STATION_COUNT = 6;
+export const STATION_COUNT = 8;
 export const WORDS_PER_STATION = 20;
-export const TOTAL_DAILY_WORDS = STATION_COUNT * WORDS_PER_STATION; // 120
+export const TOTAL_DAILY_WORDS = STATION_COUNT * WORDS_PER_STATION; // 160
 
+// "Where the Magic Begins" — the 8 stations walk children through Pop's
+// story, from her first day at school to the final celebration. Names,
+// order, and taglines come straight from the client.
 export const STATION_THEMES = [
-  { label: "Magic Station", color: "linear-gradient(135deg, #9b5cff, #6b2aff)" },
-  { label: "Eagle Station", color: "linear-gradient(135deg, #34d1ff, #2271ff)" },
-  { label: "Pop Station", color: "linear-gradient(135deg, #ff6b93, #ff3a96)" },
-  { label: "Mirror Station", color: "linear-gradient(135deg, #ffd14a, #ff9f3a)" },
-  { label: "Miss. Nelly Station", color: "linear-gradient(135deg, #34e3a4, #1ea672)" },
-  { label: "Spider Isle Station", color: "linear-gradient(135deg, #ff8a4d, #ff4d8d)" },
+  {
+    label: "Pop's School Gate",
+    emoji: "🌟",
+    tagline: "Welcome! Your adventure begins.",
+    color: "linear-gradient(135deg, #ffd14a, #ff9f3a)",
+  },
+  {
+    label: "Ms. Nelly's Reading Corner",
+    emoji: "📚",
+    tagline: "Reading is where the magic starts.",
+    color: "linear-gradient(135deg, #34d1ff, #2271ff)",
+  },
+  {
+    label: "Whispering Garden",
+    emoji: "🌳",
+    tagline: "The mysterious garden Pop wasn't supposed to enter.",
+    color: "linear-gradient(135deg, #34e3a4, #1ea672)",
+  },
+  {
+    label: "Magic Mirror",
+    emoji: "🪞",
+    tagline: "Look closely… what do you see?",
+    color: "linear-gradient(135deg, #9b5cff, #6b2aff)",
+  },
+  {
+    label: "Spider's Web Challenge",
+    emoji: "🕸️",
+    tagline: "Watch out! The spider is waiting.",
+    color: "linear-gradient(135deg, #ff8a4d, #ff4d8d)",
+  },
+  {
+    label: "Falcon Flight",
+    emoji: "🦅",
+    tagline: "The falcon helps guide Pop.",
+    color: "linear-gradient(135deg, #60a5fa, #4338ca)",
+  },
+  {
+    label: "Feather Forest",
+    emoji: "✨",
+    tagline: "Every word earns another magical feather.",
+    color: "linear-gradient(135deg, #ff6b93, #ff3a96)",
+  },
+  {
+    label: "Miss Feather Pop's Celebration Circle",
+    emoji: "🎉",
+    tagline: "Celebrate everything you've learned!",
+    color: "linear-gradient(135deg, #ff3a96, #ffd14a)",
+  },
 ];
 
 export function getStationLabel(stationIndex: number): string {
@@ -92,7 +137,7 @@ export interface WeeklyStations {
 }
 
 /**
- * Deterministically generate this week's 6 station word lists. Same
+ * Deterministically generate this week's 8 station word lists. Same
  * answer every time on the same week — Monday-to-Sunday rotation.
  * (Per client spec: words refresh weekly, not daily.)
  */
@@ -126,7 +171,7 @@ export const dailyStations = (
   return { date: w.week, stations: w.stations, allWords: w.allWords };
 };
 
-/** Given a target word, which station (0–5) contains it this week? */
+/** Given a target word, which station (0–7) contains it this week? */
 export function stationOfWord(
   word: string,
   week: string = weekKey(),

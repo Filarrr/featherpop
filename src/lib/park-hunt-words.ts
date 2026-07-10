@@ -2,7 +2,7 @@
 // generally readable for ages 5–10, and themed around things a child
 // can picture in a park (nature, animals, family, magic, feelings).
 //
-// 300+ words → plenty of room for the weekly 120-word shuffle without
+// 300+ words → plenty of room for the weekly 160-word shuffle without
 // rotation feeling stale.
 
 export const PARK_HUNT_WORDS: string[] = [
