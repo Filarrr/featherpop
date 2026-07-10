@@ -23,7 +23,7 @@ export function ChampionWordsBadge() {
       </div>
       <div className="membership-hero-champion-copy">
         <strong>Champions Battle Words</strong>
-        <p>Show your friends how many words you got this month.</p>
+        <p>Can you get more words than your friends this month?</p>
         <span>
           {currentMonth
             ? "Keep going to beat your friends!"

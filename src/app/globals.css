@@ -2665,7 +2665,93 @@ a { color: inherit; }
 }
 
 .feather-collection { padding: 1rem 0; }
-.feather-collection-head { display: grid; gap: 0.25rem; margin-bottom: 1rem; }
+.feather-collection-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.feather-collection-head-main {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+/* ===== Champions Battle Words — glowing monthly word-count circle ===== */
+.cbw {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex: 0 1 auto;
+  max-width: 320px;
+  padding: 0.75rem 1rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 209, 74, 0.35);
+  text-decoration: none;
+}
+.cbw-circle {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 28%, rgba(255, 237, 121, 0.95), rgba(255, 159, 58, 0.75));
+  color: var(--purple-deep, #2a1258);
+  box-shadow: 0 0 0 5px rgba(255, 209, 74, 0.25), 0 0 18px rgba(255, 209, 74, 0.6);
+  animation: cbw-glow 2.2s ease-in-out infinite;
+}
+@keyframes cbw-glow {
+  0%, 100% { box-shadow: 0 0 0 5px rgba(255, 209, 74, 0.25), 0 0 18px rgba(255, 209, 74, 0.6); }
+  50%      { box-shadow: 0 0 0 9px rgba(255, 209, 74, 0.12), 0 0 32px rgba(255, 209, 74, 0.85); }
+}
+.cbw-feather { font-size: 1.1rem; line-height: 1; }
+.cbw-count {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 900;
+  font-size: 1.7rem;
+  line-height: 1.05;
+}
+.cbw-unit {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+.cbw-copy { min-width: 0; }
+.cbw-copy strong {
+  display: block;
+  font-family: var(--font-baloo), sans-serif;
+  color: var(--gold, #ffd14a);
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+.cbw-copy p {
+  margin: 0.2rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+.cbw-locked .cbw-circle {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink-soft);
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.06);
+  animation: none;
+}
+.cbw-locked:hover {
+  border-color: var(--gold, #ffd14a);
+}
+@media (max-width: 560px) {
+  .cbw { max-width: 100%; flex: 1 1 100%; }
+}
 .level-progress {
   height: 10px;
   background: rgba(255,255,255,0.08);

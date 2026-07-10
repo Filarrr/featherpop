@@ -5,6 +5,7 @@ import { Lock, Trophy } from "lucide-react";
 import { useActiveChild } from "@/lib/use-active-child";
 import { totalFeathers } from "@/lib/child-profile";
 import { FEATHER_META, FEATHER_ORDER, levelFor, nextLevel } from "@/lib/levels";
+import { ChampionsBattleWords } from "./ChampionsBattleWords";
 
 function FeatherGlyph({ color, locked }: { color: string; locked: boolean }) {
   return (
@@ -52,7 +53,7 @@ function FeatherGlyph({ color, locked }: { color: string; locked: boolean }) {
   );
 }
 
-export function FeatherCollection() {
+export function FeatherCollection({ member = false }: { member?: boolean }) {
   const { progress, activeChildId } = useActiveChild();
 
   if (!activeChildId) {
@@ -80,26 +81,29 @@ export function FeatherCollection() {
   return (
     <div className="feather-collection">
       <header className="feather-collection-head">
-        <span className="kicker">
-          <Trophy aria-hidden className="h-4 w-4" />
-          Your feathers
-        </span>
-        <h1 className="h-display text-3xl">{level.title}</h1>
-        <p className="text-[var(--ink-soft)]">
-          <strong>{total}</strong> feathers · <strong>{unlockedTypes}</strong> of{" "}
-          {FEATHER_ORDER.length} types unlocked
-          {next ? (
-            <>
-              {" "}
-              · {next.min - total} more to <strong>{next.title}</strong>
-            </>
-          ) : (
-            <> · Top level!</>
-          )}
-        </p>
-        <div className="level-progress" aria-hidden>
-          <span style={{ width: `${pct}%` }} />
+        <div className="feather-collection-head-main">
+          <span className="kicker">
+            <Trophy aria-hidden className="h-4 w-4" />
+            Your feathers
+          </span>
+          <h1 className="h-display text-3xl">{level.title}</h1>
+          <p className="text-[var(--ink-soft)]">
+            <strong>{total}</strong> feathers · <strong>{unlockedTypes}</strong> of{" "}
+            {FEATHER_ORDER.length} types unlocked
+            {next ? (
+              <>
+                {" "}
+                · {next.min - total} more to <strong>{next.title}</strong>
+              </>
+            ) : (
+              <> · Top level!</>
+            )}
+          </p>
+          <div className="level-progress" aria-hidden>
+            <span style={{ width: `${pct}%` }} />
+          </div>
         </div>
+        <ChampionsBattleWords member={member} />
       </header>
 
       <div className="feather-grid">
