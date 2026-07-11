@@ -155,12 +155,13 @@ export default async function AdminPage() {
 
       {/* Platform-wide stats */}
       <section className="admin-stats">
-        <StatCard icon={<Users />} label="Families" value={families.length} tag="accounts signed up" color="#a76bff" />
+        <StatCard icon={<Users />} label="Total subscribers" value={families.length} tag="accounts signed up" color="#a76bff" />
+        <StatCard icon={<Crown />} label="Paid subscribers" value={totals.members} tag="active subscriptions" color="#ff7ab8" />
+        <StatCard icon={<Users />} label="Free subscribers" value={families.length - totals.members} tag="signed up, not paying yet" color="#4cc4ff" />
         <StatCard icon={<Users />} label="Children" value={totals.children} tag="across all families" color="#6a2dff" />
         <StatCard icon={<Sparkles />} label="FeatherPop" value={totals.featherPop} tag="earned platform-wide" color="#ffd14a" />
-        <StatCard icon={<BookOpenCheck />} label="Words found" value={totals.words} tag="lifetime, everyone" color="#4cc4ff" />
-        <StatCard icon={<Egg />} label="Eggs hatched" value={totals.eggs} tag="across all families" color="#34e3a4" />
-        <StatCard icon={<Crown />} label="Members" value={totals.members} tag="active subscriptions" color="#ff7ab8" />
+        <StatCard icon={<BookOpenCheck />} label="Words found" value={totals.words} tag="lifetime, everyone" color="#34e3a4" />
+        <StatCard icon={<Egg />} label="Eggs hatched" value={totals.eggs} tag="across all families" color="#ff9a3a" />
       </section>
 
       {/* Quick actions */}
