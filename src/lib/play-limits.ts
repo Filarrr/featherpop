@@ -5,6 +5,7 @@
 // write (consume-on-play) path.
 
 import "server-only";
+import { headers } from "next/headers";
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { getActiveChildId } from "@/lib/active-child-server";
 import { isOwnerUser } from "@/lib/owner";
@@ -13,11 +14,37 @@ import type { ChildProgress } from "@/lib/child-profile";
 export const FREE_DAILY_PLAYS = 3;
 export type GameKey = "sort" | "parkhunt" | "letterpop";
 
-export function playDayKey(now: Date = new Date()): string {
-  const y = now.getFullYear();
-  const m = `${now.getMonth() + 1}`.padStart(2, "0");
-  const d = `${now.getDate()}`.padStart(2, "0");
-  return `${y}-${m}-${d}`;
+/**
+ * Today's YYYY-MM-DD in the VISITOR'S timezone, not the server's.
+ *
+ * The server runs on UTC (Vercel), so keying plays on server-local time
+ * locked evening players out for their entire next day: a kid playing at
+ * 8pm Eastern was recorded under tomorrow's UTC date, and the "come back
+ * tomorrow" wall stayed up until 8pm the following night. We take the
+ * timezone from Vercel's geo header, falling back to US Eastern.
+ */
+export async function playDayKey(): Promise<string> {
+  let tz: string | null = null;
+  try {
+    tz = (await headers()).get("x-vercel-ip-timezone");
+  } catch {
+    /* not in a request scope */
+  }
+  for (const zone of [tz, "America/New_York"]) {
+    if (!zone) continue;
+    try {
+      // en-CA formats as YYYY-MM-DD.
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: zone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
+    } catch {
+      /* unknown zone string from the header — try the fallback */
+    }
+  }
+  return new Date().toISOString().slice(0, 10);
 }
 
 function membershipActive(
@@ -57,7 +84,7 @@ export async function readPlayGate(game: GameKey): Promise<PlayGate> {
 
   const map = progressMap(user.privateMetadata);
   const dp = map[childId]?.dailyPlays;
-  const today = playDayKey();
+  const today = await playDayKey();
   const count = dp && dp.date === today ? (dp[game] ?? 0) : 0;
   const remaining = Math.max(0, FREE_DAILY_PLAYS - count);
   return { isMember: false, remaining, locked: remaining <= 0 };
@@ -84,7 +111,7 @@ export async function tryConsumePlay(
   const u = await client.users.getUser(userId);
   const map = progressMap(u.privateMetadata);
   const prev = map[childId] ?? ({} as ChildProgress);
-  const today = playDayKey();
+  const today = await playDayKey();
   const dp =
     prev.dailyPlays && prev.dailyPlays.date === today
       ? prev.dailyPlays

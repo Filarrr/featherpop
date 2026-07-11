@@ -8,6 +8,7 @@ import { useActiveChild } from "@/lib/use-active-child";
 import { useMembership } from "@/lib/use-membership";
 import { claimRewardAction } from "@/lib/child-progress-actions";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
+import { ChampionsBattleRing } from "@/components/ChampionsBattleWords";
 import { RewardArt } from "@/components/rewards/RewardArt";
 import { EggWidget } from "@/components/eggs/EggWidget";
 import { MailingListForm } from "@/components/MailingListForm";
@@ -122,6 +123,9 @@ export function RewardsClient() {
             <small>Feathers</small>
           </div>
         </div>
+        {/* Champions Battle Words — tap the glowing ring for this month's
+            word progress pop-up. */}
+        <ChampionsBattleRing member={isMember} />
         <div className="prizes-header-avatar-v2" aria-hidden>
           <MsFeatherPopAvatar pose={active ? "cheer" : "wave"} size={108} />
         </div>
@@ -131,6 +135,17 @@ export function RewardsClient() {
       <section className="prizes-egg-section">
         <EggWidget />
       </section>
+
+      {/* Collection book — so kids can revisit their character cards any
+          time, not only right after a spin. */}
+      <Link href="/collection" className="prizes-collection-link">
+        <span className="prizes-collection-emoji" aria-hidden>🃏</span>
+        <span className="prizes-collection-copy">
+          <strong>My Collection</strong>
+          <small>All the character cards you&apos;ve collected</small>
+        </span>
+        <ChevronRight aria-hidden className="h-5 w-5" />
+      </Link>
 
       {!isMember ? (
         <Link href="/membership?from=/rewards" className="prizes-sub-banner">

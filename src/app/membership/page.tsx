@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   BookOpen,
   Crown,
@@ -30,9 +29,10 @@ const UNLOCKS = [
 
 export default async function MembershipPage() {
   const m = await getMembership();
+  // Members see this same page with the member variant below (crown status +
+  // print banner instead of the checkout CTA) — and the Champions Battle
+  // Words ring in the hero. Don't redirect them away from it.
   const active = isMemberActive(m);
-
-  if (active) redirect("/account");
 
   return (
     <main className="page membership-page-wrap">
@@ -91,10 +91,12 @@ export default async function MembershipPage() {
           </div>
         </section>
 
-        <div className="membership-price">
-          <span>$9.99</span>
-          <small>/month</small>
-        </div>
+        {!active ? (
+          <div className="membership-price">
+            <span>$9.99</span>
+            <small>/month</small>
+          </div>
+        ) : null}
 
         <section className="membership-unlocks">
           <p className="membership-unlocks-title">Unlock:</p>

@@ -5791,10 +5791,155 @@ a { color: inherit; }
 .prizes-header-v2 {
   position: relative;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
   padding: 1rem 0.25rem 0.5rem;
+}
+
+/* Champions Battle Words — compact glowing ring in the Prizes header.
+   Tap it to open the monthly word-progress pop-up. */
+.cbw-ring-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: radial-gradient(circle at 30% 28%, rgba(255, 237, 121, 0.95), rgba(255, 159, 58, 0.8));
+  color: var(--purple-deep, #2a1258);
+  box-shadow: 0 0 0 4px rgba(255, 209, 74, 0.25), 0 0 14px rgba(255, 209, 74, 0.6);
+  animation: cbw-glow 2.2s ease-in-out infinite;
+  transition: transform 160ms ease;
+}
+.cbw-ring-btn:hover { transform: scale(1.06); }
+.cbw-ring-btn-locked {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink-soft);
+  box-shadow: 0 0 0 4px rgba(255, 209, 74, 0.18);
+  animation: none;
+}
+.cbw-ring-feather { font-size: 0.95rem; line-height: 1; }
+.cbw-ring-count {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 900;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* The monthly word-progress pop-up */
+.cbw-pop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(26, 15, 58, 0.55);
+  backdrop-filter: blur(4px);
+}
+.cbw-pop-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  width: min(380px, 100%);
+  padding: 1.5rem 1.25rem;
+  border-radius: 26px;
+  background: white;
+  box-shadow: 0 24px 60px rgba(26, 15, 58, 0.45);
+  text-align: center;
+}
+.cbw-pop-close {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: rgba(106, 45, 255, 0.08);
+  color: var(--purple-deep, #2a1258);
+}
+.cbw-pop-circle { width: 110px; height: 110px; }
+.cbw-pop-title {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: var(--purple-deep, #2a1258);
+  margin: 0;
+}
+.cbw-pop-msg {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.cbw-pop-bar {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(106, 45, 255, 0.1);
+  overflow: hidden;
+}
+.cbw-pop-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold), var(--magenta));
+  transition: width 500ms ease;
+}
+.cbw-pop-goal {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--purple-deep, #2a1258);
+}
+
+@media (max-width: 480px) {
+  .prizes-header-avatar-v2 { width: 76px; }
+  .cbw-ring-btn { width: 54px; height: 54px; }
+  .cbw-ring-count { font-size: 0.9rem; }
+}
+
+/* "My Collection" banner between the egg and Choose a Reward */
+.prizes-collection-link {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0 auto 1rem;
+  max-width: 560px;
+  padding: 0.8rem 1rem;
+  border-radius: 20px;
+  background: white;
+  border: 2px solid rgba(167, 107, 255, 0.35);
+  box-shadow: 0 10px 24px rgba(106, 45, 255, 0.14);
+  color: var(--purple-deep, #2a1258);
+  text-decoration: none;
+  transition: transform 160ms ease;
+}
+.prizes-collection-link:hover { transform: translateY(-2px); }
+.prizes-collection-emoji { font-size: 1.9rem; }
+.prizes-collection-copy {
+  flex: 1;
+  display: grid;
+  gap: 0.1rem;
+  text-align: left;
+}
+.prizes-collection-copy strong {
+  font-family: var(--font-baloo), sans-serif;
+  font-size: 1.05rem;
+}
+.prizes-collection-copy small {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
 }
 .prizes-back-v2 {
   display: grid;
