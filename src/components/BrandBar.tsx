@@ -7,6 +7,8 @@ import { UserButton } from "@clerk/nextjs";
 import { Camera, Feather, Gamepad2, Gift, Home, Wand2 } from "lucide-react";
 import { SoundToggle } from "@/components/SoundToggle";
 import { ActiveChildChip } from "@/components/ActiveChildChip";
+import { ChampionsBattleRing } from "@/components/ChampionsBattleWords";
+import { useMembership } from "@/lib/use-membership";
 
 const links = [
   { href: "/", label: "Home", icon: Home },
@@ -19,6 +21,7 @@ const links = [
 
 export function BrandBar() {
   const pathname = usePathname();
+  const { isMember } = useMembership();
   if (pathname?.startsWith("/sign-in") || pathname?.startsWith("/sign-up")) {
     return null;
   }
@@ -61,6 +64,7 @@ export function BrandBar() {
         </nav>
 
         <div className="brandbar-actions">
+          <ChampionsBattleRing member={isMember} />
           <ActiveChildChip />
           <SoundToggle />
           <UserButton />

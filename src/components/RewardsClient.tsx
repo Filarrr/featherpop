@@ -8,7 +8,6 @@ import { useActiveChild } from "@/lib/use-active-child";
 import { useMembership } from "@/lib/use-membership";
 import { claimRewardAction } from "@/lib/child-progress-actions";
 import { MsFeatherPopAvatar } from "@/components/MsFeatherPopAvatar";
-import { ChampionsBattleRing } from "@/components/ChampionsBattleWords";
 import { RewardArt } from "@/components/rewards/RewardArt";
 import { EggWidget } from "@/components/eggs/EggWidget";
 import { MailingListForm } from "@/components/MailingListForm";
@@ -123,9 +122,6 @@ export function RewardsClient() {
             <small>Feathers</small>
           </div>
         </div>
-        {/* Champions Battle Words — tap the glowing ring for this month's
-            word progress pop-up. */}
-        <ChampionsBattleRing member={isMember} />
         <div className="prizes-header-avatar-v2" aria-hidden>
           <MsFeatherPopAvatar pose={active ? "cheer" : "wave"} size={108} />
         </div>

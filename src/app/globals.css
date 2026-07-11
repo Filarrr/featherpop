@@ -5791,13 +5791,13 @@ a { color: inherit; }
 .prizes-header-v2 {
   position: relative;
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.75rem;
   padding: 1rem 0.25rem 0.5rem;
 }
 
-/* Champions Battle Words — compact glowing ring in the Prizes header.
+/* Champions Battle Words — compact glowing ring in the top app header.
    Tap it to open the monthly word-progress pop-up. */
 .cbw-ring-btn {
   display: flex;
@@ -5903,11 +5903,10 @@ a { color: inherit; }
   color: var(--purple-deep, #2a1258);
 }
 
-@media (max-width: 480px) {
-  .prizes-header-avatar-v2 { width: 76px; }
-  .cbw-ring-btn { width: 54px; height: 54px; }
-  .cbw-ring-count { font-size: 0.9rem; }
-}
+/* Sized to sit alongside the sound toggle / child chip in the brand bar. */
+.brandbar .cbw-ring-btn { width: 44px; height: 44px; }
+.brandbar .cbw-ring-feather { font-size: 0.75rem; }
+.brandbar .cbw-ring-count { font-size: 0.82rem; }
 
 /* "My Collection" banner between the egg and Choose a Reward */
 .prizes-collection-link {

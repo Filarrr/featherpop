@@ -3,6 +3,7 @@ import { getMembership, isMemberActive } from "@/lib/membership";
 import { isOwner } from "@/lib/owner";
 import { MEMBERSHIP_PRICE_LABEL } from "@/lib/stripe";
 import { ChampionsBattleWords } from "@/components/ChampionsBattleWords";
+import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
 
 export const metadata = { title: "Account" };
 
@@ -34,6 +35,7 @@ export default async function AccountPage() {
                 <a href="/print" className="btn btn-ghost btn-sm">
                   Printable quest pack
                 </a>
+                {active ? <ManageSubscriptionButton /> : null}
               </div>
             ) : (
               <a href="/membership" className="btn btn-gold btn-sm mt-4">
