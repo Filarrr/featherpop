@@ -19,9 +19,8 @@ function currentMonthKey(): string {
 export function ChampionsBattleWords({ member }: { member: boolean }) {
   const { progress, activeChildId } = useActiveChild();
   const inSameMonth = progress.monthKey === currentMonthKey();
-  const monthlyWords = inSameMonth ? progress.wordsThisMonth ?? 0 : 0;
-
-  if (!activeChildId) return null;
+  const monthlyWords =
+    activeChildId && inSameMonth ? progress.wordsThisMonth ?? 0 : 0;
 
   if (!member) {
     return (
@@ -49,8 +48,14 @@ export function ChampionsBattleWords({ member }: { member: boolean }) {
       <span className="cbw-copy">
         <strong>Champions Battle Words</strong>
         <p>
-          <b>{monthlyWords.toLocaleString()}</b> words this month — can you get
-          more words than your friends?
+          {activeChildId ? (
+            <>
+              <b>{monthlyWords.toLocaleString()}</b> words this month — can you
+              get more words than your friends?
+            </>
+          ) : (
+            <>Pick a child profile to start this month&apos;s word battle!</>
+          )}
         </p>
       </span>
     </div>
