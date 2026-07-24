@@ -3120,6 +3120,165 @@ a { color: inherit; }
   .active-child-chip-avatar { width: 28px; height: 28px; }
 }
 .active-child-chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* Golden Feather champion — crown badge on the child's avatar. */
+.active-child-chip-avatar { position: relative; overflow: visible; }
+.active-child-chip-crown {
+  position: absolute;
+  top: -9px;
+  right: -7px;
+  font-size: 0.8rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+  animation: champion-crown-bob 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+.active-child-chip.is-champion {
+  box-shadow: 0 0 0 2px var(--gold), 0 6px 16px rgba(255, 209, 74, 0.45);
+}
+@keyframes champion-crown-bob {
+  0%, 100% { transform: translateY(0) rotate(-8deg); }
+  50%      { transform: translateY(-2px) rotate(8deg); }
+}
+
+/* ---------- Golden Feather celebration (1,000 words) ---------- */
+.golden-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(26, 15, 58, 0.72);
+  backdrop-filter: blur(6px);
+  animation: golden-fade-in 0.3s ease-out both;
+}
+.golden-reveal-rays {
+  position: absolute;
+  inset: -25%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 209, 74, 0.35) 0deg 12deg,
+    transparent 12deg 30deg
+  );
+  animation: golden-rays-spin 18s linear infinite;
+  pointer-events: none;
+}
+.golden-reveal-card {
+  position: relative;
+  z-index: 2;
+  width: min(24rem, 100%);
+  padding: 1.5rem 1.25rem 1.25rem;
+  border-radius: 1.75rem;
+  text-align: center;
+  background: linear-gradient(180deg, #fffdf3, #fff5d6);
+  border: 3px solid var(--gold);
+  box-shadow: 0 30px 70px rgba(240, 169, 0, 0.45);
+  animation: golden-card-in 0.55s cubic-bezier(.2, .9, .3, 1.4) both;
+}
+.golden-reveal-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgba(26, 15, 58, 0.08);
+  color: var(--ink);
+}
+.golden-reveal-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 auto;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold), #ff9a3a);
+  color: var(--ink);
+  font-weight: 900;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+}
+.golden-reveal-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 0.5rem auto 0.25rem;
+  width: 180px;
+  height: 180px;
+}
+.golden-reveal-halo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 209, 74, 0.85) 0%, transparent 66%);
+  animation: golden-halo-pulse 2s ease-in-out infinite;
+}
+.golden-reveal-feather {
+  position: relative;
+  z-index: 2;
+  animation: golden-feather-rise 1s cubic-bezier(.2, .9, .3, 1.3) both,
+             golden-feather-float 3s ease-in-out 1.1s infinite;
+  filter: drop-shadow(0 10px 20px rgba(168, 104, 0, 0.45));
+}
+.golden-reveal-sparkles span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff8b0;
+  box-shadow: 0 0 10px 3px rgba(255, 209, 74, 0.9);
+  transform: rotate(calc(var(--i) * 30deg)) translateY(-84px);
+  animation: golden-sparkle 1.8s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.12s);
+}
+.golden-reveal-title {
+  font-family: var(--font-baloo), sans-serif;
+  font-weight: 800;
+  font-size: 2rem;
+  margin: 0.35rem 0 0;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, #ffb703, #a86800);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.golden-reveal-tag { margin: 0.2rem 0 0; font-weight: 700; color: var(--ink-soft); }
+.golden-reveal-meta { margin: 0.5rem 0 0.9rem; font-size: 0.9rem; color: var(--ink-soft); }
+.golden-reveal-actions { display: grid; gap: 0.5rem; }
+@keyframes golden-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes golden-rays-spin { to { transform: rotate(360deg); } }
+@keyframes golden-card-in {
+  0%   { transform: scale(0.8) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+@keyframes golden-halo-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.9;  transform: scale(1.08); }
+}
+@keyframes golden-feather-rise {
+  0%   { transform: translateY(60px) scale(0.6) rotate(-12deg); opacity: 0; }
+  70%  { transform: translateY(-8px) scale(1.08) rotate(4deg); opacity: 1; }
+  100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+}
+@keyframes golden-feather-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-10px) rotate(3deg); }
+}
+@keyframes golden-sparkle {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .golden-reveal-rays,
+  .golden-reveal-halo,
+  .golden-reveal-feather,
+  .golden-reveal-sparkles span,
+  .active-child-chip-crown { animation: none !important; }
+}
 
 /* === V1: auth pages === */
 .auth-page {
@@ -3145,6 +3304,18 @@ a { color: inherit; }
 }
 @media (min-width: 900px) {
   .auth-split { grid-template-columns: 1.05fr 1fr; gap: 4rem; }
+}
+/* Mobile: put the sign-in / sign-up FORM first so it's visible without
+   scrolling — the artwork + perks become supporting content below it. */
+@media (max-width: 899px) {
+  .auth-page { min-height: 0; padding-top: 0.75rem; }
+  .auth-split { gap: 1.5rem; }
+  .auth-split .auth-form-wrap { order: -1; }
+  .auth-art { padding: 0.25rem 0.5rem 0; }
+  .auth-art-stage { width: 200px; height: 200px; }
+  .auth-art-stage > div,
+  .auth-art-stage > svg,
+  .auth-art-stage img { transform: scale(0.68); }
 }
 .auth-art {
   display: grid;

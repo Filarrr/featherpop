@@ -28,6 +28,7 @@ import {
 import type { EggColor, HatchedEntry } from "@/lib/child-profile";
 import { EggHatchReveal } from "@/components/eggs/EggHatchReveal";
 import { EggCrackReveal } from "@/components/eggs/EggCrackReveal";
+import { GoldenFeatherReveal } from "@/components/progress/GoldenFeatherReveal";
 import { useNavGuard } from "@/lib/use-nav-guard";
 import { Mascot, MascotMood } from "@/components/Mascot";
 
@@ -214,6 +215,8 @@ export function Wordshake({
     color: EggColor;
     wordsInEgg: number;
   } | null>(null);
+  // 1,000 words this month → the Golden Feather celebration.
+  const [goldenFeather, setGoldenFeather] = useState(false);
   const pendingAwardsRef = useRef(0);
   const refreshTimerRef = useRef<number | null>(null);
   // Batching state for the persist flow — see acceptWord() comment.
@@ -258,7 +261,7 @@ export function Wordshake({
           if (recRes?.hatched) setHatched(recRes.hatched);
           else if (recRes?.crackJustCrossed) setCrackMilestone(recRes.crackJustCrossed);
           if (recRes?.goldenFeatherJustEarned) {
-            window.open("/print/golden-feather", "_blank");
+            setGoldenFeather(true);
           }
         }
         if (bonus > 0) await awardFeatherPopAction(bonus);
@@ -306,7 +309,7 @@ export function Wordshake({
   // True while a celebration overlay is up (hatch or crack). The timer
   // pauses for the duration so the kid isn't penalized for watching
   // their reward animation.
-  const paused = !!hatched || !!crackMilestone;
+  const paused = !!hatched || !!crackMilestone || goldenFeather;
 
   // Guard browser back + every <Link> click while a round is in
   // progress. Pause-overlay state DOESN'T count as in-progress for
@@ -503,7 +506,7 @@ export function Wordshake({
               if (recRes?.hatched) setHatched(recRes.hatched);
               else if (recRes?.crackJustCrossed) setCrackMilestone(recRes.crackJustCrossed);
               if (recRes?.goldenFeatherJustEarned) {
-                window.open("/print/golden-feather", "_blank");
+                setGoldenFeather(true);
               }
             }
             if (bonusTotal > 0) await awardFeatherPopAction(bonusTotal);
@@ -650,7 +653,9 @@ export function Wordshake({
 
   return (
     <div className="wordshake">
-      {hatched ? (
+      {goldenFeather ? (
+        <GoldenFeatherReveal onClose={() => setGoldenFeather(false)} />
+      ) : hatched ? (
         <EggHatchReveal hatched={hatched} onClose={() => setHatched(null)} />
       ) : crackMilestone ? (
         <EggCrackReveal
